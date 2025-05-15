@@ -1,46 +1,46 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Users\\abhis\\Downloads\\Clint4\\Faith centre attendance management system\\",
+  "WorkspaceRootPath": "C:\\Users\\abhis\\Downloads\\Clint4\\copy one\\Faith centre attendance management system\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\abhis\\Downloads\\Clint4\\Faith centre attendance management system\\frontend\\js\\base.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:frontend\\js\\base.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\abhis\\Downloads\\Clint4\\Faith centre attendance management system\\frontend\\js\\qrScanner.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:frontend\\js\\qrScanner.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\abhis\\Downloads\\Clint4\\Faith centre attendance management system\\backend\\controllers\\attendanceController.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend\\controllers\\attendanceController.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\abhis\\Downloads\\Clint4\\Faith centre attendance management system\\frontend\\js\\attendance.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:frontend\\js\\attendance.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\abhis\\Downloads\\Clint4\\Faith centre attendance management system\\frontend\\js\\dashboard.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\abhis\\Downloads\\Clint4\\copy one\\Faith centre attendance management system\\frontend\\js\\dashboard.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
       "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:frontend\\js\\dashboard.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\abhis\\Downloads\\Clint4\\Faith centre attendance management system\\backend\\controllers\\dashboardController.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend\\controllers\\dashboardController.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\abhis\\Downloads\\Clint4\\copy one\\Faith centre attendance management system\\frontend\\js\\qrScanner.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:frontend\\js\\qrScanner.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\abhis\\Downloads\\Clint4\\Faith centre attendance management system\\frontend\\js\\profile.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:frontend\\js\\profile.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\abhis\\Downloads\\Clint4\\Faith centre attendance management system\\backend\\middleware\\authenticate.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\abhis\\Downloads\\Clint4\\copy one\\Faith centre attendance management system\\backend\\middleware\\authenticate.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
       "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend\\middleware\\authenticate.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\abhis\\Downloads\\Clint4\\Faith centre attendance management system\\frontend\\js\\utils.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:frontend\\js\\utils.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\abhis\\Downloads\\Clint4\\copy one\\Faith centre attendance management system\\frontend\\js\\attendance.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:frontend\\js\\attendance.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\abhis\\Downloads\\Clint4\\Faith centre attendance management system\\frontend\\js\\manageUsers.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\abhis\\Downloads\\Clint4\\copy one\\Faith centre attendance management system\\backend\\controllers\\attendanceController.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend\\controllers\\attendanceController.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\abhis\\Downloads\\Clint4\\copy one\\Faith centre attendance management system\\frontend\\js\\manageUsers.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
       "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:frontend\\js\\manageUsers.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\abhis\\Downloads\\Clint4\\copy one\\Faith centre attendance management system\\frontend\\js\\base.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:frontend\\js\\base.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\abhis\\Downloads\\Clint4\\copy one\\Faith centre attendance management system\\backend\\controllers\\dashboardController.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend\\controllers\\dashboardController.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\abhis\\Downloads\\Clint4\\copy one\\Faith centre attendance management system\\frontend\\js\\profile.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:frontend\\js\\profile.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\abhis\\Downloads\\Clint4\\copy one\\Faith centre attendance management system\\frontend\\js\\utils.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:frontend\\js\\utils.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
     }
   ],
   "DocumentGroupContainers": [
@@ -50,30 +50,29 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 5,
+          "SelectedChildIndex": 4,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 7,
               "Title": "dashboardController.js",
-              "DocumentMoniker": "C:\\Users\\abhis\\Downloads\\Clint4\\Faith centre attendance management system\\backend\\controllers\\dashboardController.js",
+              "DocumentMoniker": "C:\\Users\\abhis\\Downloads\\Clint4\\copy one\\Faith centre attendance management system\\backend\\controllers\\dashboardController.js",
               "RelativeDocumentMoniker": "backend\\controllers\\dashboardController.js",
-              "ToolTip": "C:\\Users\\abhis\\Downloads\\Clint4\\Faith centre attendance management system\\backend\\controllers\\dashboardController.js",
+              "ToolTip": "C:\\Users\\abhis\\Downloads\\Clint4\\copy one\\Faith centre attendance management system\\backend\\controllers\\dashboardController.js",
               "RelativeToolTip": "backend\\controllers\\dashboardController.js",
               "ViewState": "AgIAAFUAAAAAAAAAAAAwwKwAAAAeAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2025-05-08T08:54:58.029Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-05-08T08:54:58.029Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 4,
               "Title": "attendanceController.js",
-              "DocumentMoniker": "C:\\Users\\abhis\\Downloads\\Clint4\\Faith centre attendance management system\\backend\\controllers\\attendanceController.js",
+              "DocumentMoniker": "C:\\Users\\abhis\\Downloads\\Clint4\\copy one\\Faith centre attendance management system\\backend\\controllers\\attendanceController.js",
               "RelativeDocumentMoniker": "backend\\controllers\\attendanceController.js",
-              "ToolTip": "C:\\Users\\abhis\\Downloads\\Clint4\\Faith centre attendance management system\\backend\\controllers\\attendanceController.js",
+              "ToolTip": "C:\\Users\\abhis\\Downloads\\Clint4\\copy one\\Faith centre attendance management system\\backend\\controllers\\attendanceController.js",
               "RelativeToolTip": "backend\\controllers\\attendanceController.js",
-              "ViewState": "AgIAAHcAAAAAAAAAAADwv7MAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAJAAAAAAAAAAAAAqwLMAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
               "WhenOpened": "2025-05-07T15:14:38.69Z",
               "EditorCaption": ""
@@ -82,11 +81,11 @@
               "$type": "Document",
               "DocumentIndex": 1,
               "Title": "qrScanner.js",
-              "DocumentMoniker": "C:\\Users\\abhis\\Downloads\\Clint4\\Faith centre attendance management system\\frontend\\js\\qrScanner.js",
+              "DocumentMoniker": "C:\\Users\\abhis\\Downloads\\Clint4\\copy one\\Faith centre attendance management system\\frontend\\js\\qrScanner.js",
               "RelativeDocumentMoniker": "frontend\\js\\qrScanner.js",
-              "ToolTip": "C:\\Users\\abhis\\Downloads\\Clint4\\Faith centre attendance management system\\frontend\\js\\qrScanner.js",
+              "ToolTip": "C:\\Users\\abhis\\Downloads\\Clint4\\copy one\\Faith centre attendance management system\\frontend\\js\\qrScanner.js",
               "RelativeToolTip": "frontend\\js\\qrScanner.js",
-              "ViewState": "AgIAAGQBAAAAAAAAAADwv6ABAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAGUBAAAAAAAAAADwv6EBAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
               "WhenOpened": "2025-05-06T19:53:32.618Z",
               "EditorCaption": ""
@@ -95,48 +94,48 @@
               "$type": "Document",
               "DocumentIndex": 3,
               "Title": "attendance.js",
-              "DocumentMoniker": "C:\\Users\\abhis\\Downloads\\Clint4\\Faith centre attendance management system\\frontend\\js\\attendance.js",
+              "DocumentMoniker": "C:\\Users\\abhis\\Downloads\\Clint4\\copy one\\Faith centre attendance management system\\frontend\\js\\attendance.js",
               "RelativeDocumentMoniker": "frontend\\js\\attendance.js",
-              "ToolTip": "C:\\Users\\abhis\\Downloads\\Clint4\\Faith centre attendance management system\\frontend\\js\\attendance.js",
+              "ToolTip": "C:\\Users\\abhis\\Downloads\\Clint4\\copy one\\Faith centre attendance management system\\frontend\\js\\attendance.js",
               "RelativeToolTip": "frontend\\js\\attendance.js",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABIAAAA0AAAAAAAAAA==",
+              "ViewState": "AgIAAB8BAAAAAAAAAAAqwEQBAAAHAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
               "WhenOpened": "2025-05-06T14:49:33.071Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 0,
               "Title": "dashboard.js",
-              "DocumentMoniker": "C:\\Users\\abhis\\Downloads\\Clint4\\Faith centre attendance management system\\frontend\\js\\dashboard.js",
+              "DocumentMoniker": "C:\\Users\\abhis\\Downloads\\Clint4\\copy one\\Faith centre attendance management system\\frontend\\js\\dashboard.js",
               "RelativeDocumentMoniker": "frontend\\js\\dashboard.js",
-              "ToolTip": "C:\\Users\\abhis\\Downloads\\Clint4\\Faith centre attendance management system\\frontend\\js\\dashboard.js",
+              "ToolTip": "C:\\Users\\abhis\\Downloads\\Clint4\\copy one\\Faith centre attendance management system\\frontend\\js\\dashboard.js",
               "RelativeToolTip": "frontend\\js\\dashboard.js",
-              "ViewState": "AgIAAKAAAAAAAAAAAADwv9wAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAM4AAAAAAAAAAADwvwoBAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
               "WhenOpened": "2025-05-06T10:17:30.71Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 6,
               "Title": "base.js",
-              "DocumentMoniker": "C:\\Users\\abhis\\Downloads\\Clint4\\Faith centre attendance management system\\frontend\\js\\base.js",
+              "DocumentMoniker": "C:\\Users\\abhis\\Downloads\\Clint4\\copy one\\Faith centre attendance management system\\frontend\\js\\base.js",
               "RelativeDocumentMoniker": "frontend\\js\\base.js",
-              "ToolTip": "C:\\Users\\abhis\\Downloads\\Clint4\\Faith centre attendance management system\\frontend\\js\\base.js",
+              "ToolTip": "C:\\Users\\abhis\\Downloads\\Clint4\\copy one\\Faith centre attendance management system\\frontend\\js\\base.js",
               "RelativeToolTip": "frontend\\js\\base.js",
-              "ViewState": "AgIAACcAAAAAAAAAAAAywGMAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAACgAAAAAAAAAAADwv2MAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
               "WhenOpened": "2025-05-06T06:14:32.733Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 9,
               "Title": "utils.js",
-              "DocumentMoniker": "C:\\Users\\abhis\\Downloads\\Clint4\\Faith centre attendance management system\\frontend\\js\\utils.js",
+              "DocumentMoniker": "C:\\Users\\abhis\\Downloads\\Clint4\\copy one\\Faith centre attendance management system\\frontend\\js\\utils.js",
               "RelativeDocumentMoniker": "frontend\\js\\utils.js",
-              "ToolTip": "C:\\Users\\abhis\\Downloads\\Clint4\\Faith centre attendance management system\\frontend\\js\\utils.js",
+              "ToolTip": "C:\\Users\\abhis\\Downloads\\Clint4\\copy one\\Faith centre attendance management system\\frontend\\js\\utils.js",
               "RelativeToolTip": "frontend\\js\\utils.js",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAEQAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
@@ -144,23 +143,24 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
+              "DocumentIndex": 5,
               "Title": "manageUsers.js",
-              "DocumentMoniker": "C:\\Users\\abhis\\Downloads\\Clint4\\Faith centre attendance management system\\frontend\\js\\manageUsers.js",
+              "DocumentMoniker": "C:\\Users\\abhis\\Downloads\\Clint4\\copy one\\Faith centre attendance management system\\frontend\\js\\manageUsers.js",
               "RelativeDocumentMoniker": "frontend\\js\\manageUsers.js",
-              "ToolTip": "C:\\Users\\abhis\\Downloads\\Clint4\\Faith centre attendance management system\\frontend\\js\\manageUsers.js",
+              "ToolTip": "C:\\Users\\abhis\\Downloads\\Clint4\\copy one\\Faith centre attendance management system\\frontend\\js\\manageUsers.js",
               "RelativeToolTip": "frontend\\js\\manageUsers.js",
-              "ViewState": "AgIAANsAAAAAAAAAAAAcwFYBAAAFAAAAAAAAAA==",
+              "ViewState": "AgIAAEQBAAAAAAAAAAAqwFYBAAAFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2025-05-05T15:44:11.276Z"
+              "WhenOpened": "2025-05-05T15:44:11.276Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 8,
               "Title": "profile.js",
-              "DocumentMoniker": "C:\\Users\\abhis\\Downloads\\Clint4\\Faith centre attendance management system\\frontend\\js\\profile.js",
+              "DocumentMoniker": "C:\\Users\\abhis\\Downloads\\Clint4\\copy one\\Faith centre attendance management system\\frontend\\js\\profile.js",
               "RelativeDocumentMoniker": "frontend\\js\\profile.js",
-              "ToolTip": "C:\\Users\\abhis\\Downloads\\Clint4\\Faith centre attendance management system\\frontend\\js\\profile.js",
+              "ToolTip": "C:\\Users\\abhis\\Downloads\\Clint4\\copy one\\Faith centre attendance management system\\frontend\\js\\profile.js",
               "RelativeToolTip": "frontend\\js\\profile.js",
               "ViewState": "AgIAACgAAAAAAAAAAAAuwGQAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
@@ -168,15 +168,16 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 2,
               "Title": "authenticate.js",
-              "DocumentMoniker": "C:\\Users\\abhis\\Downloads\\Clint4\\Faith centre attendance management system\\backend\\middleware\\authenticate.js",
+              "DocumentMoniker": "C:\\Users\\abhis\\Downloads\\Clint4\\copy one\\Faith centre attendance management system\\backend\\middleware\\authenticate.js",
               "RelativeDocumentMoniker": "backend\\middleware\\authenticate.js",
-              "ToolTip": "C:\\Users\\abhis\\Downloads\\Clint4\\Faith centre attendance management system\\backend\\middleware\\authenticate.js",
+              "ToolTip": "C:\\Users\\abhis\\Downloads\\Clint4\\copy one\\Faith centre attendance management system\\backend\\middleware\\authenticate.js",
               "RelativeToolTip": "backend\\middleware\\authenticate.js",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABsAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2025-05-04T17:04:42.498Z"
+              "WhenOpened": "2025-05-04T17:04:42.498Z",
+              "EditorCaption": ""
             }
           ]
         }

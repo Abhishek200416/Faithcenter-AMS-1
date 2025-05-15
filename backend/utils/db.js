@@ -1,24 +1,24 @@
 // backend/utils/db.js
-require('dotenv').config();
-const { Sequelize } = require('sequelize');
-const sqlite3 = require('@journeyapps/sqlcipher');
-const config = require('../config/config');
+const cfg = require('../config/config')[process.env.NODE_ENV || 'development'];
+const opts = { logging: false };
 
-if (!process.env.DB_ENCRYPTION_KEY) {
-    console.error('❌ Missing DB_ENCRYPTION_KEY');
-    process.exit(1);
-}
-
-const sequelize = new Sequelize({
-    dialect: 'sqlite',
-    storage: config.storage,
-    dialectModule: sqlite3,
-    dialectOptions: {
+if (cfg.dialect === 'sqlite') {
+    opts.dialect = 'sqlite';
+    opts.storage = cfg.storage;
+    opts.dialectModule = require('@journeyapps/sqlcipher');
+    opts.dialectOptions = {
         key: process.env.DB_ENCRYPTION_KEY,
         busyTimeout: 5000,
         foreignKeys: true,
-    },
-    logging: false
-});
+    };
+} else {
+    // postgres
+    opts.dialect = 'postgres';
+    opts.url = cfg.url;
+    opts.dialectOptions = { ssl: { rejectUnauthorized: false } };
+}
+
+const { Sequelize } = require('sequelize');
+const sequelize = new Sequelize(opts.url || '', opts);
 
 module.exports = { sequelize };

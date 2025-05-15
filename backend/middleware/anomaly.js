@@ -1,7 +1,7 @@
 // backend/middleware/anomaly.js
 const fs = require('fs');
 const path = require('path');
-const fetch = require('node-fetch'); // npm install node-fetch
+const fetch = require('node-fetch');
 const mailer = require('../utils/mailService');
 const execSync = require('child_process').execSync;
 
@@ -22,42 +22,28 @@ module.exports = async(req, res, next) => {
         }
 
         if (tracker[ip].count > THRESHOLD) {
-            // 1) Geo-lookup
-            let geo = {};
-            try {
-                const r = await fetch(`https://ipapi.co/${ip}/json/`);
-                geo = await r.json();
-            } catch {}
+            // 1) Geo-lookup as you already have…
 
-            // 2) Regenerate + bundle fresh backup.exe
-            execSync('node backend/scripts/dump-sqlcipher.js');
-            execSync('node backend/scripts/build-sfx.js');
+            // 2) Regenerate Postgres backup → encrypted dump → zip
+            execSync('node backend/scripts/dump-pg.js');
+            execSync('node backend/scripts/encrypt-pg.js');
+            execSync('node backend/scripts/build-zip.js');
 
-            // 3) Email you: includes hacker IP + location + static map
-            const mapUrl = geo.latitude && geo.longitude ?
-                `https://maps.googleapis.com/maps/api/staticmap?center=${geo.latitude},${geo.longitude}&zoom=10&size=600x300&markers=color:red|${geo.latitude},${geo.longitude}&key=${process.env.GMAPS_KEY}` :
-                null;
-
+            // 3) Email you: attach backup.zip instead of backup.exe
+            const backupZip = path.resolve(__dirname, '../scripts/backup.zip');
             const extras = {
                 subject: '🚨 Anomaly DETECTED & BACKUP',
                 text: `IP: ${ip}\nLocation: ${geo.city}, ${geo.region}, ${geo.country_name}`,
                 html: `<p><strong>IP:</strong> ${ip}<br>
-                  <strong>Location:</strong> ${geo.city}, ${geo.region}, ${geo.country_name}</p>` +
-                    (mapUrl ? `<img src="${mapUrl}" alt="Hacker Location">` : ''),
+               <strong>Location:</strong> ${geo.city}, ${geo.region}, ${geo.country_name}</p>`,
                 attachments: [
-                    { filename: 'backup.exe', path: path.resolve(__dirname, '../scripts/backup.exe') }
+                    { filename: 'backup.zip', path: backupZip }
                 ]
             };
-
             await mailer.sendCustom(alertTo, extras);
 
-            // 4) Nuke live DB
-            const dbPath = path.resolve(__dirname, '../database.sqlite');
-            fs.unlinkSync(dbPath);
-
-            // 5) Self-heal: pull last good encrypted dump from S3 (or local)
-            execSync(`curl -s -o database.sqlite.enc https://your-bucket/last-good.sqlite.enc`);
-            execSync(`node backend/scripts/unpack.js`);
+            // 4) (You probably don’t “nuke” your Postgres database on an anomaly…
+            //    but if you really want to self-heal you could drop and re-restore it here.)
 
             // reset counter
             tracker[ip] = { count: 0, start: Date.now() };
