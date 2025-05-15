@@ -82,18 +82,22 @@ app.use('/api/leaves', authenticate, leaveRoutes);
 app.use('/api/dashboard', authenticate, dashboardRoutes);
 app.use('/api/presets', authenticate, presetRoutes);
 app.use('/api/backup', backupRouter);
-app.use(helmet({
-    contentSecurityPolicy: {
-        directives: {
-            defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", "https://unpkg.com", "https://cdn.jsdelivr.net"],
-            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-            fontSrc: ["'self'", "https://fonts.gstatic.com"],
-            imgSrc: ["'self'", "data:"],
-            connectSrc: ["'self'"],
+app.use(
+    helmet({
+        contentSecurityPolicy: {
+            directives: {
+                defaultSrc: ["'self'"],
+                scriptSrc: ["'self'", "https://unpkg.com", "https://cdn.jsdelivr.net"],
+                styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+                // Allow data: for embedded fonts
+                fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+                imgSrc: ["'self'", "data:"],
+                connectSrc: ["'self'"]
+            }
         }
-    }
-}));
+    })
+);
+
 
 /* ─── SERVE FRONT-END ASSETS & SPA FALLBACK ────────────────────────────────── */
 
@@ -174,7 +178,8 @@ async function createDefaultUsers() {
 
 (async() => {
     try {
-        await sequelize.sync();
+        await sequelize.sync({ alter: true });
+
         console.log('✔ Database synced');
         await createDefaultUsers();
         app.listen(PORT, () => {

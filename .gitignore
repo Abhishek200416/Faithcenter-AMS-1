@@ -6,6 +6,7 @@ node_modules/
 
 # VSCode settings
 .vscode/
+.vs/
 
 # macOS
 .DS_Store
