@@ -7,19 +7,31 @@ const { User, OTP } = require('../models');
 const { sendOTP } = require('../utils/mailService');
 
 /**
- * Look up a user by email, phone, uid, username or raw id.
+ * Returns true if the string is a valid UUID v1–v5.
  */
-async function findUserByIdentifier(id) {
+function isUUID(str) {
+    return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/.test(str);
+}
+
+/**
+ * Look up a user by email, phone, uid, username or raw id (only if valid UUID).
+ */
+async function findUserByIdentifier(identifier) {
+    const orConditions = [
+        { email: identifier },
+        { phone: identifier },
+        { uid: identifier },
+        { username: identifier }
+    ];
+
+    // Only include the primary-key 'id' lookup when the identifier is a valid UUID
+    if (isUUID(identifier)) {
+        orConditions.push({ id: identifier });
+    }
+
     return User.findOne({
         where: {
-            [Op.or]: [
-                { email: id },
-                { phone: id },
-                { uid: id },
-                { username: id },
-                { id }
-            ]
-        }
+            [Op.or]: orConditions }
     });
 }
 
@@ -135,7 +147,7 @@ async function resetPassword(req, res) {
     await user.save();
     await OTP.destroy({ where: { userId: user.id } });
 
-    // auto‑issue JWT
+    // auto-issue JWT
     const token = jwt.sign({ sub: user.id, role: user.role },
         process.env.JWT_SECRET, { expiresIn: '8h' }
     );
@@ -156,7 +168,6 @@ async function changePassword(req, res) {
     res.json({ message: 'Password changed successfully' });
 }
 
-// ─── EXPORT ALL HANDLERS ─────────────────────────────────────────────────────
 module.exports = {
     login,
     sendLoginOtp,
