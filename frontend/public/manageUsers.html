@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Manage Users — Faith Centre AMS</title>
+    <link rel="stylesheet" href="../css/base.css" />
+    <link rel="stylesheet" href="../css/manageUsers.css" />
+</head>
+
+<body class="dashboard-page">
+
+    <!-- shared header/nav -->
+    <header class="header">
+        <div class="container header-inner">
+            <button id="menuToggle" class="hamburger" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+            <a href="dashboard.html" class="brand">Faith Centre AMS</a>
+            <a href="dashboard.html"> <img id="mobileHome" class="home-icon" src="../assets/images/home.png" alt="Home" /></a>
+            <nav class="nav-links">
+                <a href="dashboard.html">Home</a>
+                <a href="attendance.html">Attendance</a>
+                <a href="manageUsers.html" class="active">Users</a>
+                <a href="leaves.html">Leaves</a>
+                <a href="profile.html">Profile</a>
+
+            </nav>
+            <img id="logout" class="logout-icon" src="../assets/images/exit.png" alt="Logout" />
+        </div>
+        <nav id="mobileMenu" class="mobile-menu">
+            <a href="dashboard.html">Home</a>
+            <a href="attendance.html">Attendance</a>
+            <a href="manageUsers.html">Users</a>
+            <a href="leaves.html">Leaves</a>
+            <a href="profile.html">Profile</a>
+            <a href="#" id="mobileLogout">Logout</a>
+        </nav>
+    </header>
+
+    <!-- main content -->
+    <main class="container main-content">
+        <div class="toolbar">
+            <div class="search-wrapper">
+                <input id="filterInput" type="search" placeholder="Search by name or email…" aria-label="Search users" />
+                <button type="button" class="clear-btn" aria-label="Clear search">×</button>
+                <svg class="icon-search" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" fill="none"/>
+          <line x1="16.5" y1="16.5" x2="21" y2="21"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+            </div>
+
+            <div class="filter-wrapper">
+                <select id="categoryFilter">
+          <option value="">All Categories</option>
+          <option value="admin">admin</option>
+          <option value="protocol">protocol</option>
+          <option value="media">Media</option>
+          <option value="worship">Worship</option>
+          <option value="ushering">Ushering</option>
+        </select>
+            </div>
+
+            <button id="addUserBtn" class="btn add-btn">Add User</button>
+
+            <div class="user-count">
+                Total Users: <span id="userCount">0</span>
+            </div>
+        </div>
+
+        <div class="cards-grid" id="usersContainer"></div>
+    </main>
+
+    <!-- Add/Edit Modal -->
+    <div id="userModal" class="modal" aria-hidden="true">
+        <div class="modal-backdrop"></div>
+        <form id="userForm" class="modal-dialog" role="dialog" aria-modal="true" tabindex="-1">
+            <header class="dialog-header">
+                <h2 id="modalTitle">Add User</h2>
+                <button type="button" id="cancelBtn" class="close-btn" aria-label="Close">&times;</button>
+            </header>
+            <div class="dialog-body">
+                <div class="field-group">
+                    <div class="field"><input type="text" id="f-name" name="name" placeholder="Name" required/></div>
+                    <div class="field"><input type="email" id="f-email" name="email" placeholder="Email" required/></div>
+                </div>
+                <div class="field-group">
+                    <div class="field"><input type="text" id="f-phone" name="phone" placeholder="Phone (10 digits)" pattern="\d{10}" /></div>
+                    <div class="field">
+                        <select id="f-gender" name="gender" required>
+              <option value="" disabled selected hidden>Gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+            </select>
+                    </div>
+                </div>
+                <div class="field-group">
+                    <div class="field">
+                        <select id="f-category" name="categoryType" required>
+              <option value="" disabled selected hidden>Category Type</option>
+              <option value="media">Media</option>
+              <option value="worship">Worship</option>
+              <option value="ushering">Ushering</option>
+            </select>
+                    </div>
+                    <div class="field">
+                        <select id="f-role" name="role" disabled required>
+              <option value="" disabled selected hidden>Role</option>
+            </select>
+                    </div>
+                </div>
+                <div class="field-group">
+                    <div class="field"><input type="number" id="f-age" name="age" placeholder="Age" min="0" /></div>
+                </div>
+            </div>
+            <footer class="dialog-footer">
+                <button type="submit" class="btn save-btn">Save</button>
+            </footer>
+        </form>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="modal" aria-hidden="true">
+        <div class="modal-backdrop"></div>
+        <div class="confirm-dialog" role="dialog" aria-modal="true">
+            <p id="confirmMessage">Are you sure?</p>
+            <div class="confirm-buttons">
+                <button id="confirmYes" class="btn">Yes</button>
+                <button id="confirmNo" class="btn">No</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- scripts -->
+    <script type="module" src="../js/base.js"></script>
+    <script type="module" src="../js/utils.js"></script>
+    <script type="module" src="../js/manageUsers.js"></script>
+</body>
+
+</html>

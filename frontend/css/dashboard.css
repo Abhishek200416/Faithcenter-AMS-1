@@ -1,0 +1,391 @@
+:root {
+    --spacing: 1rem;
+    --accent: #b71c1c;
+    --text: #ececec;
+    --bg: #121217;
+    --header-bg: rgba(20, 20, 30, 0.9);
+    --panel-bg: #1e1e27;
+    --radius: 8px;
+    --shadow-dark: rgba(0, 0, 0, 0.5);
+    --shadow-light: rgba(0, 0, 0, 0.2);
+    --transition: 0.2s ease-in-out;
+}
+
+body.dashboard-page {
+    background: var(--bg);
+    color: var(--text);
+}
+
+.main-content {
+    padding: calc(var(--spacing)*1.5) 0;
+    text-align: center;
+}
+
+.welcome {
+    margin-bottom: calc(var(--spacing)*0.5);
+    font-size: 1.4rem;
+}
+
+.selected-date {
+    margin-bottom: var(--spacing);
+    font-size: 1rem;
+    color: #ccc;
+}
+
+.dashboard-controls {
+    position: relative;
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing);
+    margin-bottom: var(--spacing);
+}
+
+.view-toggle select {
+    padding: 0.5rem;
+    border-radius: var(--radius);
+    background: var(--header-bg);
+    color: var(--text);
+    border: none;
+}
+
+.calendar-btn {
+    padding: 0.6rem 1.2rem;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    height: 40px;
+    margin-top: 3px;
+    border-radius: var(--radius);
+    box-shadow: 0 4px 8px var(--shadow-dark), 0 1px 3px var(--shadow-light);
+    transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
+}
+
+.calendar-btn:hover {
+    background: #d32f2f;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px var(--shadow-dark), 0 2px 4px var(--shadow-light);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--spacing);
+    padding: var(--spacing);
+    box-sizing: border-box;
+    max-height: 60vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.stats-grid::-webkit-scrollbar {
+    display: none;
+}
+
+.stat-card {
+    background: var(--header-bg);
+    padding: calc(var(--spacing)*1.2);
+    border-radius: var(--radius);
+    box-shadow: 0 4px 8px var(--shadow-dark), 0 1px 3px var(--shadow-light);
+    transition: transform var(--transition), box-shadow var(--transition);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    min-height: 120px;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 12px var(--shadow-dark), 0 2px 4px var(--shadow-light);
+}
+
+.stat-card h3 {
+    font-size: 2rem;
+    margin: .5rem 0;
+    color: var(--accent);
+}
+
+.stat-card p {
+    color: #aaa;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.calendar-overlay {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    width: 360px;
+    background: var(--panel-bg);
+    border-radius: var(--radius);
+    box-shadow: 0 4px 12px var(--shadow-dark), 0 1px 3px var(--shadow-light);
+    padding: var(--spacing);
+    z-index: 1000;
+    opacity: 0;
+    transform: translateY(-10px);
+    pointer-events: none;
+    transition: opacity var(--transition), transform var(--transition);
+}
+
+.calendar-overlay:not(.hidden) {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: all;
+}
+
+.calendar-overlay::before {
+    content: "";
+    position: absolute;
+    top: -8px;
+    right: 24px;
+    border-width: 0 8px 8px;
+    border-style: solid;
+    border-color: transparent transparent var(--panel-bg);
+}
+
+.overlay-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing);
+}
+
+.close-btn,
+.cal-nav {
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: color var(--transition);
+}
+
+.cal-nav:hover {
+    color: var(--accent);
+}
+
+.cal-month-year {
+    flex: 1;
+    text-align: center;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.4rem;
+}
+
+.calendar-day {
+    width: 2.6rem;
+    height: 2.6rem;
+    line-height: 2.6rem;
+    text-align: center;
+    border-radius: var(--radius);
+    background: var(--cell-bg);
+    border: 1px solid var(--cell-border);
+    color: var(--text);
+    cursor: pointer;
+    transition: background var(--transition), transform var(--transition), border-color var(--transition);
+}
+
+.calendar-day:hover {
+    background: var(--header-bg);
+    border-color: var(--accent);
+    transform: translateY(-2px);
+}
+
+.calendar-day.present {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+
+.calendar-day.absent {
+    opacity: 0.6;
+}
+
+.calendar-day.selected-date-cell {
+    box-shadow: 0 0 0 2px #e53935;
+}
+
+.calendar-grid .calendar-day:nth-child(-n+7) {
+    font-weight: 600;
+    color: #aaa;
+    background: transparent;
+    border: none;
+    cursor: default;
+}
+
+.logout-icon {
+    cursor: pointer;
+}
+
+.home-icon,
+.scanner-icon {
+    display: none;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    margin-top: -5px;
+}
+
+@media (max-width: 480px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .nav-links,
+    .logout-icon {
+        display: none;
+    }
+    .header-inner {
+        justify-content: space-between;
+        align-items: center;
+    }
+    .home-icon {
+        display: inline-block;
+        order: 1;
+    }
+    .brand {
+        order: 2;
+    }
+    .scanner-icon {
+        display: block;
+        position: fixed;
+        bottom: 1rem;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 56px;
+        height: 56px;
+        z-index: 1000;
+        margin-top: 0;
+    }
+    .calendar-overlay {
+        width: 100%;
+        left: 0;
+        right: 0;
+    }
+    .calendar-grid {
+        gap: 0.2rem;
+    }
+    .calendar-day {
+        width: 2.2rem;
+        height: 2.2rem;
+        line-height: 2.2rem;
+    }
+}
+
+
+/* dashboard.css */
+
+
+/* full‑screen modal */
+
+.force-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: none;
+    /* shown by JS */
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+}
+
+
+/* while modal is open, block everything else */
+
+
+/* in dashboard.css */
+
+.custom-password {
+    -webkit-text-security: disc;
+    /* mask characters like a password field */
+    /* note: works in Chrome, Edge & Safari only */
+}
+
+
+/* masks a text‑input like a password field in WebKit browsers */
+
+.custom-password {
+    -webkit-text-security: disc;
+    /* fallback so your users still see dots, and Chrome never treats it as a password field */
+}
+
+
+/* your existing .force-modal, .force-modal-open, etc. */
+
+body.force‑modal‑open>*:not(.force-modal) {
+    pointer-events: none;
+    user-select: none;
+}
+
+.modal-card {
+    background: #1f1f25;
+    padding: 2rem;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 400px;
+    color: #ececec;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+    text-align: center;
+}
+
+.field {
+    margin-bottom: 1rem;
+    text-align: left;
+}
+
+.field label {
+    display: block;
+    margin-bottom: .25rem;
+}
+
+.field input {
+    width: 100%;
+    padding: .5rem;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: .5rem;
+    margin-top: 1rem;
+}
+
+.btn.primary {
+    background: #28a745;
+    color: #fff;
+}
+
+.error {
+    color: #e74c3c;
+    min-height: 1.2em;
+    margin-top: .5rem;
+}
+
+.calendar-day.present {
+    /* category-admin */
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+.calendar-day.present-admin {
+    /* admin */
+    background: #e53935;
+    border-color: #e53935;
+}
+
+.calendar-day.present-dev {
+    /* developer */
+    background: #2196f3;
+    border-color: #2196f3;
+}

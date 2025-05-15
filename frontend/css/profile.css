@@ -1,0 +1,254 @@
+/* css/profile.css */
+
+:root {
+    /* inherits base variables */
+}
+
+
+/* Layout: two-column on desktop, one-column on mobile */
+
+.profile-page .main-content {
+    padding: calc(var(--spacing)*1.5) 0;
+}
+
+.profile-layout {
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    column-gap: var(--spacing);
+    align-items: start;
+}
+
+.welcome-panel {
+    position: sticky;
+    top: calc(var(--spacing)*1 + 1rem);
+}
+
+.welcome-panel .welcome {
+    margin: 0;
+    color: rgb(255, 255, 255);
+    font-size: 1.5rem;
+}
+
+
+/* Mobile collapse */
+
+@media (max-width: 768px) {
+    .profile-layout {
+        grid-template-columns: 1fr;
+        row-gap: var(--spacing);
+    }
+    .welcome-panel {
+        display: none;
+    }
+}
+
+
+/* profile.css */
+
+.grid-3 {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+
+/* Card & toggles */
+
+.profile-card {
+    background: var(--header-bg);
+    padding: calc(var(--spacing)*1.5);
+    border-radius: var(--radius);
+    box-shadow: 0 8px 24px var(--shadow);
+}
+
+.toggle-group {
+    display: flex;
+    gap: var(--spacing);
+    margin-bottom: var(--spacing);
+}
+
+.toggle {
+    flex: 1;
+    padding: 0.75rem;
+    background: var(--pill-bg);
+    color: var(--pill-color);
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.toggle.active,
+.toggle:hover {
+    background: var(--accent);
+}
+
+
+/* Forms */
+
+.form {
+    display: none;
+}
+
+.form.active {
+    display: block;
+}
+
+
+/* Fields grid */
+
+.grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--spacing);
+    margin-bottom: var(--spacing);
+}
+
+.field label {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.field input,
+.field select {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--input-bg);
+    border: 1px solid rgb(133 132 132 / 20%);
+    border-radius: var(--radius);
+    color: var(--text-light);
+    font-size: 1rem;
+    transition: border-color 0.2s;
+}
+
+.field input:focus,
+.field select:focus {
+    border-color: var(--accent);
+    outline: none;
+}
+
+
+/* Buttons */
+
+.btn {
+    width: 100%;
+    padding: 0.75rem;
+    margin-top: var(--spacing);
+    background: var(--btn-bg);
+    color: #fff;
+    border-radius: var(--radius);
+    border: none;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.btn:hover {
+    background: var(--btn-hover);
+}
+
+
+/* OTP spinner */
+
+.send-btn {
+    position: relative;
+}
+
+.send-btn .spinner {
+    display: none;
+    position: absolute;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid #fff;
+    border-top-color: transparent;
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: spin 0.7s linear infinite;
+}
+
+.send-btn.loading .btn-text {
+    visibility: hidden;
+}
+
+.send-btn.loading .spinner {
+    display: block;
+}
+
+@keyframes spin {
+    to {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+
+
+/* Links & feedback */
+
+.secondary-text {
+    text-align: center;
+    margin-top: var(--spacing);
+}
+
+.secondary-text a {
+    color: var(--pill-color);
+    text-decoration: underline;
+}
+
+.error {
+    color: #f44336;
+    text-align: center;
+    margin-top: var(--spacing);
+}
+
+.success {
+    color: #27ae60;
+    text-align: center;
+    margin-top: var(--spacing);
+}
+
+
+/* Dropdown styling for gender, etc. */
+
+.field select {
+    /* remove default arrow */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    /* basic styling */
+    width: 100%;
+    padding: 0.75rem 2.5rem 0.75rem 0.75rem;
+    /* extra right padding for arrow */
+    background: var(--input-bg)/* background color */
+    , url('../assets/icons/chevron-down.svg') no-repeat right 1rem center;
+    /* custom arrow */
+    background-size: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius);
+    color: var(--text-light);
+    font-size: 1rem;
+    transition: border-color 0.2s, background-color 0.2s;
+    cursor: pointer;
+}
+
+.field select:focus {
+    border-color: var(--accent);
+    outline: none;
+    background-color: rgba(20, 20, 30, 0.95);
+}
+
+
+/* For IE11 */
+
+.field select::-ms-expand {
+    display: none;
+}
+
+
+/* Option text color */
+
+.field select option {
+    background: var(--input-bg);
+    color: var(--text-light);
+}

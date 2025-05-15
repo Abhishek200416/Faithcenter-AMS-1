@@ -1,0 +1,21 @@
+/* css/developer.css */
+
+section {
+    background: var(--white);
+    padding: 1rem;
+    border-radius: 6px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+th,
+td {
+    border: 1px solid #bdc3c7;
+    padding: 0.6rem;
+}

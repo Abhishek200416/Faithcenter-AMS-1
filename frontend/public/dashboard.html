@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Dashboard — Faith Centre AMS</title>
+    <link rel="stylesheet" href="../css/base.css" />
+    <link rel="stylesheet" href="../css/dashboard.css" />
+</head>
+
+<body class="dashboard-page">
+    <header class="header">
+        <div class="container header-inner">
+            <button id="menuToggle" class="hamburger" aria-label="Open menu">
+            <span></span><span></span><span></span>
+        </button>
+            <a href="dashboard.html" class="brand">Faith Centre AMS</a>
+            <nav class="nav-links">
+                <a href="dashboard.html">Home</a>
+                <a href="attendance.html">Attendance</a>
+                <a href="manageUsers.html">Users</a>
+                <a href="leaves.html">Leaves</a>
+                <a href="profile.html">Profile</a>
+                <a href="qr.html?mode=gen">QR</a>
+            </nav>
+            <img id="logout" class="logout-icon" src="../assets/images/exit.png" alt="Logout" />
+            <!-- somewhere in dashboard.html header -->
+            <a href="dashboard.html">
+                <img id="mobileHome" class="home-icon" src="../assets/images/home.png" alt="Home">
+            </a>
+
+            <a href="qr.html?mode=scan">
+                <img id="mobileScanner" class="scanner-icon" src="../assets/images/scanner.png" alt="Scan" />
+            </a>
+
+        </div>
+        <nav id="mobileMenu" class="mobile-menu">
+            <a href="dashboard.html">Home</a>
+            <a href="attendance.html">Attendance</a>
+            <a href="manageUsers.html">Users</a>
+            <a href="leaves.html">Leaves</a>
+            <a href="profile.html">Profile</a>
+            <a href="qr.html?mode=gen">QR</a>
+            <a href="#" id="mobileLogout">Logout</a>
+        </nav>
+    </header>
+
+    <main class="container main-content">
+        <h2 class="welcome">Welcome, <span id="userName">User</span></h2>
+        <div id="selectedDateDisplay" class="selected-date">Date: —</div>
+        <section class="dashboard-controls">
+            <div class="view-toggle">
+                <select id="viewToggle">
+                <option value="myself">Myself</option>
+                <option value="team">Manage Team</option>
+            </select>
+
+            </div>
+            <div id="backupButtons" class="backup-buttons" style="display:none; margin-left:1rem;">
+                <button id="downloadBackupBtn" class="btn">Download Backup</button>
+                <!-- dashboard.html -->
+                <input type="file" id="uploadBackupInput" accept=".zip" style="display:none;" />
+
+                <button id="uploadBackupBtn" class="btn">Upload Backup</button>
+            </div>
+
+            <button id="openCalendarBtn" class="btn calendar-btn">Calendar</button>
+            <div id="calendarOverlay" class="calendar-overlay hidden">
+                <div class="arrow"></div>
+                <div class="overlay-header">
+                    <button id="closeCalendarBtn" class="close-btn" aria-label="Close">×</button>
+                    <button id="prevMonth" class="cal-nav" aria-label="Previous Month">←</button>
+                    <div id="calendarMonthYear" class="cal-month-year"></div>
+                    <button id="nextMonth" class="cal-nav" aria-label="Next Month">→</button>
+                </div>
+                <div id="calendar" class="calendar-grid"></div>
+            </div>
+        </section>
+        <section class="stats-grid">
+            <div class="stat-card" data-stat="totalUsers">
+                <h3 id="totalUsers">0</h3>
+                <p>Total Users</p>
+            </div>
+            <div class="stat-card" data-stat="pendingLeaves">
+                <h3 id="pendingLeaves">0</h3>
+                <p>Pending Leaves</p>
+            </div>
+            <div class="stat-card" data-stat="totalLeaves">
+                <h3 id="totalLeaves">0</h3>
+                <p>Total Leaves</p>
+            </div>
+            <div class="stat-card" data-stat="punchIns">
+                <h3 id="punchIns">0</h3>
+                <p id="labelPunchIns">Today’s Punch‑Ins</p>
+            </div>
+            <div class="stat-card" data-stat="punchOuts">
+                <h3 id="punchOuts">0</h3>
+                <p id="labelPunchOuts">Today’s Punch‑Outs</p>
+            </div>
+            <div class="stat-card" data-stat="lates">
+                <h3 id="lates">0</h3>
+                <p id="labelLates">Today’s Lates</p>
+            </div>
+            <div class="stat-card" data-stat="earlies">
+                <h3 id="earlies">0</h3>
+                <p id="labelEarlies">Today’s Earlies</p>
+            </div>
+            <div class="stat-card" data-stat="onTimes">
+                <h3 id="onTimes">0</h3>
+                <p id="labelOnTimes">Today’s On‑Times</p>
+            </div>
+
+        </section>
+    </main>
+    <script type="module" src="../js/base.js"></script>
+    <script type="module" src="../js/dashboard.js"></script>
+</body>
+
+</html>

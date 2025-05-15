@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Attendance — Faith Centre AMS</title>
+    <link rel="stylesheet" href="../css/base.css">
+    <link rel="stylesheet" href="../css/attendance.css">
+</head>
+
+<body class="dashboard-page">
+    <header class="header">
+        <div class="container header-inner">
+            <button id="menuToggle" class="hamburger" aria-label="Open menu">
+            <span></span><span></span><span></span>
+        </button>
+            <a href="dashboard.html" class="brand">Faith Centre AMS</a>
+            <a href="dashboard.html"><img id="mobileHome" class="home-icon" src="../assets/images/home.png" alt="Home"></a>
+            <nav class="nav-links" aria-label="Main navigation">
+                <a href="dashboard.html">Home</a>
+                <a href="attendance.html" class="active">Attendance</a>
+                <a href="manageUsers.html">Users</a>
+                <a href="leaves.html">Leaves</a>
+                <a href="profile.html">Profile</a>
+            </nav>
+            <img id="logout" class="logout-icon" src="../assets/images/exit.png" alt="Logout">
+        </div>
+        <nav id="mobileMenu" class="mobile-menu" aria-label="Mobile navigation">
+            <a href="dashboard.html">Home</a>
+            <a href="attendance.html">Attendance</a>
+            <a href="manageUsers.html">Users</a>
+            <a href="leaves.html">Leaves</a>
+            <a href="profile.html">Profile</a>
+            <a href="#" id="mobileLogout">Logout</a>
+        </nav>
+    </header>
+
+    <main class="container attendance-page" role="main">
+        <h1>Attendance Logs</h1>
+
+        <section class="filters" aria-labelledby="filter-heading">
+
+            <div class="filter-item" id="searchFilter">
+                <label for="filterSearch">Search</label>
+                <input type="search" id="filterSearch" placeholder="UID, name, email…">
+            </div>
+
+            <div class="filter-item" id="categoryFilter">
+                <label for="filterCategory">Category</label>
+                <select id="filterCategory">
+            <option value="all">All</option>
+            <option value="head-of-ushers">Ushering</option>
+            <option value="media-head">Media</option>
+            <option value="worship-head">Worship</option>
+            </select>
+            </div>
+
+            <div class="filter-item" id="roleFilter">
+                <label for="filterRole">Role</label>
+                <select id="filterRole">
+            <option value="all">All</option>
+            <option value="head">Head</option>
+            <option value="member">Member</option>
+            </select>
+            </div>
+
+            <div class="filter-item" id="statusFilter">
+                <label for="filterStatus">Status</label>
+                <select id="filterStatus">
+            <option value="all">All</option>
+            <option value="present">Present</option>
+            <option value="absent">Absent</option>
+            <option value="unreasoned-absent">Unreasoned Absent</option>
+            </select>
+            </div>
+
+            <div class="filter-item" id="logFilter">
+                <label for="filterLog">Log Type</label>
+                <select id="filterLog">
+            <option value="all">All</option>
+            <option value="punch-in">Punch In</option>
+            <option value="punch-out">Punch Out</option>
+            </select>
+            </div>
+
+            <div class="filter-item" id="timeFilter">
+                <label for="filterTime">Time Status</label>
+                <select id="filterTime">
+            <option value="all">All</option>
+            <option value="on-time">On Time</option>
+            <option value="early">Early</option>
+            <option value="late">Late</option>
+            <option value="unreasoned-late">Unreasoned Late</option>
+            </select>
+            </div>
+
+            <div class="filter-item">
+                <label>Calendar</label>
+                <button id="openCalendarBtn" class="btn accent">Calendar</button>
+                <div id="calendarOverlay" class="calendar-overlay hidden" role="dialog" aria-modal="true">
+                    <div class="overlay-header">
+                        <button id="closeCalendarBtn" class="close-btn" aria-label="Close">×</button>
+                        <button id="prevMonth" class="cal-nav" aria-label="Previous Month">←</button>
+                        <div id="calendarMonthYear" class="cal-month-year"></div>
+                        <button id="nextMonth" class="cal-nav" aria-label="Next Month">→</button>
+                    </div>
+                    <div id="calendar" class="calendar-grid" role="grid"></div>
+                </div>
+            </div>
+        </section>
+        <section class="metrics">
+            <div class="metric-card">
+                <h3>Total Users</h3>
+                <p id="cardTotalUsers">0</p>
+            </div>
+            <div class="metric-card">
+                <h3>Punch In</h3>
+                <p id="cardPunchIn">0</p>
+            </div>
+            <div class="metric-card">
+                <h3>Punch out</h3>
+                <p id="cardPunchOut">0</p>
+            </div>
+            <div class="metric-card">
+                <h3>On-Time</h3>
+                <p id="cardOnTime">0</p>
+            </div>
+            <div class="metric-card">
+                <h3>Present</h3>
+                <p id="cardTotalPresent">0</p>
+            </div>
+            <div class="metric-card">
+                <h3>Completed</h3>
+                <p id="cardCompleted">0</p>
+            </div>
+            <div class="metric-card">
+                <h3>Absent</h3>
+                <p id="cardRecentAbsent">0</p>
+            </div>
+            <div class="metric-card">
+                <h3>Unreasoned Absent</h3>
+                <p id="cardRecentUnreasonedAbsent">0</p>
+            </div>
+            <div class="metric-card">
+                <h3>Unreasoned Late</h3>
+                <p id="cardRecentUnreasonedLate">0</p>
+            </div>
+        </section>
+
+        <section class="table-wrapper">
+            <table id="history" class="striped" aria-label="Attendance History">
+                <thead>
+                    <tr>
+                        <th class="col-uid" scope="col">UID</th>
+                        <th class="col-name" scope="col">Name</th>
+                        <th class="col-cat" scope="col">Category</th>
+                        <th class="col-role" scope="col">Role</th>
+                        <th class="col-log" scope="col">
+                            Log <sup>In | Out</sup>
+                        </th>
+
+                        <th class="col-date" scope="col">Date</th>
+                        <th class="col-time" scope="col">Time</th>
+                        <th class="col-status" scope="col">Status</th>
+                        <th class="col-reason" scope="col">Reason (late/absent)</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
+
+    </main>
+
+    <div id="toast-container" class="toast-container"></div>
+
+    <script type="module" src="../js/base.js"></script>
+    <script type="module" src="../js/toast.js"></script>
+    <script type="module" src="js/attendance.js"></script>
+
+</body>
+
+</html>

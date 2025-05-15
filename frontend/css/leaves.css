@@ -1,0 +1,281 @@
+/*─────────────────────────────────────────────────────────────────────────────
+  LEAVES.CSS — Faith Centre AMS
+─────────────────────────────────────────────────────────────────────────────*/
+
+:root {
+    /* Spacing & sizing */
+    --spacing: 1rem;
+    --radius: 8px;
+    /* Colors */
+    --accent: #b71c1c;
+    --text: #ececec;
+    --bg: #121217;
+    --panel-bg: #1e1e27;
+    --header-bg: rgba(20, 20, 30, 0.9);
+    --pilll-bg: var(--panel-bg);
+    /* Shadows & transitions */
+    --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.5);
+    --transition: 0.2s ease-in-out;
+}
+
+
+/* Box-sizing reset */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+
+/* Prevent page-wide horizontal scroll */
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    line-height: 1.5;
+}
+
+
+/* Main container */
+
+main.container {
+    margin: 0 auto;
+    padding: var(--spacing);
+    display: grid;
+    grid-template-rows: auto 1fr;
+    gap: calc(var(--spacing) * 2);
+}
+
+
+/* Card panel base */
+
+.card {
+    position: relative;
+    border-radius: var(--radius);
+    padding: var(--spacing);
+    transition: transform var(--transition), box-shadow var(--transition);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+
+/* Section headings */
+
+#applySection h2,
+#listSection h2 {
+    margin: 0 0 var(--spacing);
+    font-size: 1.5rem;
+    color: #fff;
+}
+
+
+/* Leave shortcuts */
+
+.leave-shortcuts {
+    display: flex;
+    gap: var(--spacing);
+    margin-bottom: var(--spacing);
+}
+
+.leave-shortcuts button {
+    flex: 1;
+    padding: var(--spacing);
+    background: var(--pilll-bg);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-weight: 500;
+    margin-top: 10px;
+    text-align: center;
+    white-space: nowrap;
+    transition: background var(--transition);
+}
+
+.leave-shortcuts button:hover {
+    background: var(--accent);
+    color: #fff;
+}
+
+
+/* Leave form wrapper scroll */
+
+#leaveForm {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+#leaveForm .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--spacing);
+    min-width: 600px;
+}
+
+
+/* Form controls */
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.reason-group {
+    grid-column: 1 / -1;
+}
+
+label {
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+input[type="date"],
+select,
+textarea {
+    width: 100%;
+    padding: 0.6rem;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius);
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(183, 28, 28, 0.3);
+    outline: none;
+}
+
+textarea#reason {
+    min-height: 8rem;
+    resize: vertical;
+    line-height: 1.4;
+}
+
+
+/* Buttons */
+
+.btn.accent,
+#leaveForm .submit-btn {
+    padding: 0.75rem 1.5rem;
+    background: var(--accent);
+    border: none;
+    margin-top: 10px;
+    border-radius: var(--radius);
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform var(--transition), opacity var(--transition);
+}
+
+.btn.accent:hover,
+#leaveForm .submit-btn:hover {
+    transform: scale(1.02);
+    opacity: 0.9;
+}
+
+
+/* Leaves table */
+
+.table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-top: var(--spacing);
+}
+
+#leavesTable {
+    width: 100%;
+    min-width: 720px;
+    border-collapse: collapse;
+    background: var(--panel-bg);
+    box-shadow: var(--shadow);
+}
+
+th,
+td {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.9rem;
+    color: var(--text);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+th {
+    background: var(--header-bg);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+tbody tr:nth-child(odd) {
+    background: var(--bg);
+}
+
+tbody tr:hover {
+    background: rgba(183, 28, 28, 0.1);
+}
+
+button.approve,
+button.reject {
+    padding: 0.4rem 0.8rem;
+    border-radius: var(--radius);
+    background: transparent;
+    font-size: 0.85rem;
+    margin-right: 0.5rem;
+    transition: background var(--transition), color var(--transition);
+}
+
+button.approve {
+    border: 1px solid #4caf50;
+    color: #4caf50;
+}
+
+button.approve:hover {
+    background: rgba(76, 175, 80, 0.1);
+}
+
+button.reject {
+    border: 1px solid #f44336;
+    color: #f44336;
+}
+
+button.reject:hover {
+    background: rgba(244, 67, 54, 0.1);
+}
+
+
+/* Responsive adjustments */
+
+@media (max-width: 768px) {
+    #leaveForm .form-grid {
+        grid-template-columns: 1fr;
+        min-width: auto;
+    }
+}
+
+@media (max-width: 600px) {
+    th,
+    td {
+        padding: 0.5rem 0.75rem;
+        white-space: nowrap;
+    }
+}
+
+.view-toggle {
+    margin-bottom: 1rem;
+    text-align: right;
+}
+
+.view-toggle select {
+    padding: .5rem;
+    border-radius: 6px;
+    background: var(--panel-bg);
+    color: var(--text);
+    border: none;
+}

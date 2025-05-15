@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>QR Attendance — Faith Centre AMS</title>
+    <link rel="stylesheet" href="../css/base.css" />
+    <link rel="stylesheet" href="../css/qr.css" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://unpkg.com https://cdn.jsdelivr.net;">
+
+    <!-- Scanner & QR libs -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+
+    <!-- Your modules -->
+    <script type="module" src="../js/utils.js"></script>
+
+    <script type="module" src="../js/base.js"></script>
+    <script type="module" src="../js/toast.js"></script>
+    <script type="module" src="../js/qrScanner.js"></script>
+</head>
+
+<body class="dashboard-page">
+    <!-- … header/nav … -->
+    <header class="header">
+        <div class="container header-inner">
+            <button id="menuToggle" class="hamburger" aria-label="Open menu">
+    <span></span><span></span><span></span>
+  </button>
+            <a href="dashboard.html" class="brand">Faith Centre AMS</a>
+            <a href="dashboard.html"><img id="mobileHome" class="home-icon" src="../assets/images/home.png" alt="Home"></a>
+            <nav class="nav-links" aria-label="Main navigation">
+                <a href="dashboard.html">Home</a>
+                <a href="attendance.html" class="active">Attendance</a>
+                <a href="manageUsers.html">Users</a>
+                <a href="leaves.html">Leaves</a>
+                <a href="profile.html">Profile</a>
+
+            </nav>
+            <img id="logout" class="logout-icon" src="../assets/images/exit.png" alt="Logout">
+        </div>
+        <nav id="mobileMenu" class="mobile-menu" aria-label="Mobile navigation">
+            <a href="dashboard.html">Home</a>
+            <a href="attendance.html">Attendance</a>
+            <a href="manageUsers.html">Users</a>
+            <a href="leaves.html">Leaves</a>
+            <a href="profile.html">Profile</a>
+
+
+            <a href="#" id="mobileLogout">Logout</a>
+        </nav>
+    </header>
+
+    <main class="container qr-container">
+        <!-- CONFIG FORM (admins/devs) -->
+        <section class="qr-form card">
+            <h2>QR Configuration</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="dateInput">Date</label>
+                    <input id="dateInput" type="date" />
+                </div>
+                <div class="form-group">
+                    <label for="timeInput">Time</label>
+                    <input id="timeInput" type="time" step="1" />
+                </div>
+            </div>
+            <div class="form-row vertical-paired">
+                <div class="form-group">
+                    <label for="earlyThresh">Early Window (mins)</label>
+                    <input id="earlyThresh" type="number" min="0" value="5" />
+                    <label for="earlyMsg">Early Msg</label>
+                    <input id="earlyMsg" type="text" placeholder="Keep it up!" />
+                </div>
+                <div class="form-group">
+                    <label for="lateThresh">Late Window (mins)</label>
+                    <input id="lateThresh" type="number" min="0" value="5" />
+                    <label for="lateMsg">Late Msg</label>
+                    <input id="lateMsg" type="text" placeholder="Please add reason" />
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="absentCutoff">Absent Cutoff (mins)</label>
+                    <input id="absentCutoff" type="number" min="1" value="45" />
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group full-width">
+                    <label for="onTimeMsg">On‑Time Msg</label>
+                    <input id="onTimeMsg" type="text" placeholder="Well done!" />
+                </div>
+            </div>
+            <!-- new dropdown to choose punch type -->
+            <div class="form-row scan-action-row">
+                <label for="scanType">Action:</label>
+                <select id="scanType" class="scan-select">
+                <option value="punch-in">Punch In</option>
+                <option value="punch-out">Punch Out</option>
+            </select>
+                <div class="form-row presets-row">
+                    <select id="presetSelect"></select>
+                    <button id="savePresetBtn" class="btn">Save Preset</button>
+                </div>
+
+                <p id="qrStatus" class="monospace"></p>
+                <button id="applyBtn" class="btn accent">Apply &amp; Generate</button>
+        </section>
+        <!-- OUTPUT CARD -->
+        <section id="qrOutput" class="qr-output card hidden">
+            <div id="qrLoading" class="spinner hidden" aria-label="Loading…"></div>
+            <canvas s id="qrCanvas" class="hidden"></canvas>
+            <div id="qrTimer" class="monospace"></div>
+        </section>
+        <!-- SCANNER (members only) -->
+        <section id="scannerSection" class="qr-output card hidden">
+            <div id="scannerLoading" class="spinner" aria-label="Loading…"></div>
+            <h2>Scan QR</h2>
+            <p id="scanFeedback" class="monospace"></p>
+            <div id="qr-reader" class="scanner"></div>
+        </section>
+
+
+    </main>
+
+    <!-- Preset Modal -->
+    <div id="presetModal" class="preset-modal hidden">
+        <div class="preset-content">
+            <h3>Save Preset</h3>
+            <label for="presetName">Name</label>
+            <input id="presetName" type="text" placeholder="…" />
+            <div class="preset-actions">
+                <button id="presetCancel" class="btn">Cancel</button>
+                <button id="presetConfirm" class="btn accent">Save</button>
+            </div>
+        </div>
+    </div>
+    <!-- ───────────── Updated HTML for Feedback Popup ───────────── -->
+    <!-- replace your current feedback-card section with this -->
+    <div id="feedbackCard" class="feedback-card hidden">
+        <div class="feedback-content">
+            <h3 id="feedbackTitle"></h3>
+            <p id="feedbackMsg"></p>
+
+            <!-- only show when late -->
+            <div id="feedbackReasonContainer" class="feedback-reason-container hidden">
+                <label for="feedbackReason">Reason for being late:</label>
+                <textarea id="feedbackReason" placeholder="Enter your reason…"></textarea>
+            </div>
+
+            <button id="feedbackOk" class="btn accent">OK</button>
+        </div>
+    </div>
+
+
+</body>
+
+</html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Profile — Faith Centre AMS</title>
+    <link rel="stylesheet" href="../css/base.css">
+    <link rel="stylesheet" href="../css/profile.css">
+    <!-- Password toggle styles -->
+    <link rel="stylesheet" href="../css/password-toggle.css">
+</head>
+
+<body class="dashboard-page profile-page">
+
+    <!-- HEADER -->
+    <header class="header">
+        <div class="container header-inner">
+            <button id="menuToggle" class="hamburger" aria-label="Open menu">
+            <span></span><span></span><span></span>
+        </button>
+            <a href="dashboard.html" class="brand">Faith Centre AMS</a>
+            <a href="dashboard.html"> <img id="mobileHome" class="home-icon" src="../assets/images/home.png" alt="Home" /></a>
+            <nav class="nav-links">
+                <a href="dashboard.html">Home</a>
+                <a href="attendance.html">Attendance</a>
+                <a href="manageUsers.html">Users</a>
+                <a href="leaves.html">Leaves</a>
+                <a href="profile.html">Profile</a>
+            </nav>
+            <img id="logout" class="logout-icon" src="../assets/images/exit.png" alt="Logout">
+        </div>
+        <nav id="mobileMenu" class="mobile-menu">
+            <a href="dashboard.html">Home</a>
+            <a href="attendance.html">Attendance</a>
+            <a href="manageUsers.html">Users</a>
+            <a href="leaves.html">Leaves</a>
+            <a href="profile.html">Profile</a>
+            <a href="#" id="mobileLogout">Logout</a>
+        </nav>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="container main-content">
+        <div class="profile-layout">
+            <!-- Welcome panel -->
+            <aside class="welcome-panel">
+                <h2 class="welcome">Welcome, <span id="userName">User</span>!</h2>
+            </aside>
+
+            <!-- Profile card -->
+            <section class="profile-section">
+                <div class="profile-card">
+                    <div class="toggle-group">
+                        <button id="profileTab" class="toggle active">Edit Profile</button>
+                        <button id="passwordTab" class="toggle">Change Password</button>
+                    </div>
+
+                    <!-- EDIT PROFILE -->
+                    <form id="profileForm" class="form active">
+                        <div class="grid-2">
+                            <div class="field">
+                                <label for="name">Full Name</label>
+                                <input type="text" id="name" required>
+                            </div>
+                            <div class="field">
+                                <label for="phone">Phone</label>
+                                <input type="text" id="phone">
+                            </div>
+                        </div>
+                        <div class="grid-2">
+                            <div class="field">
+                                <label for="gender">Gender</label>
+                                <select id="gender" required>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                            </select>
+                            </div>
+                            <div class="field">
+                                <label for="age">Age</label>
+                                <input type="number" id="age" min="0">
+                            </div>
+                        </div>
+                        <div class="grid-2">
+                            <div class="field">
+                                <label for="email">Email</label>
+                                <input type="email" id="email" required>
+                            </div>
+                            <div class="field">
+                                <label for="username">Username</label>
+                                <input type="text" id="username" disabled>
+                            </div>
+                        </div>
+                        <!-- now three fields side‑by‑side -->
+                        <div class="grid-3">
+                            <div class="field">
+                                <label for="uid">UID</label>
+                                <input type="text" id="uid" disabled>
+                            </div>
+                            <div class="field">
+                                <label for="categoryType">Category</label>
+                                <input type="text" id="categoryType" disabled>
+                            </div>
+                            <div class="field">
+                                <label for="role">Role</label>
+                                <input type="text" id="role" disabled>
+                            </div>
+                        </div>
+
+                </div>
+                <button type="submit" class="btn">Save Changes</button>
+                <p id="profileError" class="error"></p>
+                <p id="profileSuccess" class="success"></p>
+                </form>
+
+                <!-- CHANGE PASSWORD & RESET OTP -->
+                <form id="passwordForm" class="form">
+                    <!-- Direct change -->
+                    <div id="changeSection" class="pw-section">
+                        <div class="field password-field">
+                            <label for="currentPw">Current Password</label>
+                            <div class="password-wrapper">
+                                <input type="password" id="currentPw">
+                                <button type="button" class="toggle-password" data-target="currentPw">Show</button>
+                            </div>
+                        </div>
+                        <div class="field password-field">
+                            <label for="newPw">New Password</label>
+                            <div class="password-wrapper">
+                                <input type="password" id="newPw">
+                                <button type="button" class="toggle-password" data-target="newPw">Show</button>
+                            </div>
+                        </div>
+                        <div class="field password-field">
+                            <label for="confirmPw">Confirm New Password</label>
+                            <div class="password-wrapper">
+                                <input type="password" id="confirmPw">
+                                <button type="button" class="toggle-password" data-target="confirmPw">Show</button>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn">Update Password</button>
+                        <p class="secondary-text">
+                            <a href="#" id="showReset">Forgot Password?</a>
+                        </p>
+                    </div>
+
+                    <!-- OTP reset -->
+                    <div id="resetSection" class="pw-section hidden">
+                        <div class="field otp-step1">
+                            <label for="resetIdentifier">Email or Phone</label>
+                            <input type="text" id="resetIdentifier" required>
+                            <button type="button" id="sendOtp" class="btn send-btn">
+                                <span class="btn-text">Send OTP</span>
+                                <span class="spinner"></span>
+                            </button>
+                        </div>
+                        <div class="field otp-step2 hidden">
+                            <p class="info-text">OTP sent—check your inbox.</p>
+                            <label for="resetCode">Enter OTP Code</label>
+                            <input type="text" id="resetCode">
+                        </div>
+                        <div class="field password-field otp-step2 hidden">
+                            <label for="resetNewPw">New Password</label>
+                            <div class="password-wrapper">
+                                <input type="password" id="resetNewPw">
+                                <button type="button" class="toggle-password" data-target="resetNewPw">Show</button>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn otp-step2 hidden">Reset Password</button>
+                    </div>
+
+                    <p id="passwordError" class="error"></p>
+                    <p id="passwordSuccess" class="success"></p>
+                </form>
+        </div>
+        </section>
+        </div>
+    </main>
+
+    <script type="module" src="../js/base.js"></script>
+    <script type="module" src="../js/toast.js"></script>
+    <script type="module" src="../js/profile.js"></script>
+</body>
+
+</html>
