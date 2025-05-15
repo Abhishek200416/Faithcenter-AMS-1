@@ -52,7 +52,7 @@ module.exports = sequelize => {
 
         // Only bare categories now
         categoryType: {
-            type: DataTypes.ENUM('admin', 'protocol', 'media', 'worship', 'ushering'),
+            type: DataTypes.ENUM('admin', 'protocol', 'media', 'worship', 'ushering', 'developer'),
             allowNull: true
         },
 

@@ -49,8 +49,12 @@ const apiLimiter = rateLimit({
 
 // 3) CORS: restrict to your domains
 app.use(cors({
-    origin: ['https://your-frontend.com', 'https://admin.yoursite.com']
+    origin: [
+        'https://faithcenter-ams-production.up.railway.app',
+        'http://localhost:3000'
+    ]
 }));
+
 
 // 4) JSON parser with size limit
 app.use(bodyParser.json({ limit: '10kb' }));
