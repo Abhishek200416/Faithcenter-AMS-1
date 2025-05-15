@@ -133,7 +133,7 @@ async function createDefaultUsers() {
             uid: '2534567891',
             password: 'admin1',
             role: 'admin',
-            categoryType: 'Admin',
+            categoryType: 'admin',
             gender: 'male',
             age: '21'
         },
@@ -145,7 +145,7 @@ async function createDefaultUsers() {
             uid: '2534567892',
             password: 'developer1',
             role: 'developer',
-            categoryType: 'Developer',
+            categoryType: 'developer',
             gender: 'male',
             age: '21'
         }
