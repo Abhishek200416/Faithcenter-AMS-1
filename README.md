@@ -1,1 +1,0 @@
-# Faithcenter-AMS
