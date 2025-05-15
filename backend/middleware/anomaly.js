@@ -1,7 +1,6 @@
 // backend/middleware/anomaly.js
 const fs = require('fs');
 const path = require('path');
-const fetch = require('node-fetch');
 const mailer = require('../utils/mailService');
 const execSync = require('child_process').execSync;
 
@@ -22,14 +21,22 @@ module.exports = async(req, res, next) => {
         }
 
         if (tracker[ip].count > THRESHOLD) {
-            // 1) Geo-lookup as you already have…
+            // 1) Geo-lookup
+            let geo = {};
+            try {
+                // Node 18+ has global fetch
+                const r = await fetch(`https://ipapi.co/${ip}/json/`);
+                geo = await r.json();
+            } catch (err) {
+                console.warn('⚠️ Geo lookup failed:', err);
+            }
 
-            // 2) Regenerate Postgres backup → encrypted dump → zip
+            // 2) Regenerate Postgres backup → encrypt → zip
             execSync('node backend/scripts/dump-pg.js');
             execSync('node backend/scripts/encrypt-pg.js');
             execSync('node backend/scripts/build-zip.js');
 
-            // 3) Email you: attach backup.zip instead of backup.exe
+            // 3) Email you the new ZIP
             const backupZip = path.resolve(__dirname, '../scripts/backup.zip');
             const extras = {
                 subject: '🚨 Anomaly DETECTED & BACKUP',
@@ -42,8 +49,7 @@ module.exports = async(req, res, next) => {
             };
             await mailer.sendCustom(alertTo, extras);
 
-            // 4) (You probably don’t “nuke” your Postgres database on an anomaly…
-            //    but if you really want to self-heal you could drop and re-restore it here.)
+            // 4) (Optional) self-heal steps…
 
             // reset counter
             tracker[ip] = { count: 0, start: Date.now() };
