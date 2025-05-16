@@ -3,8 +3,11 @@
 
 /* hide the whole UI until JS is ready */
 
+
+/* At very top of base.css! */
+
 .hidden {
-    visibility: hidden;
+    visibility: hidden !important;
 }
 
 .hidden {

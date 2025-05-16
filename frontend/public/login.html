@@ -5,102 +5,103 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Login — Faith Centre AMS</title>
-    <link rel="stylesheet" href="../css/base.css">
+    <link rel="stylesheet" href="css/base.css">
+    <script type="module" src="js/base.js"></script>
     <link rel="stylesheet" href="../css/login.css">
     <!-- Password toggle styles -->
 </head>
 
 <body class="login-page">
-    <div id="app-root" class="hidden"></div>
-    <div class="login-container">
-        <div class="login-card">
-            <h1>Faith Centre AMS</h1>
+    <div id="app-root" class="hidden">
+        <div class="login-container">
+            <div class="login-card">
+                <h1>Faith Centre AMS</h1>
 
-            <div class="toggle-group">
-                <button id="loginTab" class="toggle active">Login</button>
-                <button id="otpTab" class="toggle">OTP Login</button>
-            </div>
-
-            <!-- EMAIL / PASSWORD -->
-            <form id="loginForm" class="form active">
-                <div class="field">
-                    <label for="identifier">Email, Phone, UID or Username</label>
-                    <input type="text" id="identifier" placeholder="you@domain.com" required>
+                <div class="toggle-group">
+                    <button id="loginTab" class="toggle active">Login</button>
+                    <button id="otpTab" class="toggle">OTP Login</button>
                 </div>
-                <div class="field password-field">
-                    <label for="password">Password</label>
-                    <div class="password-wrapper">
-                        <input type="password" id="password" placeholder="••••••••" required>
-                        <button type="button" class="toggle-password" data-target="password">Show</button>
+
+                <!-- EMAIL / PASSWORD -->
+                <form id="loginForm" class="form active">
+                    <div class="field">
+                        <label for="identifier">Email, Phone, UID or Username</label>
+                        <input type="text" id="identifier" placeholder="you@domain.com" required>
                     </div>
-                </div>
-                <button type="submit" class="btn">Sign In</button>
-                <p class="secondary-text">
-                    <a href="#" id="showForgot">Forgot Password?</a>
-                </p>
-            </form>
+                    <div class="field password-field">
+                        <label for="password">Password</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="password" placeholder="••••••••" required>
+                            <button type="button" class="toggle-password" data-target="password">Show</button>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn">Sign In</button>
+                    <p class="secondary-text">
+                        <a href="#" id="showForgot">Forgot Password?</a>
+                    </p>
+                </form>
 
-            <!-- … inside OTP form … -->
-            <form id="otpForm" class="form">
-                <div class="field otp-step1">
-                    <label for="otpIdentifier">Email, Phone, UID or Username</label>
-                    <input type="text" id="otpIdentifier" placeholder="you@domain.com" required>
-                    <button type="button" id="sendOtp" class="btn send-btn">
+                <!-- … inside OTP form … -->
+                <form id="otpForm" class="form">
+                    <div class="field otp-step1">
+                        <label for="otpIdentifier">Email, Phone, UID or Username</label>
+                        <input type="text" id="otpIdentifier" placeholder="you@domain.com" required>
+                        <button type="button" id="sendOtp" class="btn send-btn">
   <span class="btn-text">Send OTP</span>
   <span class="spinner"></span>
 </button>
 
-                </div>
-                <div class="field otp-step2 hidden">
-                    <p class="info-text">OTP sent—check your inbox.</p>
-                    <label for="otpCode">Enter OTP</label>
-                    <input type="text" id="otpCode" placeholder="123456" required>
-                    <button type="submit" class="btn">Verify & Sign In</button>
-                    <!-- new resend button: -->
-                    <button type="button" id="resendOtp" class="btn" disabled>Resend Code</button>
-                </div>
-            </form>
+                    </div>
+                    <div class="field otp-step2 hidden">
+                        <p class="info-text">OTP sent—check your inbox.</p>
+                        <label for="otpCode">Enter OTP</label>
+                        <input type="text" id="otpCode" placeholder="123456" required>
+                        <button type="submit" class="btn">Verify & Sign In</button>
+                        <!-- new resend button: -->
+                        <button type="button" id="resendOtp" class="btn" disabled>Resend Code</button>
+                    </div>
+                </form>
 
 
-            <!-- FORGOT / RESET PASSWORD -->
-            <form id="forgotForm" class="form">
-                <div class="field">
-                    <label for="forgotEmail">Email</label>
-                    <input type="email" id="forgotEmail" placeholder="you@domain.com" required>
-                </div>
-                <div class="field">
-                    <label for="forgotPhone">Phone</label>
-                    <input type="text" id="forgotPhone" placeholder="9000000000" required>
-                </div>
-                <div class="field">
-                    <label for="forgotUid">UID</label>
-                    <input type="text" id="forgotUid" placeholder="1234567891" required>
-                </div>
-                <button type="button" id="sendResetOtp" class="btn send-btn">
+                <!-- FORGOT / RESET PASSWORD -->
+                <form id="forgotForm" class="form">
+                    <div class="field">
+                        <label for="forgotEmail">Email</label>
+                        <input type="email" id="forgotEmail" placeholder="you@domain.com" required>
+                    </div>
+                    <div class="field">
+                        <label for="forgotPhone">Phone</label>
+                        <input type="text" id="forgotPhone" placeholder="9000000000" required>
+                    </div>
+                    <div class="field">
+                        <label for="forgotUid">UID</label>
+                        <input type="text" id="forgotUid" placeholder="1234567891" required>
+                    </div>
+                    <button type="button" id="sendResetOtp" class="btn send-btn">
                     <span class="btn-text">Send OTP</span>
                     <span class="spinner"></span>
                 </button>
-                <div id="resetSection" class="hidden">
-                    <p class="info-text">OTP sent — enter it below.</p>
-                    <div class="field">
-                        <label for="resetOtp">OTP Code</label>
-                        <input type="text" id="resetOtp" placeholder="123456" required>
-                    </div>
-                    <div class="field password-field">
-                        <label for="newPassword">New Password</label>
-                        <div class="password-wrapper">
-                            <input type="password" id="newPassword" placeholder="••••••••" required>
-                            <button type="button" class="toggle-password" data-target="newPassword">Show</button>
+                    <div id="resetSection" class="hidden">
+                        <p class="info-text">OTP sent — enter it below.</p>
+                        <div class="field">
+                            <label for="resetOtp">OTP Code</label>
+                            <input type="text" id="resetOtp" placeholder="123456" required>
                         </div>
+                        <div class="field password-field">
+                            <label for="newPassword">New Password</label>
+                            <div class="password-wrapper">
+                                <input type="password" id="newPassword" placeholder="••••••••" required>
+                                <button type="button" class="toggle-password" data-target="newPassword">Show</button>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn">Reset Password</button>
                     </div>
-                    <button type="submit" class="btn">Reset Password</button>
-                </div>
-            </form>
+                </form>
 
-            <div id="loginError" class="error"></div>
+                <div id="loginError" class="error"></div>
+            </div>
         </div>
     </div>
-
 
     <script type="module" src="../js/auth.js"></script>
     <script type="module" src="../js/toast.js"></script>

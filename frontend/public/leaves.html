@@ -6,116 +6,117 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Leaves — Faith Centre AMS</title>
-    <link rel="stylesheet" href="../css/base.css" />
+    <link rel="stylesheet" href="css/base.css">
+    <script type="module" src="js/base.js"></script>
     <link rel="stylesheet" href="../css/leaves.css" />
 </head>
 
 <body class="dashboard-page">
-    <!-- … your header/nav … -->
-    <header class="header">
-        <div id="app-root" class="hidden"></div>
-        <div class="container header-inner">
-            <button id="menuToggle" class="hamburger" aria-label="Open menu">
+    <div id="app-root" class="hidden">
+        <!-- … your header/nav … -->
+        <header class="header">
+            <div class="container header-inner">
+                <button id="menuToggle" class="hamburger" aria-label="Open menu">
             <span></span><span></span><span></span>
         </button>
-            <a href="dashboard.html" class="brand">Faith Centre AMS</a>
-            <a href="dashboard.html"><img id="mobileHome" class="home-icon" src="../assets/images/home.png" alt="Home"></a>
-            <nav class="nav-links" aria-label="Main navigation">
+                <a href="dashboard.html" class="brand">Faith Centre AMS</a>
+                <a href="dashboard.html"><img id="mobileHome" class="home-icon" src="../assets/images/home.png" alt="Home"></a>
+                <nav class="nav-links" aria-label="Main navigation">
+                    <a href="dashboard.html">Home</a>
+                    <a href="attendance.html" class="active">Attendance</a>
+                    <a href="manageUsers.html">Users</a>
+                    <a href="leaves.html">Leaves</a>
+                    <a href="profile.html">Profile</a>
+                    <a href="qr.html">QR</a>
+                    <a href="developer.html">Dev</a>
+                </nav>
+                <img id="logout" class="logout-icon" src="../assets/images/exit.png" alt="Logout">
+            </div>
+            <nav id="mobileMenu" class="mobile-menu" aria-label="Mobile navigation">
                 <a href="dashboard.html">Home</a>
-                <a href="attendance.html" class="active">Attendance</a>
+                <a href="attendance.html">Attendance</a>
                 <a href="manageUsers.html">Users</a>
                 <a href="leaves.html">Leaves</a>
                 <a href="profile.html">Profile</a>
                 <a href="qr.html">QR</a>
                 <a href="developer.html">Dev</a>
+                <a href="#" id="mobileLogout">Logout</a>
             </nav>
-            <img id="logout" class="logout-icon" src="../assets/images/exit.png" alt="Logout">
-        </div>
-        <nav id="mobileMenu" class="mobile-menu" aria-label="Mobile navigation">
-            <a href="dashboard.html">Home</a>
-            <a href="attendance.html">Attendance</a>
-            <a href="manageUsers.html">Users</a>
-            <a href="leaves.html">Leaves</a>
-            <a href="profile.html">Profile</a>
-            <a href="qr.html">QR</a>
-            <a href="developer.html">Dev</a>
-            <a href="#" id="mobileLogout">Logout</a>
-        </nav>
-    </header>
+        </header>
 
-    <main class="container">
-        <h1>Leave Requests</h1>
-        <!-- VIEW TOGGLE -->
-        <!-- … inside <section id="applySection" class="card"> … -->
-        <div class="view-toggle">
-            <select id="viewToggle">
+        <main class="container">
+            <h1>Leave Requests</h1>
+            <!-- VIEW TOGGLE -->
+            <!-- … inside <section id="applySection" class="card"> … -->
+            <div class="view-toggle">
+                <select id="viewToggle">
       <option value="myself">Myself</option>
       <option value="team">Manage Team</option>
     </select>
-        </div>
-
-
-        <section id="applySection" class="card">
-            <h2>Apply for Leave</h2>
-
-            <div class="leave-shortcuts">
-                <button id="todayBtn" type="button">Today</button>
-                <button id="tomorrowBtn" type="button">Tomorrow</button>
             </div>
 
-            <form id="leaveForm">
-                <!-- first row -->
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="fromDate">From</label>
-                        <input type="date" id="fromDate" required />
-                    </div>
-                    <div class="form-group">
-                        <label for="toDate">To</label>
-                        <input type="date" id="toDate" required />
-                    </div>
-                    <div class="form-group">
-                        <label for="requestTo">Request To</label>
-                        <select id="requestTo">
+
+            <section id="applySection" class="card">
+                <h2>Apply for Leave</h2>
+
+                <div class="leave-shortcuts">
+                    <button id="todayBtn" type="button">Today</button>
+                    <button id="tomorrowBtn" type="button">Tomorrow</button>
+                </div>
+
+                <form id="leaveForm">
+                    <!-- first row -->
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="fromDate">From</label>
+                            <input type="date" id="fromDate" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="toDate">To</label>
+                            <input type="date" id="toDate" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="requestTo">Request To</label>
+                            <select id="requestTo">
                       <option value="category-admin">Category Admin</option>
                       <option value="admin">Admin</option>
                       <option value="developer">Developer</option>
                     </select>
+                        </div>
+
+                        <!-- second row (reason spans all) -->
+                        <div class="form-group reason-group">
+                            <label for="reason">Reason</label>
+                            <textarea id="reason" placeholder="Enter reason…" required></textarea>
+                        </div>
+
+                        <!-- third row (submit spans all) -->
+                        <button type="submit" class="btn accent submit-btn">Submit</button>
                     </div>
+                </form>
 
-                    <!-- second row (reason spans all) -->
-                    <div class="form-group reason-group">
-                        <label for="reason">Reason</label>
-                        <textarea id="reason" placeholder="Enter reason…" required></textarea>
-                    </div>
+            </section>
 
-                    <!-- third row (submit spans all) -->
-                    <button type="submit" class="btn accent submit-btn">Submit</button>
-                </div>
-            </form>
-
-        </section>
-
-        <section id="listSection" class="card">
-            <h2>All Requests</h2>
-            <table id="leavesTable">
-                <thead>
-                    <tr>
-                        <th>User</th>
-                        <th>From</th>
-                        <th>To</th>
-                        <th>To (Role)</th>
-                        <th>Reason</th>
-                        <th>Status</th>
-                        <th>Note</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </section>
-    </main>
-
+            <section id="listSection" class="card">
+                <h2>All Requests</h2>
+                <table id="leavesTable">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>From</th>
+                            <th>To</th>
+                            <th>To (Role)</th>
+                            <th>Reason</th>
+                            <th>Status</th>
+                            <th>Note</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </section>
+        </main>
+    </div>
     <script type="module" src="../js/leaves.js"></script>
 </body>
 
