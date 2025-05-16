@@ -6,12 +6,8 @@
 
 /* At very top of base.css! */
 
-.hidden {
-    visibility: hidden !important;
-}
-
-.hidden {
-    display: none;
+#app-root.hidden {
+    display: none !important;
 }
 
 
