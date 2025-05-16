@@ -7,11 +7,13 @@
             display: none !important;
         }
     </style>
+    <link rel="preload" href="css/base.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="css/base.css"></noscript>
+    <script type="module" src="js/base.js"></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>QR Attendance — Faith Centre AMS</title>
-    <link rel="stylesheet" href="css/base.css">
-    <script type="module" src="js/base.js"></script>
+
     <link rel="stylesheet" href="../css/qr.css" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://unpkg.com https://cdn.jsdelivr.net;">
 
@@ -22,7 +24,6 @@
     <!-- Your modules -->
     <script type="module" src="../js/utils.js"></script>
 
-    <script type="module" src="../js/base.js"></script>
     <script type="module" src="../js/toast.js"></script>
     <script type="module" src="../js/qrScanner.js"></script>
 </head>
