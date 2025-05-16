@@ -6,8 +6,8 @@
 
 /* At very top of base.css! */
 
-#app-root.hidden {
-    display: none !important;
+.hidden {
+    display: none;
 }
 
 
