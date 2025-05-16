@@ -1,6 +1,17 @@
 /* css/base.css */
 
 
+/* hide the whole UI until JS is ready */
+
+.hidden {
+    visibility: hidden;
+}
+
+.hidden {
+    display: none;
+}
+
+
 /* Theme variables */
 
 :root {
@@ -285,10 +296,6 @@ select {
 
 
 /* Utility */
-
-.hidden {
-    display: none;
-}
 
 .home-icon {
     display: none;
