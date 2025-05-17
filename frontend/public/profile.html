@@ -117,7 +117,7 @@
                         </form>
 
                         <!-- CHANGE PASSWORD / RESET WIZARD -->
-                        <form id="passwordForm" class="form">
+                        <form id="passwordForm" class="form" novalidate>
                             <!-- STEP 1: direct-change -->
                             <div id="step1" class="pw-step">
                                 <div class="field password-field">
@@ -151,7 +151,7 @@
                             <div id="step2" class="pw-step hidden">
                                 <div class="field">
                                     <label for="resetIdentifier">Email or Phone</label>
-                                    <input type="text" id="resetIdentifier" required>
+                                    <input type="text" id="resetIdentifier" name="resetIdentifier">
                                 </div>
                                 <button type="button" class="btn" id="sendVerifyBtn">Send Verification Code</button>
                             </div>
@@ -161,7 +161,7 @@
                                 <p class="info-text">Verification code sent—check your inbox.</p>
                                 <div class="field">
                                     <label for="resetCode">Enter OTP Code</label>
-                                    <input type="text" id="resetCode" required>
+                                    <input type="text" id="resetCode" name="resetCode">
                                 </div>
                                 <button type="button" class="btn" id="verifyOtpBtn">Verify Code</button>
                             </div>
