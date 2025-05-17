@@ -183,6 +183,16 @@ body {
     margin: 0;
     font-size: clamp(1rem, 2vw, 1.1rem);
     color: var(--text);
+    flex: 1 1 auto;
+    /* take available space but allow to shrink */
+    min-width: 0;
+    /* allow it to shrink below its content width */
+    overflow: hidden;
+    /* hide overflow */
+    white-space: nowrap;
+    /* don't wrap onto a second line */
+    text-overflow: ellipsis;
+    /* show “…” when truncated */
 }
 
 .badges {
