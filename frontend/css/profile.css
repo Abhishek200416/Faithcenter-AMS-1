@@ -15,6 +15,10 @@
     display: none !important;
 }
 
+.info-text {
+    color: aliceblue;
+}
+
 
 /* Layout: two-column on desktop, one-column on mobile */
 

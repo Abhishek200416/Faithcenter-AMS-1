@@ -50,8 +50,9 @@ const usernameHelp = (() => {
 })();
 
 // feedback lines
-const [profileError, profileSuccess, passwordError, passwordSuccess] = ['profileError', 'profileSuccess', 'passwordError', 'passwordSuccess']
-.map(id => document.getElementById(id));
+const [profileError, profileSuccess, passwordError, passwordSuccess] =
+    ['profileError', 'profileSuccess', 'passwordError', 'passwordSuccess']
+        .map(id => document.getElementById(id));
 
 // ——————————————————————————————————————————————————————————————————
 // Tab Switching
@@ -87,7 +88,7 @@ forgotLink.addEventListener('click', e => {
 });
 
 // Step 2 → send verification code
-sendVerifyBtn.addEventListener('click', async() => {
+sendVerifyBtn.addEventListener('click', async () => {
     const identifier = document.getElementById('resetIdentifier').value.trim();
     if (!identifier) {
         showToast('error', 'Please enter your email or phone');
@@ -108,7 +109,7 @@ sendVerifyBtn.addEventListener('click', async() => {
 });
 
 // Step 3 → verify OTP
-verifyOtpBtn.addEventListener('click', async() => {
+verifyOtpBtn.addEventListener('click', async () => {
     const identifier = document.getElementById('resetIdentifier').value.trim();
     const code = document.getElementById('resetCode').value.trim();
     if (!/^\d{4,6}$/.test(code)) {
@@ -130,7 +131,7 @@ verifyOtpBtn.addEventListener('click', async() => {
 });
 
 // Step 4 → set new password
-resetPwBtn.addEventListener('click', async() => {
+resetPwBtn.addEventListener('click', async () => {
     const identifier = document.getElementById('resetIdentifier').value.trim();
     const code = document.getElementById('resetCode').value.trim();
     const newPw = document.getElementById('resetNewPw').value.trim();
@@ -165,10 +166,10 @@ async function loadProfile() {
 
         // basic fields
         ['name', 'phone', 'gender', 'age', 'email', 'uid', 'categoryType', 'role']
-        .forEach(f => {
-            const el = document.getElementById(f);
-            if (el) el.value = user[f] ? ? '';
-        });
+            .forEach(f => {
+                const el = document.getElementById(f);
+                if (el) el.value = user[f] ?? '';
+            });
 
         // username + cooldown
         usernameInput.value = user.username;
@@ -177,9 +178,9 @@ async function loadProfile() {
         const daysLeft = Math.max(0, 30 - elapsed);
         if (['category-admin', 'usher'].includes(user.role)) {
             usernameInput.disabled = daysLeft > 0;
-            usernameHelp.textContent = daysLeft > 0 ?
-                `You have ${daysLeft} day${daysLeft>1?'s':''} until next username change.` :
-                '';
+            usernameHelp.textContent = daysLeft > 0
+                ? `You have ${daysLeft} day${daysLeft > 1 ? 's' : ''} until next username change.`
+                : '';
         } else {
             usernameInput.disabled = false;
         }
@@ -218,9 +219,9 @@ profileForm.addEventListener('submit', async e => {
         console.error(err);
         showToast('error', err.message);
         if (err.message.includes('30-day')) {
-            const days = err.message.match(/\d+/) ? .[0];
+            const days = err.message.match(/\d+/)?.[0];
             if (days) {
-                usernameHelp.textContent = `You can change your username in ${days} day${days>1?'s':''}.`;
+                usernameHelp.textContent = `You can change your username in ${days} day${days > 1 ? 's' : ''}.`;
             }
         }
     }
