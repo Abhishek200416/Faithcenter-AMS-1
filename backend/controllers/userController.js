@@ -401,9 +401,9 @@ exports.updateMyProfile = async function (req, res, next) {
     }
 };
 
-// ——————————————————————————————————————————————————————————————————
+// ————————————————————
 // DELETE & COUNT
-// ——————————————————————————————————————————————————————————————————
+// ————————————————————
 
 exports.deleteUser = async function (req, res, next) {
     try {
