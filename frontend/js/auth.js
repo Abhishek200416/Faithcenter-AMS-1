@@ -16,6 +16,8 @@ const otpBtn = otpForm.querySelector('button[type=submit]');
 const resendBtn = document.getElementById('resendOtp');
 const sendResetBtn = forgotForm.querySelector('#sendResetOtp');
 const resetSection = document.getElementById('resetSection');
+const idVal = document.getElementById('forgotIdentifier').value.trim();
+
 
 let resendCooldown = 30; // seconds
 
