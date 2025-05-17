@@ -164,7 +164,8 @@ exports.createUser = async function createUser(req, res, next) {
             age
         }))(user);
 
-        res.status(201).json({ user: safe, plainPassword: passwordPlain });
+        res.status(201).json({ user: safe, plainPassword: plainPassword });
+
     } catch (err) {
         const msg = parseSequelizeError(err);
         if (msg) return res.status(400).json({ message: msg });
