@@ -3,261 +3,233 @@
 import { apiFetch } from './utils.js';
 import { showToast } from './toast.js';
 
-// — DOM REFERENCES —
-// Tabs
-const profileTab = document.getElementById('profileTab');
-const passwordTab = document.getElementById('passwordTab');
+document.addEventListener('DOMContentLoaded', () => {
+    // — DOM REFERENCES —
+    const profileTab = document.getElementById('profileTab');
+    const passwordTab = document.getElementById('passwordTab');
+    const profileForm = document.getElementById('profileForm');
+    const passwordForm = document.getElementById('passwordForm');
+    const changeSection = document.getElementById('changeSection');
+    const resetSection = document.getElementById('resetSection');
+    const showResetLink = document.getElementById('showReset');
+    const sendOtpBtn = document.getElementById('sendOtp');
+    const resetIdentifier = document.getElementById('resetIdentifier');
+    const resetCodeInput = document.getElementById('resetCode');
+    const resetNewPwInput = document.getElementById('resetNewPw');
+    const profileError = document.getElementById('profileError');
+    const profileSuccess = document.getElementById('profileSuccess');
+    const passwordError = document.getElementById('passwordError');
+    const passwordSuccess = document.getElementById('passwordSuccess');
 
-// Forms & sections
-const profileForm = document.getElementById('profileForm');
-const passwordForm = document.getElementById('passwordForm');
-const changeSection = document.getElementById('changeSection');
-const resetSection = document.getElementById('resetSection');
-
-// “Forgot Password?” link inside Change Password panel
-const showResetLink = document.getElementById('showReset');
-
-// Buttons & fields for OTP flow
-const sendOtpBtn = document.getElementById('sendOtp');
-const resetIdentifier = document.getElementById('resetIdentifier');
-const resetCodeInput = document.getElementById('resetCode');
-const resetNewPwInput = document.getElementById('resetNewPw');
-
-// Status messages
-const profileError = document.getElementById('profileError');
-const profileSuccess = document.getElementById('profileSuccess');
-const passwordError = document.getElementById('passwordError');
-const passwordSuccess = document.getElementById('passwordSuccess');
-
-// Password-toggle buttons (delegated)
-function initPasswordToggles() {
-    document.querySelectorAll('.toggle-password').forEach(btn => {
-        btn.onclick = () => {
-            const input = document.getElementById(btn.dataset.target);
-            input.type = input.type === 'password' ? 'text' : 'password';
-            btn.textContent = input.type === 'password' ? 'Show' : 'Hide';
-        };
-    });
-}
-
-// Validate new password length
-function validatePassword(pw) {
-    if (!pw || pw.length < 6) {
-        showToast('error', 'Password must be at least 6 characters');
-        return false;
+    // — UTILS —
+    function toggleVisibility(el, show) {
+        if (show) el.classList.remove('hidden');
+        else el.classList.add('hidden');
     }
-    return true;
-}
 
-// Clear input by ID
-function clearField(id) {
-    const el = document.getElementById(id);
-    if (el) el.value = '';
-}
-
-// Switch between Profile / ChangePassword tabs
-function switchTab(tab) {
-    profileForm.classList.toggle('active', tab === 'profile');
-    passwordForm.classList.toggle('active', tab === 'password');
-    profileTab.classList.toggle('active', tab === 'profile');
-    passwordTab.classList.toggle('active', tab === 'password');
-}
-
-// Handler: User clicks “Forgot Password?” inside ChangePassword
-function showResetFlow(e) {
-    e.preventDefault();
-    changeSection.classList.add('hidden');
-    resetSection.classList.remove('hidden');
-}
-
-// Initial tab setup
-profileTab.addEventListener('click', () => switchTab('profile'));
-passwordTab.addEventListener('click', () => switchTab('password'));
-
-// “Forgot Password?” link
-showResetLink.addEventListener('click', showResetFlow);
-
-// Initialize toggles once
-initPasswordToggles();
-
-// — LOAD PROFILE — 
-async function loadProfile() {
-    try {
-        const { user } = await apiFetch('/api/users/me');
-
-        // Fill form fields
-        document.getElementById('name').value = user.name || '';
-        document.getElementById('phone').value = user.phone || '';
-        document.getElementById('gender').value = user.gender || '';
-        document.getElementById('age').value = user.age || '';
-        document.getElementById('email').value = user.email || '';
-        document.getElementById('username').value = user.username || '';
-        document.getElementById('uid').value = user.uid || '';
-        document.getElementById('categoryType').value = user.categoryType || '';
-        document.getElementById('role').value = user.role || '';
-
-        // Clear any messages
-        profileError.textContent = '';
-        profileSuccess.textContent = '';
-    } catch (err) {
-        console.error(err);
-        showToast('error', 'Failed to load profile');
+    function clearField(id) {
+        const f = document.getElementById(id);
+        if (f) f.value = '';
     }
-}
 
-// Fetch on page load
-loadProfile();
+    function validatePassword(pw) {
+        if (!pw || pw.length < 6) {
+            showToast('error', 'Password must be at least 6 characters');
+            return false;
+        }
+        return true;
+    }
 
-
-// — SAVE PROFILE — 
-profileForm.addEventListener('submit', async e => {
-    e.preventDefault();
-    profileError.textContent = '';
-    profileSuccess.textContent = '';
-    showToast('info', 'Saving profile…', true);
-
-    try {
-        const payload = {
-            name: document.getElementById('name').value.trim(),
-            phone: document.getElementById('phone').value.trim() || null,
-            gender: document.getElementById('gender').value,
-            age: Number(document.getElementById('age').value) || null,
-            email: document.getElementById('email').value.trim()
-                // username is not editable here (disabled)
-        };
-
-        await apiFetch('/api/users/me', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+    // Password-toggle buttons
+    function initPasswordToggles() {
+        document.querySelectorAll('.toggle-password').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const input = document.getElementById(btn.dataset.target);
+                input.type = input.type === 'password' ? 'text' : 'password';
+                btn.textContent = input.type === 'password' ? 'Show' : 'Hide';
+            });
         });
-
-        showToast('success', 'Profile updated');
-        profileSuccess.textContent = 'Profile updated successfully';
-        await loadProfile();
-    } catch (err) {
-        console.error(err);
-        profileError.textContent = err.message;
-        showToast('error', err.message);
     }
-});
 
+    // — TAB SWITCHING —
+    function showTab(which) {
+        toggleVisibility(profileForm, which === 'profile');
+        toggleVisibility(passwordForm, which === 'password');
 
-// — CHANGE PASSWORD — 
-passwordForm.addEventListener('submit', async e => {
-    e.preventDefault();
-    passwordError.textContent = '';
-    passwordSuccess.textContent = '';
+        profileTab.classList.toggle('active', which === 'profile');
+        passwordTab.classList.toggle('active', which === 'password');
+    }
 
-    // If still showing direct-change section
-    if (!changeSection.classList.contains('hidden')) {
-        const oldPw = document.getElementById('currentPw').value.trim();
-        const newPw = document.getElementById('newPw').value.trim();
-        const confirmPw = document.getElementById('confirmPw').value.trim();
+    profileTab.addEventListener('click', () => showTab('profile'));
+    passwordTab.addEventListener('click', () => showTab('password'));
 
-        if (!oldPw || !newPw || !confirmPw) {
-            showToast('error', 'All fields are required');
-            return;
-        }
-        if (!validatePassword(newPw)) return;
-        if (newPw !== confirmPw) {
-            showToast('error', 'New passwords do not match');
-            return;
-        }
+    // — FORGOT PASSWORD FLOW —
+    showResetLink.addEventListener('click', e => {
+        e.preventDefault();
+        toggleVisibility(changeSection, false);
+        toggleVisibility(resetSection, true);
+    });
 
-        showToast('info', 'Updating password…', true);
+    // — LOAD PROFILE —
+    async function loadProfile() {
         try {
-            await apiFetch('/api/auth/change-password', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    oldPassword: oldPw,
-                    newPassword: newPw
-                })
+            const { user } = await apiFetch('/api/users/me');
+            // fill fields
+            ['name', 'phone', 'gender', 'age', 'email', 'username', 'uid', 'categoryType', 'role']
+            .forEach(key => {
+                const el = document.getElementById(key);
+                if (el && user[key] !== undefined) el.value = user[key];
             });
 
-            showToast('success', 'Password changed');
-            passwordSuccess.textContent = 'Password updated successfully';
-
-            // Clear fields
-            clearField('currentPw');
-            clearField('newPw');
-            clearField('confirmPw');
+            profileError.textContent = '';
+            profileSuccess.textContent = '';
         } catch (err) {
             console.error(err);
-            const msg = err.message === 'Old password is incorrect' ?
-                'Incorrect current password' :
-                err.message;
-            passwordError.textContent = msg;
-            showToast('error', msg);
+            showToast('error', 'Failed to load profile');
         }
     }
 
-    // Else—OTP Reset submission
-    else {
-        const identifier = resetIdentifier.value.trim();
-        const code = resetCodeInput.value.trim();
-        const newPw = resetNewPwInput.value.trim();
+    // — SAVE PROFILE —
+    profileForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        profileError.textContent = '';
+        profileSuccess.textContent = '';
 
-        if (!identifier || !code || !newPw) {
-            showToast('error', 'Fill all reset fields');
-            return;
-        }
-        if (!validatePassword(newPw)) return;
-
-        showToast('info', 'Resetting password…', true);
+        showToast('info', 'Saving profile…');
         try {
-            await apiFetch('/api/auth/reset-password', {
-                method: 'POST',
+            const payload = {
+                name: document.getElementById('name').value.trim(),
+                phone: document.getElementById('phone').value.trim() || null,
+                gender: document.getElementById('gender').value,
+                age: Number(document.getElementById('age').value) || null,
+                email: document.getElementById('email').value.trim()
+            };
+
+            await apiFetch('/api/users/me', {
+                method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    identifier,
-                    code,
-                    newPassword: newPw
-                })
+                body: JSON.stringify(payload)
             });
 
-            showToast('success', 'Password reset successful');
-            passwordSuccess.textContent = 'Password has been reset';
+            profileSuccess.textContent = 'Profile updated';
+            showToast('success', 'Profile updated');
+            await loadProfile();
+        } catch (err) {
+            console.error(err);
+            profileError.textContent = err.message;
+            showToast('error', err.message);
+        }
+    });
 
-            // Reset UI: back to direct-change
-            resetSection.classList.add('hidden');
-            changeSection.classList.remove('hidden');
-            clearField('resetIdentifier');
-            clearField('resetCode');
-            clearField('resetNewPw');
+    // — CHANGE PASSWORD vs. RESET OTP —
+    passwordForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        passwordError.textContent = '';
+        passwordSuccess.textContent = '';
+
+        // Direct change
+        if (!changeSection.classList.contains('hidden')) {
+            const oldPw = document.getElementById('currentPw').value.trim();
+            const newPw = document.getElementById('newPw').value.trim();
+            const confirmPw = document.getElementById('confirmPw').value.trim();
+
+            if (!oldPw || !newPw || !confirmPw) {
+                showToast('error', 'All fields are required');
+                return;
+            }
+            if (!validatePassword(newPw)) return;
+            if (newPw !== confirmPw) {
+                showToast('error', 'Passwords do not match');
+                return;
+            }
+
+            showToast('info', 'Updating password…');
+            try {
+                await apiFetch('/api/auth/change-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ oldPassword: oldPw, newPassword: newPw })
+                });
+                passwordSuccess.textContent = 'Password changed';
+                showToast('success', 'Password updated');
+                ['currentPw', 'newPw', 'confirmPw'].forEach(clearField);
+            } catch (err) {
+                console.error(err);
+                const msg = err.message === 'Old password is incorrect' ?
+                    'Incorrect current password' :
+                    err.message;
+                passwordError.textContent = msg;
+                showToast('error', msg);
+            }
+        }
+        // OTP reset
+        else {
+            const identifier = resetIdentifier.value.trim();
+            const code = resetCodeInput.value.trim();
+            const newPw = resetNewPwInput.value.trim();
+
+            if (!identifier || !code || !newPw) {
+                showToast('error', 'All reset fields are required');
+                return;
+            }
+            if (!validatePassword(newPw)) return;
+
+            showToast('info', 'Resetting password…');
+            try {
+                await apiFetch('/api/auth/reset-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ identifier, code, newPassword: newPw })
+                });
+
+                passwordSuccess.textContent = 'Password reset successful';
+                showToast('success', 'Password reset');
+                // go back to direct-change
+                toggleVisibility(resetSection, false);
+                toggleVisibility(changeSection, true);
+                ['resetIdentifier', 'resetCode', 'resetNewPw'].forEach(clearField);
+            } catch (err) {
+                console.error(err);
+                passwordError.textContent = err.message;
+                showToast('error', err.message);
+            }
+        }
+    });
+
+    // — SEND OTP —
+    sendOtpBtn.addEventListener('click', async() => {
+        const idVal = resetIdentifier.value.trim();
+        if (!idVal) {
+            showToast('error', 'Enter email/phone to send OTP');
+            return;
+        }
+
+        showToast('info', 'Sending OTP…');
+        try {
+            await apiFetch('/api/auth/forgot-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ identifier: idVal })
+            });
+
+            showToast('success', 'OTP sent – check your inbox');
+            // hide step1, show step2
+            resetSection.querySelectorAll('.otp-step1')
+                .forEach(el => el.classList.add('hidden'));
+            resetSection.querySelectorAll('.otp-step2')
+                .forEach(el => el.classList.remove('hidden'));
         } catch (err) {
             console.error(err);
             passwordError.textContent = err.message;
             showToast('error', err.message);
         }
-    }
-});
+    });
 
-
-// — SEND OTP FOR RESET — 
-sendOtpBtn.addEventListener('click', async() => {
-    const identifier = resetIdentifier.value.trim();
-    if (!identifier) {
-        showToast('error', 'Enter email or phone to receive OTP');
-        return;
-    }
-
-    showToast('info', 'Sending OTP…', true);
-    try {
-        await apiFetch('/api/auth/forgot-password', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ identifier })
-        });
-
-        showToast('success', 'OTP sent—check your inbox');
-        // Reveal OTP and new-pw inputs
-        resetSection.querySelectorAll('.otp-step1').forEach(el => el.classList.add('hidden'));
-        resetSection.querySelectorAll('.otp-step2').forEach(el => el.classList.remove('hidden'));
-    } catch (err) {
-        console.error(err);
-        passwordError.textContent = err.message;
-        showToast('error', err.message);
-    }
+    // Finally, call loadProfile to populate fields
+    loadProfile();
+    initPasswordToggles();
+    // and ensure initial state:
+    showTab('profile');
+    toggleVisibility(changeSection, true);
+    toggleVisibility(resetSection, false);
 });
