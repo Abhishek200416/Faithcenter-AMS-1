@@ -24,16 +24,16 @@ module.exports = sequelize => {
             allowNull: false,
             defaultValue: DataTypes.NOW
         },
-        // NEW: how many changes in current window
+        // NEW: how many changes in current 30-day window (nullable for existing rows)
         usernameChangeCount: {
             type: DataTypes.INTEGER,
-            allowNull: false,
+            allowNull: true, // changed from false → true
             defaultValue: 0
         },
-        // NEW: window start timestamp
+        // NEW: timestamp when current window started (nullable for existing rows)
         usernameChangeWindowStart: {
             type: DataTypes.DATE,
-            allowNull: false,
+            allowNull: true, // changed from false → true
             defaultValue: DataTypes.NOW
         },
         name: {
