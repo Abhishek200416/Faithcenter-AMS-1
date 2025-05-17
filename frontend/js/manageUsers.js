@@ -62,10 +62,14 @@ function openConfirm(msg) {
             noBtn.removeEventListener('click', onNo);
             confirmModal.classList.remove('active');
         };
-        const onYes = () => { cleanup();
-            res(true); };
-        const onNo = () => { cleanup();
-            res(false); };
+        const onYes = () => {
+            cleanup();
+            res(true);
+        };
+        const onNo = () => {
+            cleanup();
+            res(false);
+        };
         yesBtn.addEventListener('click', onYes);
         noBtn.addEventListener('click', onNo);
     });
@@ -297,9 +301,11 @@ modal.querySelector('.modal-backdrop').addEventListener('click', closeModal);
 // —————————————————————————————————————
 // 11) Input Sanitizers & Validators
 // —————————————————————————————————————
-nameInput.addEventListener('input',  () => {
-  nameInput.value = nameInput.value.replace(/[^A-Za-z]/g,'');
+// allow letters, spaces (\s) and dots (.)
+nameInput.addEventListener('input', () => {
+  nameInput.value = nameInput.value.replace(/[^A-Za-z\s.]/g, '');
 });
+
 phoneInput.addEventListener('input', () => {
   phoneInput.value = phoneInput.value.replace(/\D/g,'').slice(0,10);
 });
@@ -323,7 +329,7 @@ form.addEventListener('submit', async e => {
   const rawUser  = usernameInput.value.trim();
 
   if (!/^[A-Za-z]+$/.test(name))
-    return showToast('error','Name must be letters only');
+    return showToast('error','Name may only contain letters, spaces, and dots');
   if (phone && !/^\d{10}$/.test(phone))
     return showToast('error','Phone must be 10 digits');
   if (age && !/^\d+$/.test(age))
