@@ -103,11 +103,13 @@ exports.createUser = async function createUser(req, res, next) {
         }
 
         // ────── USERNAME ──────
-        if (!username ? .trim()) {
+        if (!username?.trim()) {
+            // no username supplied → derive from name
             username = genUsername(name);
         } else {
             username = cleanUsername(username);
         }
+
         if (!USERNAME_REGEX.test(username)) {
             return res.status(400).json({
                 message: 'Username must use only lowercase letters and digits (no spaces, dots or symbols).'
@@ -165,7 +167,7 @@ exports.createUser = async function createUser(req, res, next) {
 // READ
 // ——————————————————————————————————————————————————————————————————
 
-exports.getAllUsers = async function(req, res, next) {
+exports.getAllUsers = async function (req, res, next) {
     try {
         const where = {};
         if (req.user.role === 'category-admin') {
@@ -185,7 +187,7 @@ exports.getAllUsers = async function(req, res, next) {
     }
 };
 
-exports.getUserById = async function(req, res, next) {
+exports.getUserById = async function (req, res, next) {
     try {
         const user = await User.findByPk(req.params.id, {
             attributes: [
@@ -204,7 +206,7 @@ exports.getUserById = async function(req, res, next) {
     }
 };
 
-exports.getMyProfile = async function(req, res, next) {
+exports.getMyProfile = async function (req, res, next) {
     try {
         const user = await User.findByPk(req.user.id, {
             attributes: [
@@ -223,7 +225,7 @@ exports.getMyProfile = async function(req, res, next) {
 // UPDATE
 // ——————————————————————————————————————————————————————————————————
 
-exports.updateUser = async function(req, res, next) {
+exports.updateUser = async function (req, res, next) {
     try {
         const actor = req.user.role;
         if (!['developer', 'admin', 'category-admin'].includes(actor)) {
@@ -321,7 +323,7 @@ exports.updateUser = async function(req, res, next) {
     }
 };
 
-exports.updateMyProfile = async function(req, res, next) {
+exports.updateMyProfile = async function (req, res, next) {
     try {
         const user = await User.findByPk(req.user.id);
         if (!user) return res.status(404).json({ message: 'Not found' });
@@ -403,7 +405,7 @@ exports.updateMyProfile = async function(req, res, next) {
 // DELETE & COUNT
 // ——————————————————————————————————————————————————————————————————
 
-exports.deleteUser = async function(req, res, next) {
+exports.deleteUser = async function (req, res, next) {
     try {
         const actor = req.user.role;
         if (!['developer', 'admin'].includes(actor)) {
@@ -418,7 +420,7 @@ exports.deleteUser = async function(req, res, next) {
     }
 };
 
-exports.countUsers = async function(req, res, next) {
+exports.countUsers = async function (req, res, next) {
     try {
         const where = {};
         if (req.query.category) {
