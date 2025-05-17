@@ -12,41 +12,45 @@ const ALLOWED_CATEGORIES = ['admin', 'protocol', 'media', 'worship', 'ushering']
 const MAX_CHANGES = 3;
 const WINDOW_DAYS = 30;
 
+// Only lowercase letters & digits
+const USERNAME_REGEX = /^[a-z0-9]+$/;
+
 /**
- * Returns true if this user may change their username now (max 3 per 30 days).
- * Also resets window & count if window has expired.
+ * Check and update a user's 30-day change window.
+ * Returns { allowed, count, windowStart, daysLeft }.
  */
 async function canChangeUsername(user) {
     const now = Date.now();
-    const windowStart = new Date(user.usernameChangeWindowStart).getTime();
-    const daysSinceWindow = (now - windowStart) / (1000 * 60 * 60 * 24);
-
+    let windowStart = new Date(user.usernameChangeWindowStart).getTime();
     let count = user.usernameChangeCount;
-    let windowStartDate = new Date(user.usernameChangeWindowStart);
 
-    if (daysSinceWindow >= WINDOW_DAYS) {
-        // reset window
+    // expired window?
+    const daysElapsed = (now - windowStart) / (1000 * 60 * 60 * 24);
+    if (daysElapsed >= WINDOW_DAYS) {
+        windowStart = now;
         count = 0;
-        windowStartDate = new Date();
     }
 
+    // developers/admins unlimited
     if (['developer', 'admin'].includes(user.role)) {
-        return { allowed: true, count, windowStart: windowStartDate };
+        return { allowed: true, count, windowStart };
     }
-    // category-admin & usher:
+
+    // category-admin & usher
     if (count < MAX_CHANGES) {
-        return { allowed: true, count, windowStart: windowStartDate };
+        return { allowed: true, count, windowStart };
     }
+
     return {
         allowed: false,
-        daysLeft: Math.ceil(WINDOW_DAYS - daysSinceWindow),
         count,
-        windowStart: windowStartDate
+        windowStart,
+        daysLeft: Math.ceil(WINDOW_DAYS - daysElapsed)
     };
 }
 
 /**
- * Parse Sequelize unique‐constraint errors
+ * Extract Sequelize unique-constraint messages
  */
 function parseSequelizeError(err) {
     if (err instanceof Sequelize.UniqueConstraintError) {
@@ -55,18 +59,16 @@ function parseSequelizeError(err) {
     return null;
 }
 
-/** 2-digit year + 8-digit random UID */
+/** UID: 2-digit year + 8 random digits */
 function genUid() {
     const yy = new Date().getFullYear().toString().slice(-2);
-    const rand = Math.floor(Math.random() * 1e8).toString().padStart(8, '0');
+    const rand = Math.random().toString().slice(2, 10).padEnd(8, '0');
     return yy + rand;
 }
 
-/** Username‐cleanup: lowercase, remove spaces & dots */
+/** Normalize username: lowercase, strip spaces & dots */
 function cleanUsername(raw) {
-    return raw
-        .toLowerCase()
-        .replace(/[\s\.]+/g, '');
+    return raw.toLowerCase().replace(/[\s\.]+/g, '');
 }
 
 /** Derive default username from name */
@@ -74,13 +76,10 @@ function genUsername(name) {
     return cleanUsername(name);
 }
 
-/** Default password */
-function genPassword(source) {
-    return cleanUsername(source) + '@passFC';
+/** Default password from username */
+function genPassword(src) {
+    return cleanUsername(src) + '@passFC';
 }
-
-/** Only letters+digits allowed */
-const USERNAME_REGEX = /^[a-z0-9]+$/;
 
 // ——————————————————————————————————————————————————————————————————
 // CREATE
@@ -95,11 +94,10 @@ exports.createUser = async function createUser(req, res, next) {
 
         let { name, email, phone, role, categoryType, gender, age, username } = req.body;
         categoryType = categoryType.replace(/-head$/, '');
+
         if (!ALLOWED_CATEGORIES.includes(categoryType)) {
             return res.status(400).json({ message: 'Invalid category type' });
         }
-
-        // role‐based checks…
         if (actor === 'admin' && !['category-admin', 'usher'].includes(role)) {
             return res.status(403).json({ message: 'Admins can only create Heads or Members' });
         }
@@ -108,14 +106,14 @@ exports.createUser = async function createUser(req, res, next) {
         }
 
         // ────── USERNAME ──────
-        if (!username || !username.trim()) {
+        if (!username ? .trim()) {
             username = genUsername(name);
         } else {
             username = cleanUsername(username);
         }
         if (!USERNAME_REGEX.test(username)) {
             return res.status(400).json({
-                message: 'Username must use only lowercase letters and digits (no spaces, dots or symbols).'
+                message: 'Username must use only lowercase letters & digits (no spaces, dots or symbols).'
             });
         }
         if (await User.findOne({ where: { username } })) {
@@ -124,7 +122,7 @@ exports.createUser = async function createUser(req, res, next) {
 
         // ────── UID & PASSWORD ──────
         const uid = genUid();
-        const passwordPlain = genPassword(username || name);
+        const passwordPlain = genPassword(username);
         const passwordHash = await bcrypt.hash(passwordPlain, 10);
 
         // ────── CREATE ──────
@@ -184,9 +182,7 @@ exports.getAllUsers = async function(req, res, next) {
             ]
         });
         res.json({ users });
-    } catch (err) {
-        next(err);
-    }
+    } catch (err) { next(err) }
 };
 
 exports.getUserById = async function(req, res, next) {
@@ -203,9 +199,7 @@ exports.getUserById = async function(req, res, next) {
             return res.status(403).json({ message: 'Forbidden' });
         }
         res.json({ user });
-    } catch (err) {
-        next(err);
-    }
+    } catch (err) { next(err) }
 };
 
 exports.getMyProfile = async function(req, res, next) {
@@ -218,9 +212,7 @@ exports.getMyProfile = async function(req, res, next) {
             ]
         });
         res.json({ user });
-    } catch (err) {
-        next(err);
-    }
+    } catch (err) { next(err) }
 };
 
 // ——————————————————————————————————————————————————————————————————
@@ -254,35 +246,33 @@ exports.updateUser = async function(req, res, next) {
 
         // ────── USERNAME CHANGE ──────
         if (username && username !== user.username) {
-            const cleaned = cleanUsername(username);
-            if (!USERNAME_REGEX.test(cleaned)) {
+            const clean = cleanUsername(username);
+            if (!USERNAME_REGEX.test(clean)) {
                 return res.status(400).json({
-                    message: 'Username must use only lowercase letters and digits (no spaces, dots or symbols).'
+                    message: 'Username must use only lowercase letters & digits.'
                 });
             }
 
             const { allowed, daysLeft, count, windowStart } = await canChangeUsername(user);
             if (!allowed) {
                 return res.status(400).json({
-                    message: `You have used ${MAX_CHANGES} changes this window; try again in ${daysLeft} days.`
+                    message: `Used ${MAX_CHANGES} changes; try again in ${daysLeft} days.`
                 });
             }
-            if (await User.findOne({ where: { username: cleaned } })) {
+            if (await User.findOne({ where: { username: clean } })) {
                 return res.status(400).json({ message: 'Username already exists' });
             }
 
-            // apply change: increment count or reset window if needed
+            // reset or increment window
             const now = new Date();
-            const windowStartDate = new Date(user.usernameChangeWindowStart);
-            if ((now - windowStartDate) / (1000 * 60 * 60 * 24) >= WINDOW_DAYS) {
-                // reset
+            if (now - new Date(user.usernameChangeWindowStart) >= WINDOW_DAYS * 86400000) {
                 updates.usernameChangeCount = 1;
                 updates.usernameChangeWindowStart = now;
             } else {
                 updates.usernameChangeCount = user.usernameChangeCount + 1;
             }
 
-            updates.username = cleaned;
+            updates.username = clean;
             updates.usernameChangedAt = now;
         }
 
@@ -335,33 +325,32 @@ exports.updateMyProfile = async function(req, res, next) {
         const updates = { name, email, phone, gender, age };
 
         if (username && username !== user.username) {
-            const cleaned = cleanUsername(username);
-            if (!USERNAME_REGEX.test(cleaned)) {
+            const clean = cleanUsername(username);
+            if (!USERNAME_REGEX.test(clean)) {
                 return res.status(400).json({
-                    message: 'Username must use only lowercase letters and digits (no spaces, dots or symbols).'
+                    message: 'Username must use only lowercase letters & digits.'
                 });
             }
 
             const { allowed, daysLeft } = await canChangeUsername(user);
             if (!allowed) {
                 return res.status(400).json({
-                    message: `You have used ${MAX_CHANGES} changes this window; try again in ${daysLeft} days.`
+                    message: `Used ${MAX_CHANGES} changes; try again in ${daysLeft} days.`
                 });
             }
-            if (await User.findOne({ where: { username: cleaned } })) {
+            if (await User.findOne({ where: { username: clean } })) {
                 return res.status(400).json({ message: 'Username already exists' });
             }
 
             const now = new Date();
-            const windowStartDate = new Date(user.usernameChangeWindowStart);
-            if ((now - windowStartDate) / (1000 * 60 * 60 * 24) >= WINDOW_DAYS) {
+            if (now - new Date(user.usernameChangeWindowStart) >= WINDOW_DAYS * 86400000) {
                 updates.usernameChangeCount = 1;
                 updates.usernameChangeWindowStart = now;
             } else {
                 updates.usernameChangeCount = user.usernameChangeCount + 1;
             }
 
-            updates.username = cleaned;
+            updates.username = clean;
             updates.usernameChangedAt = now;
         }
 
@@ -419,9 +408,7 @@ exports.deleteUser = async function(req, res, next) {
         if (!user) return res.status(404).json({ message: 'Not found' });
         await user.destroy();
         res.status(204).end();
-    } catch (err) {
-        next(err);
-    }
+    } catch (err) { next(err) }
 };
 
 exports.countUsers = async function(req, res, next) {
@@ -432,7 +419,5 @@ exports.countUsers = async function(req, res, next) {
         }
         const count = await User.count({ where });
         res.json({ count });
-    } catch (err) {
-        next(err);
-    }
+    } catch (err) { next(err) }
 };
