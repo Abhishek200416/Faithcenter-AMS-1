@@ -21,7 +21,6 @@ const phoneInput = document.getElementById('f-phone');
 const ageInput = document.getElementById('f-age');
 const userCountEl = document.getElementById('userCount');
 const clearBtn = document.querySelector('.search-wrapper .clear-btn');
-
 const confirmModal = document.getElementById('confirmModal');
 const confirmMsg = document.getElementById('confirmMessage');
 const yesBtn = document.getElementById('confirmYes');
@@ -40,11 +39,10 @@ const ROLE_LABELS = {
     usher: 'Member'
 };
 
-// —————————————————————————————————————
+// ————————————————————————————————————————
 // Helpers
-// —————————————————————————————————————
+// ————————————————————————————————————————
 
-// Sanitize to lowercase a–z & 0–9 only
 function sanitizeUsername(str) {
     return String(str || '')
         .trim()
@@ -52,32 +50,32 @@ function sanitizeUsername(str) {
         .replace(/[^a-z0-9]/g, '');
 }
 
-// Custom confirmation dialog
 function openConfirm(msg) {
     return new Promise(res => {
         confirmMsg.textContent = msg;
         confirmModal.classList.add('active');
-        const cleanup = () => {
+
+        function onYes() { cleanup();
+            res(true); }
+
+        function onNo() { cleanup();
+            res(false); }
+
+        function cleanup() {
             yesBtn.removeEventListener('click', onYes);
             noBtn.removeEventListener('click', onNo);
             confirmModal.classList.remove('active');
-        };
-        const onYes = () => {
-            cleanup();
-            res(true);
-        };
-        const onNo = () => {
-            cleanup();
-            res(false);
-        };
+        }
+
         yesBtn.addEventListener('click', onYes);
         noBtn.addEventListener('click', onNo);
     });
 }
 
-// —————————————————————————————————————
-// 1) Determine Current User & UI Permissions
-// —————————————————————————————————————
+// ————————————————————————————————————————
+// 1) Get current user + permissions
+// ————————————————————————————————————————
+
 async function loadMe() {
     try {
         const { user } = await apiFetch('/api/users/me');
@@ -85,22 +83,22 @@ async function loadMe() {
         myId = user.id;
         myCategory = user.categoryType || '';
 
-        // Show/hide Add button
-        addBtn.style.display = ['developer', 'admin', 'category-admin']
-            .includes(myRole) ? '' : 'none';
+        // show/hide Add button
+        addBtn.style.display = ['developer', 'admin', 'category-admin'].includes(myRole) ?
+            '' : 'none';
 
-        // Only dev/admin see the global filter
+        // show/hide global category filter
         categoryFilter.parentElement.style.display = ['developer', 'admin'].includes(myRole) ? '' : 'none';
-
     } catch {
         addBtn.style.display = 'none';
         categoryFilter.parentElement.style.display = 'none';
     }
 }
 
-// —————————————————————————————————————
-// 2) Role‐assignment Options
-// —————————————————————————————————————
+// ————————————————————————————————————————
+// 2) Populate Role dropdown based on your role
+// ————————————————————————————————————————
+
 function updateRoleOptions() {
     roleSelect.innerHTML = `<option value="" disabled selected hidden>Role</option>`;
     let allowed = [];
@@ -114,24 +112,24 @@ function updateRoleOptions() {
     roleSelect.disabled = !allowed.length;
 }
 
-// —————————————————————————————————————
-// 3) Load & Filter Users
-// —————————————————————————————————————
+// ————————————————————————————————————————
+// 3) Fetch & filter users
+// ————————————————————————————————————————
+
 async function loadUsers() {
     try {
         const { users } = await apiFetch('/api/users');
-
         let visible = [];
+
         if (myRole === 'developer') visible = users;
-        else if (myRole === 'admin')
-            visible = users.filter(u => ['category-admin', 'usher'].includes(u.role));
+        else if (myRole === 'admin') visible = users.filter(u => ['category-admin', 'usher'].includes(u.role));
         else if (myRole === 'category-admin')
-            visible = users.filter(u => u.role === 'usher' && u.categoryType === myCategory);
+            visible = users.filter(u =>
+                u.role === 'usher' && u.categoryType === myCategory);
         else visible = [];
 
         allUsers = visible;
         applyFilters();
-
     } catch (err) {
         showToast('error',
             err.message.includes('Forbidden') ?
@@ -142,31 +140,32 @@ async function loadUsers() {
     }
 }
 
-// —————————————————————————————————————
-// 4) Apply Search & Category Filters
-// —————————————————————————————————————
+// ————————————————————————————————————————
+// 4) Search & category filters + alphabetical sort
+// ————————————————————————————————————————
+
 function applyFilters() {
     const text = filterInput.value.trim().toLowerCase();
     clearBtn.style.display = text ? 'block' : 'none';
     const cat = categoryFilter.value;
 
-    let filtered = allUsers.filter(u => {
-        const matchText = !text ||
-            u.name.toLowerCase().includes(text) ||
-            u.email.toLowerCase().includes(text);
-        const matchCat = !cat || u.categoryType === cat;
-        return matchText && matchCat;
-    });
-
-    // **Sort alphabetically by name**
-    filtered.sort((a, b) => a.name.localeCompare(b.name));
+    const filtered = allUsers
+        .filter(u => {
+            const matchText = !text ||
+                u.name.toLowerCase().includes(text) ||
+                u.email.toLowerCase().includes(text);
+            const matchCat = !cat || u.categoryType === cat;
+            return matchText && matchCat;
+        })
+        .sort((a, b) => a.name.localeCompare(b.name)); // alphabetical
 
     renderCards(filtered);
 }
 
-// —————————————————————————————————————
-// 5) Render User Cards (Alphabetical Detail Order)
-// —————————————————————————————————————
+// ————————————————————————————————————————
+// 5) Render each card + expand on click
+// ————————————————————————————————————————
+
 function renderCards(list) {
     userCountEl.textContent = list.length;
     container.innerHTML = '';
@@ -190,7 +189,6 @@ function renderCards(list) {
         </div>
       </div>
       <div class="user-card-detail">
-        <!-- Fields in TRUE ALPHABETICAL order: Age, Email, Gender, Phone, UID, Username -->
         <p><strong>Age:</strong> ${u.age ?? '—'}</p>
         <p><strong>Email:</strong> ${u.email}</p>
         <p><strong>Gender:</strong> ${u.gender}</p>
@@ -203,12 +201,23 @@ function renderCards(list) {
         </div>
       </div>
     `;
-    card.querySelector('.edit-btn').onclick   = () => editUser(u.id);
+
+    // expand/collapse on any click outside the buttons
+    card.addEventListener('click', e => {
+      if (!e.target.closest('.edit-btn, .delete-btn')) {
+        card.classList.toggle('expanded');
+      }
+    });
+
+    // Edit
+    card.querySelector('.edit-btn').onclick = () => editUser(u.id);
+
+    // Delete
     card.querySelector('.delete-btn').onclick = async e => {
       e.stopPropagation();
       if (await openConfirm(`Delete ${u.name}?`)) {
         try {
-          await apiFetch(`/api/users/${u.id}`, { method:'DELETE' });
+          await apiFetch(`/api/users/${u.id}`, { method: 'DELETE' });
           showToast('success','User deleted');
           loadUsers();
         } catch (err) {
@@ -216,38 +225,32 @@ function renderCards(list) {
         }
       }
     };
+
     container.append(card);
   });
 }
-// …inside renderCards, after you `container.append(card);`:
 
-//  Add this so clicking the card (but _not_ its buttons) expands/collapses it:
-card.addEventListener('click', e => {
-  // ignore clicks on the Edit/Delete buttons
-  if (e.target.closest('.edit-btn, .delete-btn')) return;
-  card.classList.toggle('expanded');
-});
+// ————————————————————————————————————————
+// 6) Filter input listeners
+// ————————————————————————————————————————
 
-// —————————————————————————————————————
-// 6) Search/Clear Listeners
-// —————————————————————————————————————
-filterInput.addEventListener('input', applyFilters);
-categoryFilter.addEventListener('change', applyFilters);
+filterInput.addEventListener('input',   applyFilters);
+categoryFilter.addEventListener('change',applyFilters);
 clearBtn.addEventListener('click', () => {
   filterInput.value = '';
   filterInput.dispatchEvent(new Event('input'));
   filterInput.focus();
 });
 
-// —————————————————————————————————————
-// 7) Open “Add User” Modal
-// —————————————————————————————————————
+// ————————————————————————————————————————
+// 7) “Add User” modal
+// ————————————————————————————————————————
+
 addBtn.addEventListener('click', () => {
   editId = null;
   form.reset();
   titleEl.textContent = 'Add User';
 
-  // Lock category for heads
   if (myRole === 'category-admin') {
     catSelect.value    = myCategory;
     catSelect.disabled = true;
@@ -259,9 +262,10 @@ addBtn.addEventListener('click', () => {
   openModal();
 });
 
-// —————————————————————————————————————
-// 8) Open “Edit User” Modal
-// —————————————————————————————————————
+// ————————————————————————————————————————
+// 8) “Edit User” modal
+// ————————————————————————————————————————
+
 async function editUser(id) {
   try {
     const { user } = await apiFetch(`/api/users/${id}`);
@@ -269,31 +273,32 @@ async function editUser(id) {
 
     nameInput.value     = user.name;
     emailInput.value    = user.email;
-    usernameInput.value = '';  // blank → backend will default if unchanged
+    usernameInput.value = '';              // backend will keep existing if blank
     phoneInput.value    = user.phone || '';
     ageInput.value      = user.age   || '';
     form.gender.value   = user.gender;
-    catSelect.value     = user.categoryType || '';
+    catSelect.value     = user.categoryType||'';
     catSelect.disabled  = (myRole === 'category-admin');
 
     updateRoleOptions();
-    form.role.value = user.role;
+    form.role.value     = user.role;
     titleEl.textContent = 'Edit User';
     openModal();
-
   } catch {
     showToast('error','Unable to load user');
   }
 }
 
-// —————————————————————————————————————
-// 9) Category → Role Dependency
-// —————————————————————————————————————
+// ————————————————————————————————————————
+// 9) Category→Role dependency
+// ————————————————————————————————————————
+
 catSelect.addEventListener('change', updateRoleOptions);
 
-// —————————————————————————————————————
-// 10) Modal Open/Close
-// —————————————————————————————————————
+// ————————————————————————————————————————
+// 10) Modal open/close
+// ————————————————————————————————————————
+
 function openModal() {
   modal.classList.add('active');
   modal.setAttribute('aria-hidden','false');
@@ -306,56 +311,57 @@ function closeModal() {
 cancelBtn.addEventListener('click', closeModal);
 modal.querySelector('.modal-backdrop').addEventListener('click', closeModal);
 
-// —————————————————————————————————————
-// 11) Input Sanitizers & Validators
-// —————————————————————————————————————
-// allow letters, spaces (\s) and dots (.)
-nameInput.addEventListener('input', () => {
-  nameInput.value = nameInput.value.replace(/[^A-Za-z\s.]/g, '');
-});
+// ————————————————————————————————————————
+// 11) Input sanitizers & validators
+// ————————————————————————————————————————
 
+nameInput.addEventListener('input', () => {
+  // allow letters, spaces & dots
+  nameInput.value = nameInput.value.replace(/[^A-Za-z\s.]/g,'');
+});
 phoneInput.addEventListener('input', () => {
   phoneInput.value = phoneInput.value.replace(/\D/g,'').slice(0,10);
 });
-ageInput.addEventListener('input',   () => {
+ageInput.addEventListener('input', () => {
   ageInput.value = ageInput.value.replace(/\D/g,'').slice(0,3);
 });
 usernameInput.addEventListener('input', () => {
   usernameInput.value = sanitizeUsername(usernameInput.value);
 });
 
-// —————————————————————————————————————
-// 12) Submit (Create or Update)
-// —————————————————————————————————————
+// ————————————————————————————————————————
+// 12) Submit form (create/update)
+// ————————————————————————————————————————
+
 form.addEventListener('submit', async e => {
   e.preventDefault();
 
-  const name     = nameInput.value.trim();
-  const email    = emailInput.value.trim();
-  const phone    = phoneInput.value.trim();
-  const age      = ageInput.value.trim();
-  const rawUser  = usernameInput.value.trim();
+  const name   = nameInput.value.trim();
+  const email  = emailInput.value.trim();
+  const phone  = phoneInput.value.trim();
+  const age    = ageInput.value.trim();
+  const rawUser= usernameInput.value.trim();
 
   if (!/^[A-Za-z.\s]+$/.test(name)) {
     return showToast('error','Name may only contain letters, spaces, and dots');
   }
-  if (phone && !/^\d{10}$/.test(phone))
+  if (phone && !/^\d{10}$/.test(phone)) {
     return showToast('error','Phone must be 10 digits');
-  if (age && !/^\d+$/.test(age))
+  }
+  if (age && !/^\d+$/.test(age)) {
     return showToast('error','Age must be numeric');
+  }
 
-  // Build payload
   const payload = {
     name,
     email,
-    phone: phone || null,
-    age:   age   ? Number(age) : null,
+    phone: phone||null,
+    age:    age? Number(age):null,
     gender: form.gender.value,
     categoryType: catSelect.value.replace(/-head$/,''),
     role: form.role.value
   };
 
-  // Optional username
   if (rawUser) {
     if (!/^[a-z0-9]+$/.test(rawUser)) {
       return showToast('error','Username must be lowercase letters & digits only');
@@ -367,13 +373,13 @@ form.addEventListener('submit', async e => {
   const method = editId ? 'PUT' : 'POST';
 
   try {
-    showToast('success', editId ? 'Updating…' : 'Creating…', true);
+    showToast('success', editId? 'Updating…':'Creating…', true);
     await apiFetch(url, {
       method,
-      headers: { 'Content-Type': 'application/json' },
+      headers: {'Content-Type':'application/json'},
       body: JSON.stringify(payload)
     });
-    showToast('success', editId ? 'User updated' : 'User created');
+    showToast('success', editId? 'User updated':'User created');
     closeModal();
     loadUsers();
   } catch (err) {
@@ -381,9 +387,10 @@ form.addEventListener('submit', async e => {
   }
 });
 
-// —————————————————————————————————————
-// 13) Initialize
-// —————————————————————————————————————
+// ————————————————————————————————————————
+// 13) Initialize everything
+// ————————————————————————————————————————
+
 (async function init() {
   closeModal();
   await loadMe();
