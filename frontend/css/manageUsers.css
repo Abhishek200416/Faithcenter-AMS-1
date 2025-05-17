@@ -197,18 +197,20 @@ body {
     font-size: 0.75rem;
     background: var(--accent);
     color: #fff;
-    max-width: 120px;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
 }
 
 .badge-cat {
     background: #444;
-    max-width: 120px;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
 }
 
 
