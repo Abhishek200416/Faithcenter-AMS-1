@@ -23,6 +23,18 @@ module.exports = sequelize => {
             allowNull: false,
             defaultValue: DataTypes.NOW
         },
+        // New: count of changes in current window
+        usernameChangeCount: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 0
+        },
+        // New: window start for counting changes
+        usernameChangeWindowStart: {
+            type: DataTypes.DATE,
+            allowNull: false,
+            defaultValue: DataTypes.NOW
+        },
         name: {
             type: DataTypes.STRING,
             allowNull: false
@@ -42,20 +54,15 @@ module.exports = sequelize => {
             type: DataTypes.STRING,
             allowNull: false
         },
-
-        // Roles remain: developer, admin, category-admin, usher
         role: {
             type: DataTypes.ENUM('developer', 'admin', 'category-admin', 'usher'),
             allowNull: false,
             defaultValue: 'usher'
         },
-
-        // Only bare categories now
         categoryType: {
-            type: DataTypes.ENUM('admin', 'protocol', 'media', 'worship', 'ushering', 'developer'),
+            type: DataTypes.ENUM('admin', 'protocol', 'media', 'worship', 'ushering'),
             allowNull: true
         },
-
         gender: {
             type: DataTypes.ENUM('male', 'female'),
             allowNull: false
