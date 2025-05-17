@@ -183,36 +183,6 @@ body {
     margin: 0;
     font-size: clamp(1rem, 2vw, 1.1rem);
     color: var(--text);
-    flex: 1 1 auto;
-    /* take available space but allow to shrink */
-    min-width: 0;
-    /* allow it to shrink below its content width */
-    overflow: hidden;
-    /* hide overflow */
-    white-space: nowrap;
-    /* don't wrap onto a second line */
-    text-overflow: ellipsis;
-    /* show “…” when truncated */
-}
-
-
-/* On mobile, allow the name to wrap onto two lines before ellipsis */
-
-@media (max-width: 480px) {
-    .user-card-header h3 {
-        white-space: normal;
-        /* Allow wrapping */
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        /* Max 2 lines */
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        /* Show ellipsis if still overflowing */
-        height: 2.4em;
-        /* Make space for 2 lines */
-        line-height: 1.2em;
-    }
 }
 
 .badges {

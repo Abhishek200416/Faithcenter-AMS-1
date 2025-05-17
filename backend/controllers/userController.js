@@ -9,7 +9,6 @@ const { Sequelize, Op } = require('sequelize');
 // ——————————————————————————————————————————————————————————————————
 
 const ALLOWED_CATEGORIES = ['admin', 'protocol', 'media', 'worship', 'ushering'];
-const USERNAME_SUFFIX = 'FC';
 
 /**
  * Returns true if this user may change their username now:
@@ -23,7 +22,7 @@ function canChangeUsername(user) {
         const daysSince = (now - ago) / (1000 * 60 * 60 * 24);
         return daysSince >= 30;
     }
-    return true; // dev/admin always
+    return true; // developer & admin always
 }
 
 function parseSequelizeError(err) {
@@ -33,25 +32,23 @@ function parseSequelizeError(err) {
     return null;
 }
 
+/** 2-digit year + 8-digit random */
 function genUid() {
     const yy = new Date().getFullYear().toString().slice(-2);
-    const rand = Math.floor(Math.random() * 1e8).toString().padStart(8, '0');
+    const rand = Math.floor(Math.random() * 1e8)
+        .toString()
+        .padStart(8, '0');
     return yy + rand;
 }
 
-/**
- * Generates a username like "john@3FC"
- */
-/**
- * Normalize a username: lowercase, no spaces.
- */
+/** Lowercase, no spaces */
 function genUsername(name) {
     return name.replace(/\s+/g, '').toLowerCase();
 }
 
-
-function genPassword(name) {
-    return name.replace(/\s+/g, '').toLowerCase() + '@passFC';
+/** Lowercase, no spaces, then @passFC */
+function genPassword(source) {
+    return source.replace(/\s+/g, '').toLowerCase() + '@passFC';
 }
 
 // ——————————————————————————————————————————————————————————————————
@@ -65,39 +62,45 @@ exports.createUser = async function createUser(req, res, next) {
             return res.status(403).json({ message: 'Forbidden' });
         }
 
-        let { name, email, phone, role, categoryType, gender, age, username } = req.body;
+        let { name, email, phone, role, categoryType, gender, age, username } =
+        req.body;
         categoryType = categoryType.replace(/-head$/, '');
         if (!ALLOWED_CATEGORIES.includes(categoryType)) {
             return res.status(400).json({ message: 'Invalid category type' });
         }
 
-        // Role-based creation permission
-        if (actor === 'admin' && !['category-admin', 'usher'].includes(role)) {
-            return res.status(403).json({ message: 'Admins can only create Heads or Members' });
+        // Role-based permission
+        if (
+            actor === 'admin' &&
+            !['category-admin', 'usher'].includes(role)
+        ) {
+            return res
+                .status(403)
+                .json({ message: 'Admins can only create Heads or Members' });
         }
         if (actor === 'category-admin') {
             if (role !== 'usher' || categoryType !== req.user.categoryType) {
-                return res.status(403).json({ message: 'Heads can only add Members in their own category' });
+                return res
+                    .status(403)
+                    .json({ message: 'Heads can only add Members in their own category' });
             }
         }
 
-        // ────── USERNAME: optional field ──────
+        // ────── USERNAME (optional) ──────
         if (!username || !username.trim()) {
-            // derive from the full name
             username = genUsername(name);
         } else {
             username = username.trim().toLowerCase();
         }
-        // now ensure it’s unique:
-        const dup = await User.findOne({ where: { username } });
-        if (dup) {
+        // uniqueness check
+        if (await User.findOne({ where: { username } })) {
             return res.status(400).json({ message: 'Username already exists' });
         }
 
-
-        // ────── UID & PASSWORD ──────
+        // ────── UID, PASSWORD ──────
         const uid = genUid();
-        const passwordPlain = genPassword(name);
+        // password from username if given, else from name
+        const passwordPlain = genPassword(username || name);
         const passwordHash = await bcrypt.hash(passwordPlain, 10);
 
         // ────── CREATE ──────
@@ -112,11 +115,32 @@ exports.createUser = async function createUser(req, res, next) {
             uid,
             username,
             password: passwordHash,
-            usernameChangedAt: new Date()
+            usernameChangedAt: new Date(),
         });
 
-        const safe = (({ id, uid, username, name, email, phone, role, categoryType, gender, age }) =>
-            ({ id, uid, username, name, email, phone, role, categoryType, gender, age }))(user);
+        const safe = (({
+            id,
+            uid,
+            username,
+            name,
+            email,
+            phone,
+            role,
+            categoryType,
+            gender,
+            age,
+        }) => ({
+            id,
+            uid,
+            username,
+            name,
+            email,
+            phone,
+            role,
+            categoryType,
+            gender,
+            age,
+        }))(user);
 
         res.status(201).json({ user: safe, plainPassword: passwordPlain });
     } catch (err) {
@@ -139,10 +163,18 @@ exports.getAllUsers = async function getAllUsers(req, res, next) {
         const users = await User.findAll({
             where,
             attributes: [
-                'id', 'uid', 'username', 'name',
-                'email', 'phone', 'role', 'categoryType',
-                'gender', 'age', 'usernameChangedAt'
-            ]
+                'id',
+                'uid',
+                'username',
+                'name',
+                'email',
+                'phone',
+                'role',
+                'categoryType',
+                'gender',
+                'age',
+                'usernameChangedAt',
+            ],
         });
         res.json({ users });
     } catch (err) {
@@ -154,13 +186,24 @@ exports.getUserById = async function getUserById(req, res, next) {
     try {
         const user = await User.findByPk(req.params.id, {
             attributes: [
-                'id', 'uid', 'username', 'name',
-                'email', 'phone', 'role', 'categoryType',
-                'gender', 'age', 'usernameChangedAt'
-            ]
+                'id',
+                'uid',
+                'username',
+                'name',
+                'email',
+                'phone',
+                'role',
+                'categoryType',
+                'gender',
+                'age',
+                'usernameChangedAt',
+            ],
         });
         if (!user) return res.status(404).json({ message: 'Not found' });
-        if (req.user.role === 'category-admin' && user.categoryType !== req.user.categoryType) {
+        if (
+            req.user.role === 'category-admin' &&
+            user.categoryType !== req.user.categoryType
+        ) {
             return res.status(403).json({ message: 'Forbidden' });
         }
         res.json({ user });
@@ -173,10 +216,18 @@ exports.getMyProfile = async function getMyProfile(req, res, next) {
     try {
         const user = await User.findByPk(req.user.id, {
             attributes: [
-                'id', 'uid', 'username', 'name',
-                'email', 'phone', 'role', 'categoryType',
-                'gender', 'age', 'usernameChangedAt'
-            ]
+                'id',
+                'uid',
+                'username',
+                'name',
+                'email',
+                'phone',
+                'role',
+                'categoryType',
+                'gender',
+                'age',
+                'usernameChangedAt',
+            ],
         });
         res.json({ user });
     } catch (err) {
@@ -199,19 +250,35 @@ exports.updateUser = async function updateUser(req, res, next) {
         if (!user) return res.status(404).json({ message: 'Not found' });
 
         if (actor === 'category-admin') {
-            if (user.role !== 'usher' ||
-                user.categoryType !== req.user.categoryType) {
+            if (
+                user.role !== 'usher' ||
+                user.categoryType !== req.user.categoryType
+            ) {
                 return res.status(403).json({ message: 'Forbidden' });
             }
         }
 
-        let { name, email, phone, role, categoryType, gender, age, username } = req.body;
+        let {
+            name,
+            email,
+            phone,
+            role,
+            categoryType,
+            gender,
+            age,
+            username,
+        } = req.body;
         categoryType = categoryType.replace(/-head$/, '');
         if (!ALLOWED_CATEGORIES.includes(categoryType)) {
             return res.status(400).json({ message: 'Invalid category type' });
         }
-        if (actor === 'admin' && !['category-admin', 'usher'].includes(role)) {
-            return res.status(403).json({ message: 'Admins can only assign Heads or Members' });
+        if (
+            actor === 'admin' &&
+            !['category-admin', 'usher'].includes(role)
+        ) {
+            return res
+                .status(403)
+                .json({ message: 'Admins can only assign Heads or Members' });
         }
 
         const updates = { name, email, phone, role, categoryType, gender, age };
@@ -223,7 +290,6 @@ exports.updateUser = async function updateUser(req, res, next) {
                     .status(400)
                     .json({ message: 'Username can only be changed once every 30 days' });
             }
-            // duplicate?
             const dup = await User.findOne({ where: { username } });
             if (dup) {
                 return res.status(400).json({ message: 'Username already exists' });
@@ -245,7 +311,7 @@ exports.updateUser = async function updateUser(req, res, next) {
             categoryType,
             gender,
             age,
-            usernameChangedAt
+            usernameChangedAt,
         }) => ({
             id,
             uid,
@@ -257,7 +323,7 @@ exports.updateUser = async function updateUser(req, res, next) {
             categoryType,
             gender,
             age,
-            usernameChangedAt
+            usernameChangedAt,
         }))(user);
 
         res.json({ user: safe });
@@ -303,7 +369,7 @@ exports.updateMyProfile = async function updateMyProfile(req, res, next) {
             categoryType,
             gender,
             age,
-            usernameChangedAt
+            usernameChangedAt,
         }) => ({
             id,
             uid,
@@ -315,7 +381,7 @@ exports.updateMyProfile = async function updateMyProfile(req, res, next) {
             categoryType,
             gender,
             age,
-            usernameChangedAt
+            usernameChangedAt,
         }))(user);
 
         res.json({ user: safe });
