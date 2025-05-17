@@ -22,9 +22,16 @@ let resendCooldown = 30; // seconds
 // — Helpers —
 function isValidIdentifier(s) {
     return !!(
-        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) ||
-        /^\d{10,}$/.test(s) ||
-        /^[a-z0-9]+@1FC$/.test(s) ||
+        // email
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)
+        // phone/UID (pure digits)
+        ||
+        /^\d{10,}$/.test(s)
+        // your generated usernames (just letters+digits)
+        ||
+        /^[a-zA-Z0-9]+$/.test(s)
+        // optional: raw UUID
+        ||
         /^[0-9a-fA-F-]{36}$/.test(s)
     );
 }
