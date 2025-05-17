@@ -119,10 +119,10 @@
                     <p id="profileSuccess" class="success"></p>
                     </form>
 
-                    <!-- CHANGE PASSWORD & RESET OTP -->
+                    <!-- inside profile.html, in your password form -->
                     <form id="passwordForm" class="form">
-                        <!-- Direct change -->
-                        <div id="changeSection" class="pw-section" active>
+                        <!-- STEP 1: Direct change -->
+                        <div id="step1" class="pw-step">
                             <div class="field password-field">
                                 <label for="currentPw">Current Password</label>
                                 <div class="password-wrapper">
@@ -144,35 +144,48 @@
                                     <button type="button" class="toggle-password" data-target="confirmPw">Show</button>
                                 </div>
                             </div>
-                            <button type="submit" class="btn">Update Password</button>
+                            <button type="submit" class="btn" id="updatePwBtn">Update Password</button>
                             <p class="secondary-text">
-                                <a href="#" id="showReset">Forgot Password?</a>
+                                <a href="#" id="forgotLink">Forgot Password?</a>
                             </p>
                         </div>
 
-                        <!-- OTP reset -->
-                        <div id="resetSection" class="pw-section hidden">
-                            <div class="field otp-step1">
+                        <!-- STEP 2: “enter email/phone” -->
+                        <div id="step2" class="pw-step hidden">
+                            <div class="field">
                                 <label for="resetIdentifier">Email or Phone</label>
                                 <input type="text" id="resetIdentifier" required>
-                                <button type="button" id="sendOtp" class="btn send-btn">
-                                <span class="btn-text">Send OTP</span>
-                                <span class="spinner"></span>
-                            </button>
                             </div>
-                            <div class="field otp-step2 hidden">
-                                <p class="info-text">OTP sent—check your inbox.</p>
+                            <button type="button" class="btn" id="sendVerifyBtn">Send Verification Code</button>
+                        </div>
+
+                        <!-- STEP 3: “enter OTP” -->
+                        <div id="step3" class="pw-step hidden">
+                            <p class="info-text">Verification code sent—check your inbox.</p>
+                            <div class="field">
                                 <label for="resetCode">Enter OTP Code</label>
-                                <input type="text" id="resetCode">
+                                <input type="text" id="resetCode" required>
                             </div>
-                            <div class="field password-field otp-step2 hidden">
+                            <button type="button" class="btn" id="verifyOtpBtn">Verify Code</button>
+                        </div>
+
+                        <!-- STEP 4: “set new password” -->
+                        <div id="step4" class="pw-step hidden">
+                            <div class="field password-field">
                                 <label for="resetNewPw">New Password</label>
                                 <div class="password-wrapper">
                                     <input type="password" id="resetNewPw">
                                     <button type="button" class="toggle-password" data-target="resetNewPw">Show</button>
                                 </div>
                             </div>
-                            <button type="submit" class="btn otp-step2 hidden">Reset Password</button>
+                            <div class="field password-field">
+                                <label for="resetConfirmPw">Confirm Password</label>
+                                <div class="password-wrapper">
+                                    <input type="password" id="resetConfirmPw">
+                                    <button type="button" class="toggle-password" data-target="resetConfirmPw">Show</button>
+                                </div>
+                            </div>
+                            <button type="button" class="btn" id="resetPwBtn">Reset Password</button>
                         </div>
 
                         <p id="passwordError" class="error"></p>

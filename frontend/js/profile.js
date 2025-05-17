@@ -1,3 +1,4 @@
+// File: public/js/profile.js
 import { apiFetch } from './utils.js';
 import { showToast } from './toast.js';
 
@@ -6,286 +7,247 @@ import { showToast } from './toast.js';
 // ——————————————————————————————————————————————————————————————————
 /** Strip to lowercase a–z & 0–9 only */
 function sanitizeUsername(str) {
-    return String(str || '')
-        .trim()
-        .toLowerCase()
-        .replace(/[^a-z0-9]/g, '');
+  return String(str || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
 }
 
+/** Return whole days since ISO date string */
 function daysSince(dateStr) {
-    const ms = Date.now() - new Date(dateStr).getTime();
-    return Math.floor(ms / (1000 * 60 * 60 * 24));
+  const ms   = Date.now() - new Date(dateStr).getTime();
+  return Math.floor(ms / (1000 * 60 * 60 * 24));
 }
 
 // ——————————————————————————————————————————————————————————————————
 // DOM Refs
 // ——————————————————————————————————————————————————————————————————
-const profileTab = document.getElementById('profileTab');
-const passwordTab = document.getElementById('passwordTab');
-const profileForm = document.getElementById('profileForm');
-const passwordForm = document.getElementById('passwordForm');
-const changeSec = document.getElementById('changeSection');
-const resetSec = document.getElementById('resetSection');
-const sendOtpBtn = document.getElementById('sendOtp');
-const showResetLink = document.getElementById('showReset');
+const profileTab    = document.getElementById('profileTab');
+const passwordTab   = document.getElementById('passwordTab');
+const profileForm   = document.getElementById('profileForm');
+const passwordForm  = document.getElementById('passwordForm');
+
+const step1         = document.getElementById('step1');
+const step2         = document.getElementById('step2');
+const step3         = document.getElementById('step3');
+const step4         = document.getElementById('step4');
+const forgotLink    = document.getElementById('forgotLink');
+const sendVerifyBtn = document.getElementById('sendVerifyBtn');
+const verifyOtpBtn  = document.getElementById('verifyOtpBtn');
+const resetPwBtn    = document.getElementById('resetPwBtn');
 
 const usernameInput = document.getElementById('username');
-const usernameHelp = (() => {
-    let p = document.getElementById('usernameHelp');
-    if (!p) {
-        p = document.createElement('p');
-        p.id = 'usernameHelp';
-        p.className = 'info-text';
-        usernameInput.parentNode.appendChild(p);
-    }
-    return p;
+const usernameHelp  = (() => {
+  let p = document.getElementById('usernameHelp');
+  if (!p) {
+    p = document.createElement('p');
+    p.id        = 'usernameHelp';
+    p.className = 'info-text';
+    usernameInput.parentNode.appendChild(p);
+  }
+  return p;
 })();
 
-const [profileError, profileSuccess, passwordError, passwordSuccess] = ['profileError', 'profileSuccess', 'passwordError', 'passwordSuccess']
-.map(id => document.getElementById(id));
+// feedback lines
+const [ profileError, profileSuccess, passwordError, passwordSuccess ] =
+  [ 'profileError','profileSuccess','passwordError','passwordSuccess' ]
+    .map(id => document.getElementById(id));
 
 // ——————————————————————————————————————————————————————————————————
 // Tab Switching
 // ——————————————————————————————————————————————————————————————————
 function switchTab(tab) {
-    // Profile vs Password form
-    profileForm.classList.toggle('active', tab === 'profile');
-    passwordForm.classList.toggle('active', tab === 'password');
-    profileTab.classList.toggle('active', tab === 'profile');
-    passwordTab.classList.toggle('active', tab === 'password');
-
-    // Always reset password‐sections to “direct change” view
-    changeSec.classList.remove('hidden');
-    resetSec.classList.add('hidden');
-
-    // Clear any messages
-    [profileError, profileSuccess, passwordError, passwordSuccess]
-    .forEach(el => el.textContent = '');
+  profileForm.classList.toggle('active', tab === 'profile');
+  passwordForm.classList.toggle('active', tab === 'password');
+  profileTab .classList.toggle('active', tab === 'profile');
+  passwordTab.classList.toggle('active', tab === 'password');
+  // always reset to direct-change on tab switch
+  showStep(1);
+  [ profileError, profileSuccess, passwordError, passwordSuccess ].forEach(el => el.textContent = '');
 }
 
-profileTab.onclick = () => switchTab('profile');
+profileTab.onclick  = () => switchTab('profile');
 passwordTab.onclick = () => switchTab('password');
+
+// ——————————————————————————————————————————————————————————————————
+// Password Reset Wizard
+// ——————————————————————————————————————————————————————————————————
+function showStep(n) {
+  [ step1, step2, step3, step4 ].forEach((el,i) => {
+    el.classList.toggle('hidden', i+1 !== n);
+  });
+  passwordError.textContent   = '';
+  passwordSuccess.textContent = '';
+}
+
+// “Forgot password?” → step 2
+forgotLink.addEventListener('click', e => {
+  e.preventDefault();
+  showStep(2);
+});
+
+// Step 2 → send verification code
+sendVerifyBtn.addEventListener('click', async () => {
+  const identifier = document.getElementById('resetIdentifier').value.trim();
+  if (!identifier) {
+    showToast('error','Please enter your email or phone');
+    return;
+  }
+  try {
+    showToast('success','Sending code…', true);
+    await apiFetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify({ identifier })
+    });
+    showToast('success','Code sent!');
+    showStep(3);
+  } catch (err) {
+    showToast('error', err.message);
+  }
+});
+
+// Step 3 → verify OTP
+verifyOtpBtn.addEventListener('click', async () => {
+  const identifier = document.getElementById('resetIdentifier').value.trim();
+  const code       = document.getElementById('resetCode').value.trim();
+  if (!/^\d{4,6}$/.test(code)) {
+    showToast('error','Enter a valid code');
+    return;
+  }
+  try {
+    showToast('success','Verifying…', true);
+    await apiFetch('/api/auth/verify-reset-otp', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify({ identifier, code })
+    });
+    showToast('success','Verified!');
+    showStep(4);
+  } catch (err) {
+    showToast('error', err.message);
+  }
+});
+
+// Step 4 → set new password
+resetPwBtn.addEventListener('click', async () => {
+  const identifier = document.getElementById('resetIdentifier').value.trim();
+  const code       = document.getElementById('resetCode').value.trim();
+  const newPw      = document.getElementById('resetNewPw').value.trim();
+  const confPw     = document.getElementById('resetConfirmPw').value.trim();
+  if (!newPw || newPw !== confPw) {
+    showToast('error','Passwords must match');
+    return;
+  }
+  try {
+    showToast('success','Resetting…', true);
+    await apiFetch('/api/auth/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify({ identifier, code, newPassword: newPw })
+    });
+    showToast('success','Password reset! Please log in.');
+    switchTab('profile');
+  } catch (err) {
+    showToast('error', err.message);
+  }
+});
 
 // ——————————————————————————————————————————————————————————————————
 // Load & Render Profile
 // ——————————————————————————————————————————————————————————————————
 async function loadProfile() {
-    try {
-        const { user } = await apiFetch('/api/users/me');
+  try {
+    const { user } = await apiFetch('/api/users/me');
 
-        // Welcome banner
-        document.getElementById('userName').textContent = user.name;
+    // banner
+    document.getElementById('userName').textContent = user.name;
 
-        // Fill basic fields
-        ['name', 'phone', 'gender', 'age', 'email', 'uid', 'categoryType', 'role']
-        .forEach(f => {
-            const el = document.getElementById(f);
-            if (el) el.value = user[f] || '';
-        });
+    // basic fields
+    [ 'name','phone','gender','age','email','uid','categoryType','role' ]
+      .forEach(f => {
+        const el = document.getElementById(f);
+        if (el) el.value = user[f] ?? '';
+      });
 
-        // Username (no suffix logic)
-        usernameInput.value = user.username;
-        usernameHelp.textContent = '';
-
-        // Cooldown logic (server enforces 3×/30d; here we show days until next allowed)
-        const elapsed = daysSince(user.usernameChangedAt);
-        const daysLeft = Math.max(0, 30 - elapsed);
-        if (['category-admin', 'usher'].includes(user.role)) {
-            usernameInput.disabled = daysLeft > 0;
-            usernameHelp.textContent = daysLeft > 0 ?
-                `You can change your username in ${daysLeft} day${daysLeft > 1 ? 's' : ''}.` :
-                '';
-        } else {
-            // dev & admin always editable
-            usernameInput.disabled = false;
-        }
-
-    } catch (err) {
-        console.error(err);
-        showToast('error', 'Failed to load profile');
+    // username + cooldown
+    usernameInput.value       = user.username;
+    usernameHelp.textContent  = '';
+    const elapsed             = daysSince(user.usernameChangedAt);
+    const daysLeft            = Math.max(0, 30 - elapsed);
+    if ([ 'category-admin','usher' ].includes(user.role)) {
+      usernameInput.disabled = daysLeft > 0;
+      usernameHelp.textContent = daysLeft > 0
+        ? `You have ${daysLeft} day${daysLeft>1?'s':''} until next username change.`
+        : '';
+    } else {
+      usernameInput.disabled = false;
     }
+  } catch (err) {
+    console.error(err);
+    showToast('error','Failed to load profile');
+  }
 }
-
-// ——————————————————————————————————————————————————————————————————
-// Username Input Sanitization
-// ——————————————————————————————————————————————————————————————————
-usernameInput.addEventListener('input', () => {
-    usernameInput.value = sanitizeUsername(usernameInput.value);
-});
 
 // ——————————————————————————————————————————————————————————————————
 // Profile Save Handler
 // ——————————————————————————————————————————————————————————————————
 profileForm.addEventListener('submit', async e => {
-    e.preventDefault();
-    showToast('success', 'Saving profile…', true);
+  e.preventDefault();
+  showToast('success','Saving profile…', true);
 
-    try {
-        const payload = {
-            name: e.target.name.value.trim(),
-            phone: e.target.phone.value.trim() || null,
-            gender: e.target.gender.value,
-            age: e.target.age.value ? Number(e.target.age.value) : null,
-            email: e.target.email.value.trim(),
-            username: usernameInput.value.trim() || undefined
-        };
+  try {
+    const payload = {
+      name:     e.target.name.value.trim(),
+      phone:    e.target.phone.value.trim() || null,
+      gender:   e.target.gender.value,
+      age:      e.target.age.value ? +e.target.age.value : null,
+      email:    e.target.email.value.trim(),
+      username: sanitizeUsername(usernameInput.value) || undefined
+    };
 
-        await apiFetch('/api/users/me', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
+    await apiFetch('/api/users/me', {
+      method: 'PUT',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify(payload)
+    });
 
-        showToast('success', 'Profile updated');
-        await loadProfile();
-
-    } catch (err) {
-        console.error(err);
-        showToast('error', err.message);
-        // If server returns “3 changes in 30 days” error, it will include that text
-        if (err.message.includes('30-day')) {
-            const days = err.message.match(/\d+/);
-            if (days) {
-                usernameHelp.textContent =
-                    `You can change your username in ${days[0]} days.`;
-            }
-        }
-    }
-});
-
-// ——————————————————————————————————————————————————————————————————
-// Password vs. OTP Reset Toggle
-// ——————————————————————————————————————————————————————————————————
-showResetLink.addEventListener('click', e => {
-    e.preventDefault();
-    changeSec.classList.add('hidden');
-    resetSec.classList.remove('hidden');
-});
-
-// ——————————————————————————————————————————————————————————————————
-// Password / OTP Submission
-// ——————————————————————————————————————————————————————————————————
-passwordForm.addEventListener('submit', async e => {
-    e.preventDefault();
-
-    // Direct-change section visible?
-    if (!changeSec.classList.contains('hidden')) {
-        // Current / New / Confirm
-        const oldPw = document.getElementById('currentPw').value.trim();
-        const newPw = document.getElementById('newPw').value.trim();
-        const confirm = document.getElementById('confirmPw').value.trim();
-
-        if (!oldPw || !newPw || !confirm) {
-            showToast('error', 'All password fields are required');
-            return;
-        }
-        if (newPw !== confirm) {
-            showToast('error', 'New passwords do not match');
-            return;
-        }
-
-        showToast('success', 'Updating password…', true);
-        try {
-            await apiFetch('/api/auth/change-password', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ oldPassword: oldPw, newPassword: newPw })
-            });
-            showToast('success', 'Password updated');
-            // Clear fields
-            ['currentPw', 'newPw', 'confirmPw'].forEach(id =>
-                document.getElementById(id).value = ''
-            );
-        } catch (err) {
-            console.error('Change-password error:', err);
-            const msg = err.message === 'Old password is incorrect' ?
-                'Incorrect current password' :
-                err.message;
-            showToast('error', msg);
-        }
-
-    } else {
-        // OTP-based reset
-        const emailOrPhone = document.getElementById('resetIdentifier').value.trim();
-        const code = document.getElementById('resetCode').value.trim();
-        const newPw = document.getElementById('resetNewPw').value.trim();
-
-        if (!emailOrPhone || !code || !newPw) {
-            showToast('error', 'Please fill in all reset fields');
-            return;
-        }
-
-        showToast('success', 'Resetting password…', true);
-        try {
-            await apiFetch('/api/auth/reset-password', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    identifier: emailOrPhone,
-                    code,
-                    newPassword: newPw
-                })
-            });
-            showToast('success', 'Password reset successfully');
-            // Return to direct-change view
-            resetSec.classList.add('hidden');
-            changeSec.classList.remove('hidden');
-            switchTab('profile');
-        } catch (err) {
-            console.error('Reset-password error:', err);
-            showToast('error', err.message);
-        }
-    }
-});
-
-// ——————————————————————————————————————————————————————————————————
-// Send OTP Button
-// ——————————————————————————————————————————————————————————————————
-sendOtpBtn.addEventListener('click', async() => {
-    const idVal = document.getElementById('resetIdentifier').value.trim();
-    if (!idVal) {
-        showToast('error', 'Enter your email or phone to receive OTP');
-        return;
-    }
-
-    showToast('success', 'Sending OTP…', true);
-    sendOtpBtn.disabled = true;
-    sendOtpBtn.classList.add('loading');
-
-    try {
-        await apiFetch('/api/auth/forgot-password', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ identifier: idVal })
-        });
-        // Reveal OTP & new-password fields
-        resetSec.querySelector('.otp-step1').classList.add('hidden');
-        resetSec.querySelectorAll('.otp-step2')
-            .forEach(el => el.classList.remove('hidden'));
-        showToast('success', 'OTP sent! Check your inbox.');
-    } catch (err) {
-        console.error('Send-OTP error:', err);
-        showToast('error', err.message);
-    } finally {
-        sendOtpBtn.disabled = false;
-        sendOtpBtn.classList.remove('loading');
-    }
-});
-
-// ——————————————————————————————————————————————————————————————————
-// Toggle-password visibility
-// ——————————————————————————————————————————————————————————————————
-document.querySelectorAll('.toggle-password')
-    .forEach(btn => btn.addEventListener('click', () => {
-        const inp = document.getElementById(btn.dataset.target);
-        inp.type = inp.type === 'password' ? 'text' : 'password';
-        btn.textContent = inp.type === 'password' ? 'Show' : 'Hide';
-    }));
-
-// ——————————————————————————————————————————————————————————————————
-// Initialize
-// ——————————————————————————————————————————————————————————————————
-(async() => {
-    switchTab('profile');
+    showToast('success','Profile updated');
     await loadProfile();
+  } catch (err) {
+    console.error(err);
+    showToast('error', err.message);
+    if (err.message.includes('30-day')) {
+      const days = err.message.match(/\d+/)?.[0];
+      if (days) {
+        usernameHelp.textContent = `You can change your username in ${days} day${days>1?'s':''}.`;
+      }
+    }
+  }
+});
+
+// ——————————————————————————————————————————————————————————————————
+// Username Input Sanitization
+// ——————————————————————————————————————————————————————————————————
+usernameInput.addEventListener('input', () => {
+  usernameInput.value = sanitizeUsername(usernameInput.value);
+});
+
+// ——————————————————————————————————————————————————————————————————
+// Toggle-password visibility (works for all steps)
+// ——————————————————————————————————————————————————————————————————
+document.querySelectorAll('.toggle-password').forEach(btn =>
+  btn.addEventListener('click', () => {
+    const inp = document.getElementById(btn.dataset.target);
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+    btn.textContent = inp.type === 'password' ? 'Show' : 'Hide';
+  })
+);
+
+// ——————————————————————————————————————————————————————————————————
+// Init
+// ——————————————————————————————————————————————————————————————————
+(async function init() {
+  switchTab('profile');
+  await loadProfile();
 })();

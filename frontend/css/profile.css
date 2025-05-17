@@ -5,6 +5,17 @@
 }
 
 
+/* profile.css */
+
+.pw-step {
+    margin-bottom: var(--spacing);
+}
+
+.hidden {
+    display: none !important;
+}
+
+
 /* Layout: two-column on desktop, one-column on mobile */
 
 .profile-page .main-content {
