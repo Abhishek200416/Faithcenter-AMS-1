@@ -5,6 +5,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Login — Faith Centre AMS</title>
+    <!-- 1) Preload the image for highest priority -->
+    <link rel="preload" href="/assets/images/best.jpg" as="image" />
+
+    <!-- 2) Inline the critical background rule -->
+    <style>
+        body.login-page {
+            /* fallback color while image loads: */
+            background-color: #1b1b1b;
+            /* preload gives us the file instantly or near–instantly: */
+            background: url('../assets/images/best.jpg') center/cover no-repeat fixed;
+        }
+    </style>
     <link rel="stylesheet" href="../css/base.css">
     <link rel="stylesheet" href="../css/login.css">
     <!-- Password toggle styles -->
