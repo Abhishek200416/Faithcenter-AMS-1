@@ -42,10 +42,13 @@ function genUid() {
 /**
  * Generates a username like "john@3FC"
  */
-function genUsername(name, suffixNumber) {
-    const base = name.replace(/\s+/g, '').toLowerCase();
-    return `${base}@${suffixNumber}${USERNAME_SUFFIX}`;
+/**
+ * Normalize a username: lowercase, no spaces.
+ */
+function genUsername(name) {
+    return name.replace(/\s+/g, '').toLowerCase();
 }
+
 
 function genPassword(name) {
     return name.replace(/\s+/g, '').toLowerCase() + '@passFC';
@@ -80,33 +83,17 @@ exports.createUser = async function createUser(req, res, next) {
 
         // ────── USERNAME: optional field ──────
         if (!username || !username.trim()) {
-            // find existing @nFC users
-            const all = await User.findAll({
-                where: {
-                    username: {
-                        [Op.like]: `%@%${USERNAME_SUFFIX}` }
-                },
-                attributes: ['username']
-            });
-            // get max suffix n
-            let maxN = 0;
-            all.forEach(u => {
-                const m = u.username.match(/@(\d+)FC$/);
-                if (m) {
-                    const num = parseInt(m[1], 10);
-                    if (num > maxN) maxN = num;
-                }
-            });
-            const nextN = maxN + 1;
-            username = genUsername(name, nextN);
+            // derive from the full name
+            username = genUsername(name);
         } else {
-            username = username.trim();
-            // check duplicate
-            const dup = await User.findOne({ where: { username } });
-            if (dup) {
-                return res.status(400).json({ message: 'Username already exists' });
-            }
+            username = username.trim().toLowerCase();
         }
+        // now ensure it’s unique:
+        const dup = await User.findOne({ where: { username } });
+        if (dup) {
+            return res.status(400).json({ message: 'Username already exists' });
+        }
+
 
         // ────── UID & PASSWORD ──────
         const uid = genUid();
