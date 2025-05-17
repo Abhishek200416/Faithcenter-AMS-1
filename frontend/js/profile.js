@@ -1,5 +1,4 @@
 // frontend/js/profile.js
-// frontend/js/profile.js
 import { apiFetch } from './utils.js';
 import { showToast } from './toast.js';
 
@@ -11,36 +10,13 @@ const changeSec = document.getElementById('changeSection');
 const resetSec = document.getElementById('resetSection');
 const sendOtpBtn = document.getElementById('sendOtp');
 const usernameInput = document.getElementById('username');
-const usernameHelp = (() => {
-    let p = document.getElementById('usernameHelp');
-    if (!p) {
-        p = document.createElement('p');
-        p.id = 'usernameHelp';
-        p.className = 'info-text';
-        usernameInput.parentNode.appendChild(p);
-    }
+const usernameHelp = document.getElementById('usernameHelp') || (() => {
+    const p = document.createElement('p');
+    p.id = 'usernameHelp';
+    p.className = 'info-text';
+    usernameInput.parentNode.append(p);
     return p;
 })();
-const SUFFIX = '@1FC';
-
-// … after your loadProfile() call, insert this handler:
-usernameInput.addEventListener('input', () => {
-    let v = usernameInput.value;
-
-    // if it doesn't end with the exact suffix, strip off any bad suffix or extra chars
-    if (!v.endsWith(SUFFIX)) {
-        // take everything up to the first '@' (in case they tried to re‑insert one),
-        // or the whole string if they never removed '@1FC' entirely
-        const idx = v.indexOf(SUFFIX);
-        if (idx >= 0) {
-            v = v.slice(0, idx);
-        } else if (v.includes('@')) {
-            v = v.split('@')[0];
-        }
-        // finally re‑append the frozen suffix
-        usernameInput.value = v + SUFFIX;
-    }
-});
 
 const [profileError, profileSuccess, passwordError, passwordSuccess] = ['profileError', 'profileSuccess', 'passwordError', 'passwordSuccess']
 .map(id => document.getElementById(id));
@@ -62,63 +38,41 @@ function switchTab(tab) {
 profileTab.onclick = () => switchTab('profile');
 passwordTab.onclick = () => switchTab('password');
 
-async function safeFetch(...args) {
-    return apiFetch(...args);
-}
-
 async function loadProfile() {
     try {
-        const { user } = await safeFetch('/api/users/me');
-
-        // Welcome banner
+        const { user } = await apiFetch('/api/users/me');
         document.getElementById('userName').textContent = user.name;
 
-        // fill fields
-        ['name', 'phone', 'gender', 'age', 'email', 'uid']
+        // fill simple fields
+        ['name', 'phone', 'gender', 'age', 'email', 'uid', 'categoryType']
         .forEach(f => {
             const el = document.getElementById(f);
             if (el) el.value = user[f] || '';
         });
 
-        // username
-        usernameInput.value = user.username;
-        usernameHelp.textContent = '';
-        // username
-        const raw = user.username || '';
-        // if somehow missing suffix, force it
-        usernameInput.value = raw.endsWith(SUFFIX) ?
-            raw :
-            raw.split('@')[0] + SUFFIX;
+        // username: just load directly
+        usernameInput.value = user.username || '';
         usernameHelp.textContent = '';
 
+        // role display
+        const roleMap = {
+            developer: 'Developer',
+            admin: 'Admin',
+            'category-admin': 'Head',
+            usher: 'Member'
+        };
+        document.getElementById('role').value = roleMap[user.role] || user.role;
 
-        // decide if editable
-        const role = user.role;
+        // username cooldown logic only if you still want it:
         const elapsed = daysSince(user.usernameChangedAt);
         const daysLeft = Math.max(0, 30 - elapsed);
 
-        if (role === 'category-admin' || role === 'usher') {
-            if (daysLeft > 0) {
-                usernameInput.disabled = true;
-                usernameHelp.textContent =
-                    `You can change your username in ${daysLeft} day${daysLeft>1?'s':''}.`;
-            } else {
-                usernameInput.disabled = false;
-            }
+        if (['category-admin', 'usher'].includes(user.role) && daysLeft > 0) {
+            usernameInput.disabled = true;
+            usernameHelp.textContent = `You can change your username in ${daysLeft} day${daysLeft>1?'s':''}.`;
         } else {
-            // developers & admins always can
             usernameInput.disabled = false;
         }
-
-        // category & role display
-        document.getElementById('categoryType').value = user.categoryType || '';
-        const roleMap = {
-            'developer': 'Developer',
-            'admin': 'Admin',
-            'category-admin': 'Head',
-            'usher': 'Member'
-        };
-        document.getElementById('role').value = roleMap[role] || 'Member';
 
     } catch (err) {
         console.error(err);
@@ -129,7 +83,6 @@ async function loadProfile() {
 loadProfile();
 
 // ——— PROFILE SAVE —————————
-
 profileForm.addEventListener('submit', async e => {
     e.preventDefault();
     showToast('success', 'Saving profile…', true);
@@ -142,30 +95,28 @@ profileForm.addEventListener('submit', async e => {
             email: e.target.email.value.trim(),
             username: usernameInput.value.trim()
         };
-        await safeFetch('/api/users/me', {
+        await apiFetch('/api/users/me', {
             method: 'PUT',
             body: JSON.stringify(payload)
         });
         showToast('success', 'Profile updated');
-        // reload so cooldown resets if username was changed
         await loadProfile();
     } catch (err) {
         console.error(err);
-        // server may return our 30‑day error
-        if (err.message.includes('30 days')) {
-            showToast('error', err.message);
-            // re‑render help text
-            const msg = err.message.match(/(\d+)/);
-            if (msg) usernameHelp.textContent =
-                `You can change your username in ${msg[1]} days.`;
+        const msg = err.message;
+        if (msg.includes('Username can only be changed')) {
+            showToast('error', msg);
+            // re-render help text if server told you the days remaining
+            const m = msg.match(/(\d+)/);
+            if (m) usernameHelp.textContent = `You can change your username in ${m[1]} day${m[1]>1?'s':''}.`;
         } else {
-            showToast('error', err.message);
+            showToast('error', msg);
         }
     }
 });
 
-// ——— PASSWORD & OTP (unchanged) —————————
-// ... your existing passwordForm submit, sendOtpBtn click, toggle‑password handlers ...
+// ——— PASSWORD FORM HANDLERS —————————
+// ... your existing change-password and reset-OTP logic unchanged ...
 
 // ——— Password & OTP Reset ————————————
 
