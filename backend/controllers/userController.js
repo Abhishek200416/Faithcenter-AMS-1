@@ -2,14 +2,14 @@
 
 const { User } = require('../models');
 const bcrypt = require('bcrypt');
-const { Sequelize } = require('sequelize');
+const { Sequelize, Op } = require('sequelize');
 
 // ——————————————————————————————————————————————————————————————————
 // CONFIG & HELPERS
 // ——————————————————————————————————————————————————————————————————
 
 const ALLOWED_CATEGORIES = ['admin', 'protocol', 'media', 'worship', 'ushering'];
-const USERNAME_SUFFIX = '@1FC';
+const USERNAME_SUFFIX = 'FC';
 
 /**
  * Returns true if this user may change their username now:
@@ -20,10 +20,10 @@ function canChangeUsername(user) {
     if (['category-admin', 'usher'].includes(user.role)) {
         const now = Date.now();
         const ago = new Date(user.usernameChangedAt).getTime();
-        const days = (now - ago) / (1000 * 60 * 60 * 24);
-        return days >= 30;
+        const daysSince = (now - ago) / (1000 * 60 * 60 * 24);
+        return daysSince >= 30;
     }
-    return true;
+    return true; // dev/admin always
 }
 
 function parseSequelizeError(err) {
@@ -39,8 +39,12 @@ function genUid() {
     return yy + rand;
 }
 
-function genUsername(name) {
-    return name.replace(/\s+/g, '').toLowerCase() + USERNAME_SUFFIX;
+/**
+ * Generates a username like "john@3FC"
+ */
+function genUsername(name, suffixNumber) {
+    const base = name.replace(/\s+/g, '').toLowerCase();
+    return `${base}@${suffixNumber}${USERNAME_SUFFIX}`;
 }
 
 function genPassword(name) {
@@ -58,12 +62,13 @@ exports.createUser = async function createUser(req, res, next) {
             return res.status(403).json({ message: 'Forbidden' });
         }
 
-        let { name, email, phone, role, categoryType, gender, age } = req.body;
+        let { name, email, phone, role, categoryType, gender, age, username } = req.body;
         categoryType = categoryType.replace(/-head$/, '');
         if (!ALLOWED_CATEGORIES.includes(categoryType)) {
             return res.status(400).json({ message: 'Invalid category type' });
         }
 
+        // Role-based creation permission
         if (actor === 'admin' && !['category-admin', 'usher'].includes(role)) {
             return res.status(403).json({ message: 'Admins can only create Heads or Members' });
         }
@@ -73,11 +78,42 @@ exports.createUser = async function createUser(req, res, next) {
             }
         }
 
+        // ────── USERNAME: optional field ──────
+        if (!username || !username.trim()) {
+            // find existing @nFC users
+            const all = await User.findAll({
+                where: {
+                    username: {
+                        [Op.like]: `%@%${USERNAME_SUFFIX}` }
+                },
+                attributes: ['username']
+            });
+            // get max suffix n
+            let maxN = 0;
+            all.forEach(u => {
+                const m = u.username.match(/@(\d+)FC$/);
+                if (m) {
+                    const num = parseInt(m[1], 10);
+                    if (num > maxN) maxN = num;
+                }
+            });
+            const nextN = maxN + 1;
+            username = genUsername(name, nextN);
+        } else {
+            username = username.trim();
+            // check duplicate
+            const dup = await User.findOne({ where: { username } });
+            if (dup) {
+                return res.status(400).json({ message: 'Username already exists' });
+            }
+        }
+
+        // ────── UID & PASSWORD ──────
         const uid = genUid();
-        const username = genUsername(name);
         const passwordPlain = genPassword(name);
         const passwordHash = await bcrypt.hash(passwordPlain, 10);
 
+        // ────── CREATE ──────
         const user = await User.create({
             name,
             email,
@@ -137,12 +173,9 @@ exports.getUserById = async function getUserById(req, res, next) {
             ]
         });
         if (!user) return res.status(404).json({ message: 'Not found' });
-
-        if (req.user.role === 'category-admin' &&
-            user.categoryType !== req.user.categoryType) {
+        if (req.user.role === 'category-admin' && user.categoryType !== req.user.categoryType) {
             return res.status(403).json({ message: 'Forbidden' });
         }
-
         res.json({ user });
     } catch (err) {
         next(err);
@@ -195,13 +228,20 @@ exports.updateUser = async function updateUser(req, res, next) {
         }
 
         const updates = { name, email, phone, role, categoryType, gender, age };
+
+        // ────── USERNAME CHANGE ──────
         if (username && username !== user.username) {
             if (!canChangeUsername(user)) {
                 return res
                     .status(400)
                     .json({ message: 'Username can only be changed once every 30 days' });
             }
-            updates.username = username;
+            // duplicate?
+            const dup = await User.findOne({ where: { username } });
+            if (dup) {
+                return res.status(400).json({ message: 'Username already exists' });
+            }
+            updates.username = username.trim();
             updates.usernameChangedAt = new Date();
         }
 
@@ -248,13 +288,18 @@ exports.updateMyProfile = async function updateMyProfile(req, res, next) {
 
         const { name, email, phone, gender, age, username } = req.body;
         const updates = { name, email, phone, gender, age };
+
         if (username && username !== user.username) {
             if (!canChangeUsername(user)) {
                 return res
                     .status(400)
                     .json({ message: 'Username can only be changed once every 30 days' });
             }
-            updates.username = username;
+            const dup = await User.findOne({ where: { username } });
+            if (dup) {
+                return res.status(400).json({ message: 'Username already exists' });
+            }
+            updates.username = username.trim();
             updates.usernameChangedAt = new Date();
         }
 
