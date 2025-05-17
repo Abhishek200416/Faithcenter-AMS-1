@@ -12,41 +12,11 @@ const ALLOWED_CATEGORIES = ['admin', 'protocol', 'media', 'worship', 'ushering']
 const MAX_CHANGES = 3;
 const WINDOW_DAYS = 30;
 
-/**
- * Returns true if this user may change their username now (max 3 per 30 days).
- * Also resets window & count if window has expired.
- */
-async function canChangeUsername(user) {
-    const now = Date.now();
-    const windowStart = new Date(user.usernameChangeWindowStart).getTime();
-    const daysSinceWindow = (now - windowStart) / (1000 * 60 * 60 * 24);
-
-    let count = user.usernameChangeCount;
-    let windowStartDate = new Date(user.usernameChangeWindowStart);
-
-    if (daysSinceWindow >= WINDOW_DAYS) {
-        // reset window
-        count = 0;
-        windowStartDate = new Date();
-    }
-
-    if (['developer', 'admin'].includes(user.role)) {
-        return { allowed: true, count, windowStart: windowStartDate };
-    }
-    // category-admin & usher:
-    if (count < MAX_CHANGES) {
-        return { allowed: true, count, windowStart: windowStartDate };
-    }
-    return {
-        allowed: false,
-        daysLeft: Math.ceil(WINDOW_DAYS - daysSinceWindow),
-        count,
-        windowStart: windowStartDate
-    };
-}
+// valid username characters
+const USERNAME_REGEX = /^[a-z0-9]+$/;
 
 /**
- * Parse Sequelize unique‐constraint errors
+ * Parses a Sequelize unique‐constraint error into a friendly message
  */
 function parseSequelizeError(err) {
     if (err instanceof Sequelize.UniqueConstraintError) {
@@ -55,32 +25,58 @@ function parseSequelizeError(err) {
     return null;
 }
 
-/** 2-digit year + 8-digit random UID */
+/** 2-digit year + 8-digit random */
 function genUid() {
     const yy = new Date().getFullYear().toString().slice(-2);
-    const rand = Math.floor(Math.random() * 1e8).toString().padStart(8, '0');
+    const rand = Math.floor(Math.random() * 1e8)
+        .toString()
+        .padStart(8, '0');
     return yy + rand;
 }
 
-/** Username‐cleanup: lowercase, remove spaces & dots */
+/** Strip spaces & dots, lowercase */
 function cleanUsername(raw) {
-    return raw
-        .toLowerCase()
-        .replace(/[\s\.]+/g, '');
+    return raw.toLowerCase().replace(/[\s\.]+/g, '');
 }
 
-/** Derive default username from name */
+/** Default username from name */
 function genUsername(name) {
     return cleanUsername(name);
 }
 
-/** Default password */
+/** Default password from username */
 function genPassword(source) {
     return cleanUsername(source) + '@passFC';
 }
 
-/** Only letters+digits allowed */
-const USERNAME_REGEX = /^[a-z0-9]+$/;
+/**
+ * Checks whether the user may change their username.
+ * - Admins & developers always allowed
+ * - Others: at most MAX_CHANGES per WINDOW_DAYS rolling window
+ */
+async function canChangeUsername(user) {
+    const now = Date.now();
+    const windowStart = user.usernameChangeWindowStart ?
+        new Date(user.usernameChangeWindowStart).getTime() :
+        now;
+    const elapsedDays = (now - windowStart) / (1000 * 60 * 60 * 24);
+
+    let count = user.usernameChangeCount || 0;
+    let startDate = new Date(windowStart);
+
+    // reset window if expired
+    if (elapsedDays >= WINDOW_DAYS) {
+        count = 0;
+        startDate = new Date();
+    }
+
+    if (['developer', 'admin'].includes(user.role) || count < MAX_CHANGES) {
+        return { allowed: true, count, startDate };
+    } else {
+        const daysLeft = Math.ceil(WINDOW_DAYS - elapsedDays);
+        return { allowed: false, daysLeft };
+    }
+}
 
 // ——————————————————————————————————————————————————————————————————
 // CREATE
@@ -95,11 +91,10 @@ exports.createUser = async function createUser(req, res, next) {
 
         let { name, email, phone, role, categoryType, gender, age, username } = req.body;
         categoryType = categoryType.replace(/-head$/, '');
+
         if (!ALLOWED_CATEGORIES.includes(categoryType)) {
             return res.status(400).json({ message: 'Invalid category type' });
         }
-
-        // role‐based checks…
         if (actor === 'admin' && !['category-admin', 'usher'].includes(role)) {
             return res.status(403).json({ message: 'Admins can only create Heads or Members' });
         }
@@ -108,7 +103,7 @@ exports.createUser = async function createUser(req, res, next) {
         }
 
         // ────── USERNAME ──────
-        if (!username || !username.trim()) {
+        if (!username ? .trim()) {
             username = genUsername(name);
         } else {
             username = cleanUsername(username);
@@ -124,7 +119,7 @@ exports.createUser = async function createUser(req, res, next) {
 
         // ────── UID & PASSWORD ──────
         const uid = genUid();
-        const passwordPlain = genPassword(username || name);
+        const passwordPlain = genPassword(username);
         const passwordHash = await bcrypt.hash(passwordPlain, 10);
 
         // ────── CREATE ──────
@@ -157,7 +152,8 @@ exports.createUser = async function createUser(req, res, next) {
             age
         }))(user);
 
-        res.status(201).json({ user: safe, plainPassword });
+        // **use passwordPlain here**
+        res.status(201).json({ user: safe, plainPassword: passwordPlain });
     } catch (err) {
         const msg = parseSequelizeError(err);
         if (msg) return res.status(400).json({ message: msg });
@@ -243,6 +239,7 @@ exports.updateUser = async function(req, res, next) {
 
         let { name, email, phone, role, categoryType, gender, age, username } = req.body;
         categoryType = categoryType.replace(/-head$/, '');
+
         if (!ALLOWED_CATEGORIES.includes(categoryType)) {
             return res.status(400).json({ message: 'Invalid category type' });
         }
@@ -261,25 +258,23 @@ exports.updateUser = async function(req, res, next) {
                 });
             }
 
-            const { allowed, daysLeft, count, windowStart } = await canChangeUsername(user);
+            const { allowed, daysLeft, count, startDate } = await canChangeUsername(user);
             if (!allowed) {
                 return res.status(400).json({
-                    message: `You have used ${MAX_CHANGES} changes this window; try again in ${daysLeft} days.`
+                    message: `You’ve used ${MAX_CHANGES} changes this 30-day window; try again in ${daysLeft} days.`
                 });
             }
             if (await User.findOne({ where: { username: cleaned } })) {
                 return res.status(400).json({ message: 'Username already exists' });
             }
 
-            // apply change: increment count or reset window if needed
             const now = new Date();
-            const windowStartDate = new Date(user.usernameChangeWindowStart);
-            if ((now - windowStartDate) / (1000 * 60 * 60 * 24) >= WINDOW_DAYS) {
-                // reset
+            // reset or increment
+            if ((now - startDate) / (1000 * 60 * 60 * 24) >= WINDOW_DAYS) {
                 updates.usernameChangeCount = 1;
                 updates.usernameChangeWindowStart = now;
             } else {
-                updates.usernameChangeCount = user.usernameChangeCount + 1;
+                updates.usernameChangeCount = (user.usernameChangeCount || 0) + 1;
             }
 
             updates.username = cleaned;
@@ -342,10 +337,10 @@ exports.updateMyProfile = async function(req, res, next) {
                 });
             }
 
-            const { allowed, daysLeft } = await canChangeUsername(user);
+            const { allowed, daysLeft, count, startDate } = await canChangeUsername(user);
             if (!allowed) {
                 return res.status(400).json({
-                    message: `You have used ${MAX_CHANGES} changes this window; try again in ${daysLeft} days.`
+                    message: `You’ve used ${MAX_CHANGES} changes this 30-day window; try again in ${daysLeft} days.`
                 });
             }
             if (await User.findOne({ where: { username: cleaned } })) {
@@ -353,12 +348,11 @@ exports.updateMyProfile = async function(req, res, next) {
             }
 
             const now = new Date();
-            const windowStartDate = new Date(user.usernameChangeWindowStart);
-            if ((now - windowStartDate) / (1000 * 60 * 60 * 24) >= WINDOW_DAYS) {
+            if ((now - startDate) / (1000 * 60 * 60 * 24) >= WINDOW_DAYS) {
                 updates.usernameChangeCount = 1;
                 updates.usernameChangeWindowStart = now;
             } else {
-                updates.usernameChangeCount = user.usernameChangeCount + 1;
+                updates.usernameChangeCount = (user.usernameChangeCount || 0) + 1;
             }
 
             updates.username = cleaned;
