@@ -1,4 +1,5 @@
 // backend/models/user.js
+
 const { DataTypes } = require('sequelize');
 
 module.exports = sequelize => {
@@ -23,13 +24,13 @@ module.exports = sequelize => {
             allowNull: false,
             defaultValue: DataTypes.NOW
         },
-        // New: count of changes in current window
+        // NEW: how many changes in current window
         usernameChangeCount: {
             type: DataTypes.INTEGER,
             allowNull: false,
             defaultValue: 0
         },
-        // New: window start for counting changes
+        // NEW: window start timestamp
         usernameChangeWindowStart: {
             type: DataTypes.DATE,
             allowNull: false,
@@ -60,7 +61,7 @@ module.exports = sequelize => {
             defaultValue: 'usher'
         },
         categoryType: {
-            type: DataTypes.ENUM('admin', 'protocol', 'media', 'worship', 'ushering'),
+            type: DataTypes.ENUM('admin', 'protocol', 'media', 'worship', 'ushering', 'developer'),
             allowNull: true
         },
         gender: {
