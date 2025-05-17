@@ -1,7 +1,11 @@
+// public/js/auth.js
+
 import { saveToken, getToken, apiFetch } from './utils.js';
 import { showToast } from './toast.js';
 
-if (getToken()) window.location.href = '/dashboard.html';
+if (getToken()) {
+    window.location.href = '/dashboard.html';
+}
 
 // — DOM refs —
 const loginTab = document.getElementById('loginTab');
@@ -14,10 +18,8 @@ const loginBtn = loginForm.querySelector('button[type=submit]');
 const sendOtpBtn = document.getElementById('sendOtp');
 const otpBtn = otpForm.querySelector('button[type=submit]');
 const resendBtn = document.getElementById('resendOtp');
-const sendResetBtn = forgotForm.querySelector('#sendResetOtp');
+const sendResetBtn = document.getElementById('sendResetOtp');
 const resetSection = document.getElementById('resetSection');
-const idVal = document.getElementById('forgotIdentifier').value.trim();
-
 
 let resendCooldown = 30; // seconds
 
@@ -27,10 +29,9 @@ function isValidIdentifier(s) {
         /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) || // email
         /^\d{10,}$/.test(s) || // phone
         /^[a-z0-9]+$/.test(s) || // username (lowercase letters/numbers)
-        /^[0-9a-fA-F-]{36}$/.test(s) // UUID
+        /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/.test(s) // UUID
     );
 }
-
 
 function validatePassword(p) {
     if (p.length < 6) {
@@ -42,30 +43,35 @@ function validatePassword(p) {
 
 function initPasswordToggles() {
     document.querySelectorAll('.toggle-password').forEach(btn => {
-        btn.onclick = () => {
+        btn.addEventListener('click', () => {
             const input = document.getElementById(btn.dataset.target);
             input.type = input.type === 'password' ? 'text' : 'password';
             btn.textContent = input.type === 'password' ? 'Show' : 'Hide';
-        };
+        });
     });
 }
 
 function switchTab(tab) {
     [loginForm, otpForm, forgotForm].forEach(f => f.classList.remove('active'));
-    if (tab === 'login') loginForm.classList.add('active');
-    if (tab === 'otp') otpForm.classList.add('active');
-    if (tab === 'forgot') forgotForm.classList.add('active');
     loginTab.classList.toggle('active', tab === 'login');
     otpTab.classList.toggle('active', tab === 'otp');
+
+    if (tab === 'login') {
+        loginForm.classList.add('active');
+    } else if (tab === 'otp') {
+        otpForm.classList.add('active');
+    } else {
+        forgotForm.classList.add('active');
+    }
 }
 
 // — Initial setup —
-loginTab.onclick = () => switchTab('login');
-otpTab.onclick = () => switchTab('otp');
-showForgot.onclick = e => {
+loginTab.addEventListener('click', () => switchTab('login'));
+otpTab.addEventListener('click', () => switchTab('otp'));
+showForgot.addEventListener('click', e => {
     e.preventDefault();
     switchTab('forgot');
-};
+});
 
 switchTab('login');
 initPasswordToggles();
@@ -75,15 +81,15 @@ loginForm.addEventListener('submit', async e => {
     e.preventDefault();
     loginBtn.disabled = true;
 
-    const idVal = document.getElementById('identifier').value.trim();
-    const pwVal = document.getElementById('password').value;
+    const identifier = document.getElementById('identifier').value.trim();
+    const password = document.getElementById('password').value;
 
-    if (!isValidIdentifier(idVal)) {
+    if (!isValidIdentifier(identifier)) {
         showToast('error', 'Invalid identifier');
         loginBtn.disabled = false;
         return;
     }
-    if (!validatePassword(pwVal)) {
+    if (!validatePassword(password)) {
         loginBtn.disabled = false;
         return;
     }
@@ -92,12 +98,13 @@ loginForm.addEventListener('submit', async e => {
         const data = await apiFetch('/api/auth/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ identifier: idVal, password: pwVal })
+            body: JSON.stringify({ identifier, password })
         });
         saveToken(data.token);
         window.location.href = '/dashboard.html';
     } catch (err) {
-        showToast('error',
+        showToast(
+            'error',
             err.message === 'Invalid credentials' ?
             'Incorrect identifier or password' :
             err.message
@@ -109,8 +116,8 @@ loginForm.addEventListener('submit', async e => {
 
 // — 2) SEND LOGIN OTP & SHOW SPINNER —
 async function handleSendLoginOtp() {
-    const idVal = document.getElementById('otpIdentifier').value.trim();
-    if (!isValidIdentifier(idVal)) {
+    const identifier = document.getElementById('otpIdentifier').value.trim();
+    if (!isValidIdentifier(identifier)) {
         showToast('error', 'Enter valid Email/Phone/UID/Username');
         return;
     }
@@ -122,14 +129,13 @@ async function handleSendLoginOtp() {
         await apiFetch('/api/auth/login-otp', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ identifier: idVal })
+            body: JSON.stringify({ identifier })
         });
 
         document.querySelector('.otp-step1').classList.add('hidden');
         document.querySelector('.otp-step2').classList.remove('hidden');
         showToast('success', 'Login code sent! Check your email.');
         startResendTimer();
-
     } catch (err) {
         showToast('error', err.message);
     } finally {
@@ -143,16 +149,16 @@ async function handleVerifyLoginOtp(e) {
     e.preventDefault();
     otpBtn.disabled = true;
 
-    const idVal = document.getElementById('otpIdentifier').value.trim();
+    const identifier = document.getElementById('otpIdentifier').value.trim();
     const code = document.getElementById('otpCode').value.trim();
 
-    if (!isValidIdentifier(idVal)) {
+    if (!isValidIdentifier(identifier)) {
         showToast('error', 'Invalid identifier');
         otpBtn.disabled = false;
         return;
     }
     if (!/^\d{6}$/.test(code)) {
-        showToast('error', 'Enter the 6‑digit code');
+        showToast('error', 'Enter the 6-digit code');
         otpBtn.disabled = false;
         return;
     }
@@ -161,11 +167,10 @@ async function handleVerifyLoginOtp(e) {
         const data = await apiFetch('/api/auth/verify-login-otp', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ identifier: idVal, code })
+            body: JSON.stringify({ identifier, code })
         });
         saveToken(data.token);
         window.location.href = '/dashboard.html';
-
     } catch (err) {
         showToast('error', err.message);
     } finally {
@@ -173,7 +178,7 @@ async function handleVerifyLoginOtp(e) {
     }
 }
 
-// — 4) EXPONENTIAL BACK‑OFF FOR RESEND —
+// — 4) EXPONENTIAL BACK-OFF FOR RESEND —
 function startResendTimer() {
     resendBtn.disabled = true;
     let t = resendCooldown;
@@ -198,21 +203,22 @@ resendBtn.addEventListener('click', handleSendLoginOtp);
 otpForm.addEventListener('submit', handleVerifyLoginOtp);
 
 // — 5) FORGOT / RESET PASSWORD —
-
-// send reset‑OTP
+// NOTE: Your HTML must have a single input with id="forgotIdentifier"
 sendResetBtn.addEventListener('click', async e => {
     e.preventDefault();
-    const idVal = document.getElementById('forgotIdentifier').value.trim();
-    if (!isValidIdentifier(idVal)) {
+    const identifier = document.getElementById('forgotIdentifier').value.trim();
+
+    if (!isValidIdentifier(identifier)) {
         showToast('error', 'Enter valid Email/Phone/UID/Username');
         return;
     }
+
     sendResetBtn.disabled = true;
     try {
         await apiFetch('/api/auth/forgot-password', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ identifier: idVal })
+            body: JSON.stringify({ identifier })
         });
         resetSection.classList.remove('hidden');
         showToast('success', 'Reset code sent! Check your email.');
@@ -223,20 +229,19 @@ sendResetBtn.addEventListener('click', async e => {
     }
 });
 
-// verify reset‑OTP & set new password
 forgotForm.addEventListener('submit', async e => {
     e.preventDefault();
     const submitBtn = forgotForm.querySelector('button[type=submit]');
-    const idVal = document.getElementById('forgotIdentifier').value.trim();
+    const identifier = document.getElementById('forgotIdentifier').value.trim();
     const code = document.getElementById('resetOtp').value.trim();
     const newPw = document.getElementById('newPassword').value;
 
-    if (!isValidIdentifier(idVal)) {
+    if (!isValidIdentifier(identifier)) {
         showToast('error', 'Enter valid Email/Phone/UID/Username');
         return;
     }
     if (!/^\d{6}$/.test(code)) {
-        showToast('error', 'Enter the 6‑digit code');
+        showToast('error', 'Enter the 6-digit code');
         return;
     }
     if (!validatePassword(newPw)) return;
@@ -246,7 +251,7 @@ forgotForm.addEventListener('submit', async e => {
         await apiFetch('/api/auth/reset-password', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ identifier: idVal, code, newPassword: newPw })
+            body: JSON.stringify({ identifier, code, newPassword: newPw })
         });
         showToast('success', 'Password reset—please log in.');
         switchTab('login');
