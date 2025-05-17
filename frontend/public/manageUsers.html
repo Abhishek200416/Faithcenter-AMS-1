@@ -94,6 +94,11 @@
                         <div class="field"><input type="text" id="f-name" name="name" placeholder="Name" required/></div>
                         <div class="field"><input type="email" id="f-email" name="email" placeholder="Email" required/></div>
                     </div>
+                    <div class="field">
+                        <input type="text" id="f-username" name="username" placeholder="Username (optional)" pattern="[a-z0-9]{3,}" />
+                        <small>Only lowercase letters and digits, no spaces or special chars</small>
+                    </div>
+
                     <div class="field-group">
                         <div class="field"><input type="text" id="f-phone" name="phone" placeholder="Phone (10 digits)" pattern="\d{10}" /></div>
                         <div class="field">
@@ -123,7 +128,7 @@
                         </div>
                     </div>
                     <div class="field-group">
-                        <div class="field"><input type="number" id="f-age" name="age" placeholder="Age" min="0" /></div>
+                        <div class="field"><input type="number" id="f-age" name="age" placeholder="Age" min="0" required /></div>
                     </div>
                 </div>
                 <footer class="dialog-footer">

@@ -1,5 +1,5 @@
 // frontend/js/profile.js
-// frontend/js/profile.js
+
 import { apiFetch } from './utils.js';
 import { showToast } from './toast.js';
 
@@ -12,113 +12,95 @@ const resetSec = document.getElementById('resetSection');
 const sendOtpBtn = document.getElementById('sendOtp');
 const usernameInput = document.getElementById('username');
 const usernameHelp = (() => {
-    let p = document.getElementById('usernameHelp');
-    if (!p) {
-        p = document.createElement('p');
-        p.id = 'usernameHelp';
-        p.className = 'info-text';
-        usernameInput.parentNode.appendChild(p);
+    let el = document.getElementById('usernameHelp');
+    if (!el) {
+        el = document.createElement('p');
+        el.id = 'usernameHelp';
+        el.className = 'info-text';
+        usernameInput.parentNode.appendChild(el);
     }
-    return p;
+    return el;
 })();
-const SUFFIX = '@1FC';
 
-// … after your loadProfile() call, insert this handler:
-usernameInput.addEventListener('input', () => {
-    let v = usernameInput.value;
-
-    // if it doesn't end with the exact suffix, strip off any bad suffix or extra chars
-    if (!v.endsWith(SUFFIX)) {
-        // take everything up to the first '@' (in case they tried to re‑insert one),
-        // or the whole string if they never removed '@1FC' entirely
-        const idx = v.indexOf(SUFFIX);
-        if (idx >= 0) {
-            v = v.slice(0, idx);
-        } else if (v.includes('@')) {
-            v = v.split('@')[0];
-        }
-        // finally re‑append the frozen suffix
-        usernameInput.value = v + SUFFIX;
-    }
-});
-
-const [profileError, profileSuccess, passwordError, passwordSuccess] = ['profileError', 'profileSuccess', 'passwordError', 'passwordSuccess']
-.map(id => document.getElementById(id));
-
+// Helper: days since a given date string
 function daysSince(dateStr) {
     const ms = Date.now() - new Date(dateStr).getTime();
     return Math.floor(ms / (1000 * 60 * 60 * 24));
 }
 
+// Helper: sanitize to lowercase a–z & 0–9 only
+function sanitizeUsername(str) {
+    return String(str || '')
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '');
+}
+
+// Tab switching
 function switchTab(tab) {
     profileForm.classList.toggle('active', tab === 'profile');
     passwordForm.classList.toggle('active', tab === 'password');
     profileTab.classList.toggle('active', tab === 'profile');
     passwordTab.classList.toggle('active', tab === 'password');
-    [profileError, profileSuccess, passwordError, passwordSuccess]
-    .forEach(el => el.textContent = '');
 }
-
 profileTab.onclick = () => switchTab('profile');
 passwordTab.onclick = () => switchTab('password');
 
+// Safe fetch alias
 async function safeFetch(...args) {
     return apiFetch(...args);
 }
 
+// Load and render user profile
 async function loadProfile() {
     try {
         const { user } = await safeFetch('/api/users/me');
 
-        // Welcome banner
+        // Fill static fields
         document.getElementById('userName').textContent = user.name;
-
-        // fill fields
         ['name', 'phone', 'gender', 'age', 'email', 'uid']
-        .forEach(f => {
-            const el = document.getElementById(f);
-            if (el) el.value = user[f] || '';
-        });
+            .forEach(field => {
+                const el = document.getElementById(field);
+                if (el) el.value = user[field] || '';
+            });
 
-        // username
-        usernameInput.value = user.username;
-        usernameHelp.textContent = '';
-        // username
-        const raw = user.username || '';
-        // if somehow missing suffix, force it
-        usernameInput.value = raw.endsWith(SUFFIX) ?
-            raw :
-            raw.split('@')[0] + SUFFIX;
+        // Username
+        usernameInput.value = user.username || '';
         usernameHelp.textContent = '';
 
-
-        // decide if editable
+        // Change-limit logic (3 changes per 30 days)
         const role = user.role;
-        const elapsed = daysSince(user.usernameChangedAt);
-        const daysLeft = Math.max(0, 30 - elapsed);
+        const changeCount = user.usernameChangeCount ?? 0;
+        const windowStart = user.usernameChangeWindowStart;
+        const daysUsedWindow = daysSince(windowStart);
+        const daysLeftWindow = Math.max(0, 30 - daysUsedWindow);
+        const changesLeft = Math.max(0, 3 - changeCount);
 
-        if (role === 'category-admin' || role === 'usher') {
-            if (daysLeft > 0) {
+        // Only category-admin & usher are rate-limited
+        if (['category-admin', 'usher'].includes(role)) {
+            if (changesLeft <= 0 && daysLeftWindow > 0) {
                 usernameInput.disabled = true;
                 usernameHelp.textContent =
-                    `You can change your username in ${daysLeft} day${daysLeft>1?'s':''}.`;
+                    `No username changes left. Try again in ${daysLeftWindow} day${daysLeftWindow > 1 ? 's' : ''}.`;
             } else {
                 usernameInput.disabled = false;
+                usernameHelp.textContent =
+                    `${changesLeft} username change${changesLeft !== 1 ? 's' : ''} left in next ${daysLeftWindow} day${daysLeftWindow > 1 ? 's' : ''}.`;
             }
         } else {
-            // developers & admins always can
+            // developers & admins always allowed
             usernameInput.disabled = false;
         }
 
-        // category & role display
+        // Display category & role labels
         document.getElementById('categoryType').value = user.categoryType || '';
         const roleMap = {
-            'developer': 'Developer',
-            'admin': 'Admin',
+            developer: 'Developer',
+            admin: 'Admin',
             'category-admin': 'Head',
-            'usher': 'Member'
+            usher: 'Member'
         };
-        document.getElementById('role').value = roleMap[role] || 'Member';
+        document.getElementById('role').value = roleMap[role] || role;
 
     } catch (err) {
         console.error(err);
@@ -126,46 +108,60 @@ async function loadProfile() {
     }
 }
 
+// Initial load
 loadProfile();
 
-// ——— PROFILE SAVE —————————
 
+// ——— PROFILE SAVE —————————
 profileForm.addEventListener('submit', async e => {
     e.preventDefault();
     showToast('success', 'Saving profile…', true);
+
     try {
+        // Gather payload
+        const rawUsername = e.target.username.value.trim();
         const payload = {
             name: e.target.name.value.trim(),
-            phone: e.target.phone.value.trim(),
+            phone: e.target.phone.value.trim() || null,
             gender: e.target.gender.value,
             age: e.target.age.value || null,
             email: e.target.email.value.trim(),
-            username: usernameInput.value.trim()
+            username: rawUsername ? sanitizeUsername(rawUsername) : undefined
         };
+
         await safeFetch('/api/users/me', {
             method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
+
         showToast('success', 'Profile updated');
-        // reload so cooldown resets if username was changed
+        // Reload to refresh limits/counters
         await loadProfile();
+
     } catch (err) {
         console.error(err);
-        // server may return our 30‑day error
-        if (err.message.includes('30 days')) {
+
+        // Handle server-side rate-limit message
+        if (err.message.includes('3 times') || err.message.includes('30-day')) {
             showToast('error', err.message);
-            // re‑render help text
-            const msg = err.message.match(/(\d+)/);
-            if (msg) usernameHelp.textContent =
-                `You can change your username in ${msg[1]} days.`;
+            // Re-render help text
+            const match = err.message.match(/in (\d+) day/);
+            const days = match ? Number(match[1]) : 0;
+            usernameInput.disabled = true;
+            usernameHelp.textContent =
+                `No username changes left. Try again in ${days} day${days > 1 ? 's' : ''}.`;
         } else {
             showToast('error', err.message);
         }
     }
 });
 
+
 // ——— PASSWORD & OTP (unchanged) —————————
-// ... your existing passwordForm submit, sendOtpBtn click, toggle‑password handlers ...
+// ... existing passwordForm submit, sendOtpBtn click, toggle-password handlers ...
+// Keep your current logic for change-password, reset-password & OTP flows.
+
 
 // ——— Password & OTP Reset ————————————
 
@@ -237,7 +233,7 @@ passwordForm.addEventListener('submit', async e => {
 
 // ——— Send OTP ————————————————
 
-sendOtpBtn.onclick = async() => {
+sendOtpBtn.onclick = async () => {
     const email = document.getElementById('resetIdentifier').value.trim();
     if (!email) {
         showToast('error', 'Enter your email or phone to receive OTP');

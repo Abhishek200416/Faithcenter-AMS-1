@@ -18,6 +18,17 @@ module.exports = sequelize => {
             unique: true,
             allowNull: false
         },
+        usernameChangeCount: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 0
+        },
+        usernameChangeWindowStart: {
+            type: DataTypes.DATE,
+            allowNull: false,
+            defaultValue: DataTypes.NOW
+        },
+
         usernameChangedAt: {
             type: DataTypes.DATE,
             allowNull: false,
