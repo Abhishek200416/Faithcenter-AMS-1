@@ -22,12 +22,13 @@ let resendCooldown = 30; // seconds
 // — Helpers —
 function isValidIdentifier(s) {
     return !!(
-        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) ||
-        /^\d{10,}$/.test(s) ||
-        /^[a-z0-9]+@1FC$/.test(s) ||
-        /^[0-9a-fA-F-]{36}$/.test(s)
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) || // email
+        /^\d{10,}$/.test(s) || // phone
+        /^[a-z0-9]+$/.test(s) || // username (lowercase letters/numbers)
+        /^[0-9a-fA-F-]{36}$/.test(s) // UUID
     );
 }
+
 
 function validatePassword(p) {
     if (p.length < 6) {
@@ -59,8 +60,10 @@ function switchTab(tab) {
 // — Initial setup —
 loginTab.onclick = () => switchTab('login');
 otpTab.onclick = () => switchTab('otp');
-showForgot.onclick = e => { e.preventDefault();
-    switchTab('forgot'); };
+showForgot.onclick = e => {
+    e.preventDefault();
+    switchTab('forgot');
+};
 
 switchTab('login');
 initPasswordToggles();
