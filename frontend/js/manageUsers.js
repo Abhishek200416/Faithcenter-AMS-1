@@ -328,8 +328,9 @@ form.addEventListener('submit', async e => {
   const age      = ageInput.value.trim();
   const rawUser  = usernameInput.value.trim();
 
-  if (!/^[A-Za-z]+$/.test(name))
+  if (!/^[A-Za-z.\s]+$/.test(name)) {
     return showToast('error','Name may only contain letters, spaces, and dots');
+  }
   if (phone && !/^\d{10}$/.test(phone))
     return showToast('error','Phone must be 10 digits');
   if (age && !/^\d+$/.test(age))
