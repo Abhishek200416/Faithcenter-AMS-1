@@ -23,7 +23,7 @@ module.exports = sequelize => {
         usernameChangeCount: {
             type: DataTypes.INTEGER,
             allowNull: false,
-            defaultValue: 0
+            defaultValue: 1
         },
         usernameChangeWindowStart: {
             type: DataTypes.DATE,
