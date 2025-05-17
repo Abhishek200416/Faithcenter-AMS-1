@@ -2,20 +2,30 @@
 
 const { User } = require('../models');
 const bcrypt = require('bcrypt');
-const { Sequelize, Op } = require('sequelize');
+const { Sequelize } = require('sequelize');
 
 // ——————————————————————————————————————————————————————————————————
 // CONFIG & HELPERS
 // ——————————————————————————————————————————————————————————————————
 
 const ALLOWED_CATEGORIES = ['admin', 'protocol', 'media', 'worship', 'ushering'];
-const MAX_CHANGES = 3;
-const WINDOW_DAYS = 30;
-const USERNAME_REGEX = /^[a-z0-9]+$/; // only lowercase letters & digits
+const USERNAME_SUFFIX = '@1FC';
 
 /**
- * Parse a Sequelize unique‐constraint error into a friendly message
+ * Returns true if this user may change their username now:
+ * - 'developer' & 'admin': always true
+ * - 'category-admin' & 'usher': only if ≥30 days since last change
  */
+function canChangeUsername(user) {
+    if (['category-admin', 'usher'].includes(user.role)) {
+        const now = Date.now();
+        const ago = new Date(user.usernameChangedAt).getTime();
+        const days = (now - ago) / (1000 * 60 * 60 * 24);
+        return days >= 30;
+    }
+    return true;
+}
+
 function parseSequelizeError(err) {
     if (err instanceof Sequelize.UniqueConstraintError) {
         return err.errors.map(e => e.message).join('; ');
@@ -23,53 +33,18 @@ function parseSequelizeError(err) {
     return null;
 }
 
-/** 2-digit year + 8-digit random UID */
 function genUid() {
     const yy = new Date().getFullYear().toString().slice(-2);
     const rand = Math.floor(Math.random() * 1e8).toString().padStart(8, '0');
     return yy + rand;
 }
 
-/** Lowercase, strip spaces & dots */
-function cleanUsername(raw) {
-    return raw.toLowerCase().replace(/[\s\.]+/g, '');
-}
-
-/** Default username from name */
 function genUsername(name) {
-    return cleanUsername(name);
+    return name.replace(/\s+/g, '').toLowerCase() + USERNAME_SUFFIX;
 }
 
-/** Default password from username */
-function genPassword(source) {
-    return cleanUsername(source) + '@passFC';
-}
-
-/**
- * Checks if user may change username:
- * - dev/admin always allowed
- * - others: max MAX_CHANGES per WINDOW_DAYS rolling window
- */
-async function canChangeUsername(user) {
-    const now = Date.now();
-    const ws = user.usernameChangeWindowStart ?
-        new Date(user.usernameChangeWindowStart).getTime() :
-        now;
-    const elapsedDays = (now - ws) / (1000 * 60 * 60 * 24);
-    let count = user.usernameChangeCount || 0;
-    let windowStart = new Date(ws);
-
-    if (elapsedDays >= WINDOW_DAYS) {
-        count = 0;
-        windowStart = new Date();
-    }
-
-    if (user.role === 'developer' || user.role === 'admin' || count < MAX_CHANGES) {
-        return { allowed: true, count, windowStart };
-    } else {
-        const daysLeft = Math.ceil(WINDOW_DAYS - elapsedDays);
-        return { allowed: false, daysLeft };
-    }
+function genPassword(name) {
+    return name.replace(/\s+/g, '').toLowerCase() + '@passFC';
 }
 
 // ——————————————————————————————————————————————————————————————————
@@ -83,41 +58,26 @@ exports.createUser = async function createUser(req, res, next) {
             return res.status(403).json({ message: 'Forbidden' });
         }
 
-        let { name, email, phone, role, categoryType, gender, age, username } = req.body;
+        let { name, email, phone, role, categoryType, gender, age } = req.body;
         categoryType = categoryType.replace(/-head$/, '');
-
-        // category & role validation
         if (!ALLOWED_CATEGORIES.includes(categoryType)) {
             return res.status(400).json({ message: 'Invalid category type' });
         }
+
         if (actor === 'admin' && !['category-admin', 'usher'].includes(role)) {
             return res.status(403).json({ message: 'Admins can only create Heads or Members' });
         }
-        if (actor === 'category-admin' && (role !== 'usher' || categoryType !== req.user.categoryType)) {
-            return res.status(403).json({ message: 'Heads can only add Members in their own category' });
+        if (actor === 'category-admin') {
+            if (role !== 'usher' || categoryType !== req.user.categoryType) {
+                return res.status(403).json({ message: 'Heads can only add Members in their own category' });
+            }
         }
 
-        // ────── USERNAME ──────
-        if (!username || !username.trim()) {
-            username = genUsername(name);
-        } else {
-            username = cleanUsername(username);
-        }
-        if (!USERNAME_REGEX.test(username)) {
-            return res.status(400).json({
-                message: 'Username must use only lowercase letters and digits (no spaces, dots or symbols).'
-            });
-        }
-        if (await User.findOne({ where: { username } })) {
-            return res.status(400).json({ message: 'Username already exists' });
-        }
-
-        // ────── UID & PASSWORD ──────
         const uid = genUid();
-        const passwordPlain = genPassword(username);
+        const username = genUsername(name);
+        const passwordPlain = genPassword(name);
         const passwordHash = await bcrypt.hash(passwordPlain, 10);
 
-        // ────── CREATE ──────
         const user = await User.create({
             name,
             email,
@@ -129,26 +89,13 @@ exports.createUser = async function createUser(req, res, next) {
             uid,
             username,
             password: passwordHash,
-            usernameChangedAt: new Date(),
-            usernameChangeCount: 0,
-            usernameChangeWindowStart: new Date()
+            usernameChangedAt: new Date()
         });
 
-        const safe = (({ id, uid, username, name, email, phone, role, categoryType, gender, age }) => ({
-            id,
-            uid,
-            username,
-            name,
-            email,
-            phone,
-            role,
-            categoryType,
-            gender,
-            age
-        }))(user);
+        const safe = (({ id, uid, username, name, email, phone, role, categoryType, gender, age }) =>
+            ({ id, uid, username, name, email, phone, role, categoryType, gender, age }))(user);
 
         res.status(201).json({ user: safe, plainPassword: passwordPlain });
-
     } catch (err) {
         const msg = parseSequelizeError(err);
         if (msg) return res.status(400).json({ message: msg });
@@ -169,9 +116,9 @@ exports.getAllUsers = async function getAllUsers(req, res, next) {
         const users = await User.findAll({
             where,
             attributes: [
-                'id', 'uid', 'username', 'name', 'email', 'phone',
-                'role', 'categoryType', 'gender', 'age', 'usernameChangedAt',
-                'usernameChangeCount', 'usernameChangeWindowStart'
+                'id', 'uid', 'username', 'name',
+                'email', 'phone', 'role', 'categoryType',
+                'gender', 'age', 'usernameChangedAt'
             ]
         });
         res.json({ users });
@@ -184,15 +131,18 @@ exports.getUserById = async function getUserById(req, res, next) {
     try {
         const user = await User.findByPk(req.params.id, {
             attributes: [
-                'id', 'uid', 'username', 'name', 'email', 'phone',
-                'role', 'categoryType', 'gender', 'age', 'usernameChangedAt',
-                'usernameChangeCount', 'usernameChangeWindowStart'
+                'id', 'uid', 'username', 'name',
+                'email', 'phone', 'role', 'categoryType',
+                'gender', 'age', 'usernameChangedAt'
             ]
         });
         if (!user) return res.status(404).json({ message: 'Not found' });
-        if (req.user.role === 'category-admin' && user.categoryType !== req.user.categoryType) {
+
+        if (req.user.role === 'category-admin' &&
+            user.categoryType !== req.user.categoryType) {
             return res.status(403).json({ message: 'Forbidden' });
         }
+
         res.json({ user });
     } catch (err) {
         next(err);
@@ -203,9 +153,9 @@ exports.getMyProfile = async function getMyProfile(req, res, next) {
     try {
         const user = await User.findByPk(req.user.id, {
             attributes: [
-                'id', 'uid', 'username', 'name', 'email', 'phone',
-                'role', 'categoryType', 'gender', 'age', 'usernameChangedAt',
-                'usernameChangeCount', 'usernameChangeWindowStart'
+                'id', 'uid', 'username', 'name',
+                'email', 'phone', 'role', 'categoryType',
+                'gender', 'age', 'usernameChangedAt'
             ]
         });
         res.json({ user });
@@ -227,13 +177,16 @@ exports.updateUser = async function updateUser(req, res, next) {
 
         const user = await User.findByPk(req.params.id);
         if (!user) return res.status(404).json({ message: 'Not found' });
-        if (actor === 'category-admin' && (user.role !== 'usher' || user.categoryType !== req.user.categoryType)) {
-            return res.status(403).json({ message: 'Forbidden' });
+
+        if (actor === 'category-admin') {
+            if (user.role !== 'usher' ||
+                user.categoryType !== req.user.categoryType) {
+                return res.status(403).json({ message: 'Forbidden' });
+            }
         }
 
         let { name, email, phone, role, categoryType, gender, age, username } = req.body;
         categoryType = categoryType.replace(/-head$/, '');
-
         if (!ALLOWED_CATEGORIES.includes(categoryType)) {
             return res.status(400).json({ message: 'Invalid category type' });
         }
@@ -242,37 +195,14 @@ exports.updateUser = async function updateUser(req, res, next) {
         }
 
         const updates = { name, email, phone, role, categoryType, gender, age };
-
-        // ────── USERNAME CHANGE ──────
         if (username && username !== user.username) {
-            const cleaned = cleanUsername(username);
-            if (!USERNAME_REGEX.test(cleaned)) {
-                return res.status(400).json({
-                    message: 'Username must use only lowercase letters and digits (no spaces, dots or symbols).'
-                });
+            if (!canChangeUsername(user)) {
+                return res
+                    .status(400)
+                    .json({ message: 'Username can only be changed once every 30 days' });
             }
-
-            const { allowed, daysLeft, startDate } = await canChangeUsername(user);
-            if (!allowed) {
-                return res.status(400).json({
-                    message: `You’ve used ${MAX_CHANGES} changes this 30-day window; try again in ${daysLeft} days.`
-                });
-            }
-            if (await User.findOne({ where: { username: cleaned } })) {
-                return res.status(400).json({ message: 'Username already exists' });
-            }
-
-            const now = new Date();
-            // reset or increment count
-            if ((now - startDate) / (1000 * 60 * 60 * 24) >= WINDOW_DAYS) {
-                updates.usernameChangeCount = 1;
-                updates.usernameChangeWindowStart = now;
-            } else {
-                updates.usernameChangeCount = (user.usernameChangeCount || 0) + 1;
-            }
-
-            updates.username = cleaned;
-            updates.usernameChangedAt = now;
+            updates.username = username;
+            updates.usernameChangedAt = new Date();
         }
 
         await user.update(updates);
@@ -288,9 +218,7 @@ exports.updateUser = async function updateUser(req, res, next) {
             categoryType,
             gender,
             age,
-            usernameChangedAt,
-            usernameChangeCount,
-            usernameChangeWindowStart
+            usernameChangedAt
         }) => ({
             id,
             uid,
@@ -302,9 +230,7 @@ exports.updateUser = async function updateUser(req, res, next) {
             categoryType,
             gender,
             age,
-            usernameChangedAt,
-            usernameChangeCount,
-            usernameChangeWindowStart
+            usernameChangedAt
         }))(user);
 
         res.json({ user: safe });
@@ -322,35 +248,14 @@ exports.updateMyProfile = async function updateMyProfile(req, res, next) {
 
         const { name, email, phone, gender, age, username } = req.body;
         const updates = { name, email, phone, gender, age };
-
         if (username && username !== user.username) {
-            const cleaned = cleanUsername(username);
-            if (!USERNAME_REGEX.test(cleaned)) {
-                return res.status(400).json({
-                    message: 'Username must use only lowercase letters and digits (no spaces, dots or symbols).'
-                });
+            if (!canChangeUsername(user)) {
+                return res
+                    .status(400)
+                    .json({ message: 'Username can only be changed once every 30 days' });
             }
-
-            const { allowed, daysLeft, startDate } = await canChangeUsername(user);
-            if (!allowed) {
-                return res.status(400).json({
-                    message: `You’ve used ${MAX_CHANGES} changes this 30-day window; try again in ${daysLeft} days.`
-                });
-            }
-            if (await User.findOne({ where: { username: cleaned } })) {
-                return res.status(400).json({ message: 'Username already exists' });
-            }
-
-            const now = new Date();
-            if ((now - startDate) / (1000 * 60 * 60 * 24) >= WINDOW_DAYS) {
-                updates.usernameChangeCount = 1;
-                updates.usernameChangeWindowStart = now;
-            } else {
-                updates.usernameChangeCount = (user.usernameChangeCount || 0) + 1;
-            }
-
-            updates.username = cleaned;
-            updates.usernameChangedAt = now;
+            updates.username = username;
+            updates.usernameChangedAt = new Date();
         }
 
         await user.update(updates);
@@ -366,9 +271,7 @@ exports.updateMyProfile = async function updateMyProfile(req, res, next) {
             categoryType,
             gender,
             age,
-            usernameChangedAt,
-            usernameChangeCount,
-            usernameChangeWindowStart
+            usernameChangedAt
         }) => ({
             id,
             uid,
@@ -380,9 +283,7 @@ exports.updateMyProfile = async function updateMyProfile(req, res, next) {
             categoryType,
             gender,
             age,
-            usernameChangedAt,
-            usernameChangeCount,
-            usernameChangeWindowStart
+            usernameChangedAt
         }))(user);
 
         res.json({ user: safe });

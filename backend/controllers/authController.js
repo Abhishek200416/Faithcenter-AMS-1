@@ -2,7 +2,7 @@
 
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
-const { Op, Sequelize } = require('sequelize');
+const { Op } = require('sequelize');
 const { User, OTP } = require('../models');
 const { sendOTP } = require('../utils/mailService');
 
@@ -10,41 +10,33 @@ const { sendOTP } = require('../utils/mailService');
  * Returns true if the string is a valid UUID v1–v5.
  */
 function isUUID(str) {
-    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
+    return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/.test(str);
 }
 
 /**
- * Look up a user by email, phone, uid, username (case-insensitive) or raw id (if a UUID).
+ * Look up a user by email, phone, uid, username or raw id (only if valid UUID).
  */
 async function findUserByIdentifier(identifier) {
-    const clauses = [
+    const orConditions = [
         { email: identifier },
         { phone: identifier },
-        { uid: identifier }
+        { uid: identifier },
+        { username: identifier }
     ];
 
-    // case-insensitive username match
-    if (/^[a-z0-9]+$/i.test(identifier)) {
-        clauses.push(
-            Sequelize.where(
-                Sequelize.fn('lower', Sequelize.col('username')),
-                identifier.toLowerCase()
-            )
-        );
-    }
-
-    // raw PK lookup if it's a UUID
+    // Only include the primary-key 'id' lookup when the identifier is a valid UUID
     if (isUUID(identifier)) {
-        clauses.push({ id: identifier });
+        orConditions.push({ id: identifier });
     }
 
     return User.findOne({
         where: {
-            [Op.or]: clauses }
+            [Op.or]: orConditions
+        }
     });
 }
 
-// ─── SEND LOGIN OTP ───────────────────────────────────────────────────────────
+// ─── SEND LOGIN OTP (no password reset) ────────────────────────────────────────
 async function sendLoginOtp(req, res) {
     const { identifier } = req.body;
     const user = await findUserByIdentifier(identifier);
@@ -58,7 +50,7 @@ async function sendLoginOtp(req, res) {
     res.json({ message: 'Login OTP sent' });
 }
 
-// ─── VERIFY LOGIN OTP ────────────────────────────────────────────────────────
+// ─── VERIFY LOGIN OTP ─────────────────────────────────────────────────────────
 async function verifyLoginOtp(req, res) {
     const { identifier, code } = req.body;
     const user = await findUserByIdentifier(identifier);
@@ -69,7 +61,8 @@ async function verifyLoginOtp(req, res) {
             userId: user.id,
             code,
             expiresAt: {
-                [Op.gte]: new Date() }
+                [Op.gte]: new Date()
+            }
         }
     });
     if (!otp) return res.status(400).json({ message: 'Invalid or expired OTP' });
@@ -78,9 +71,9 @@ async function verifyLoginOtp(req, res) {
     await OTP.destroy({ where: { userId: user.id } });
 
     // issue JWT
-    const token = jwt.sign({ sub: user.id, role: user.role }, process.env.JWT_SECRET, {
-        expiresIn: '8h'
-    });
+    const token = jwt.sign({ sub: user.id, role: user.role },
+        process.env.JWT_SECRET, { expiresIn: '8h' }
+    );
     res.json({
         token,
         user: {
@@ -95,7 +88,7 @@ async function verifyLoginOtp(req, res) {
     });
 }
 
-// ─── STANDARD LOGIN (PASSWORD) ───────────────────────────────────────────────
+// ─── STANDARD LOGIN (password) ────────────────────────────────────────────────
 async function login(req, res) {
     const { identifier, password } = req.body;
     const user = await findUserByIdentifier(identifier);
@@ -104,9 +97,9 @@ async function login(req, res) {
     const matches = await bcrypt.compare(password, user.password);
     if (!matches) return res.status(401).json({ message: 'Invalid credentials' });
 
-    const token = jwt.sign({ sub: user.id, role: user.role }, process.env.JWT_SECRET, {
-        expiresIn: '8h'
-    });
+    const token = jwt.sign({ sub: user.id, role: user.role },
+        process.env.JWT_SECRET, { expiresIn: '8h' }
+    );
     res.json({
         token,
         user: {
@@ -121,7 +114,7 @@ async function login(req, res) {
     });
 }
 
-// ─── FORGOT PASSWORD (SEND RESET OTP) ────────────────────────────────────────
+// ─── FORGOT PASSWORD (SEND RESET OTP) ─────────────────────────────────────────
 async function forgotPassword(req, res) {
     const id = req.body.identifier || req.body.email;
     const user = await findUserByIdentifier(id);
@@ -147,7 +140,8 @@ async function resetPassword(req, res) {
             userId: user.id,
             code,
             expiresAt: {
-                [Op.gte]: new Date() }
+                [Op.gte]: new Date()
+            }
         }
     });
     if (!otp) return res.status(400).json({ message: 'Invalid or expired OTP' });
@@ -157,13 +151,13 @@ async function resetPassword(req, res) {
     await OTP.destroy({ where: { userId: user.id } });
 
     // auto-issue JWT
-    const token = jwt.sign({ sub: user.id, role: user.role }, process.env.JWT_SECRET, {
-        expiresIn: '8h'
-    });
+    const token = jwt.sign({ sub: user.id, role: user.role },
+        process.env.JWT_SECRET, { expiresIn: '8h' }
+    );
     res.json({ message: 'Password reset successful', token });
 }
 
-// ─── DIRECT CHANGE PASSWORD (AUTHENTICATED) ─────────────────────────────────
+// ─── DIRECT CHANGE PASSWORD (AUTHENTICATED) ──────────────────────────────────
 async function changePassword(req, res) {
     const user = await User.findByPk(req.user.id);
     if (!user) return res.status(404).json({ message: 'User not found' });

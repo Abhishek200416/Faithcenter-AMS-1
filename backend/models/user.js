@@ -1,5 +1,4 @@
 // backend/models/user.js
-
 const { DataTypes } = require('sequelize');
 
 module.exports = sequelize => {
@@ -24,18 +23,6 @@ module.exports = sequelize => {
             allowNull: false,
             defaultValue: DataTypes.NOW
         },
-        // NEW: how many changes in current 30-day window (nullable for existing rows)
-        usernameChangeCount: {
-            type: DataTypes.INTEGER,
-            allowNull: true, // changed from false → true
-            defaultValue: 0
-        },
-        // NEW: timestamp when current window started (nullable for existing rows)
-        usernameChangeWindowStart: {
-            type: DataTypes.DATE,
-            allowNull: true, // changed from false → true
-            defaultValue: DataTypes.NOW
-        },
         name: {
             type: DataTypes.STRING,
             allowNull: false
@@ -55,15 +42,20 @@ module.exports = sequelize => {
             type: DataTypes.STRING,
             allowNull: false
         },
+
+        // Roles remain: developer, admin, category-admin, usher
         role: {
             type: DataTypes.ENUM('developer', 'admin', 'category-admin', 'usher'),
             allowNull: false,
             defaultValue: 'usher'
         },
+
+        // Only bare categories now
         categoryType: {
             type: DataTypes.ENUM('admin', 'protocol', 'media', 'worship', 'ushering', 'developer'),
             allowNull: true
         },
+
         gender: {
             type: DataTypes.ENUM('male', 'female'),
             allowNull: false

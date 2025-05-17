@@ -1,12 +1,8 @@
-// public/js/profile.js
-
+// frontend/js/profile.js
+// frontend/js/profile.js
 import { apiFetch } from './utils.js';
 import { showToast } from './toast.js';
 
-const MAX_USERNAME_CHANGES = 3;
-const USERNAME_WINDOW_DAYS = 30;
-
-// — DOM refs —
 const profileTab = document.getElementById('profileTab');
 const passwordTab = document.getElementById('passwordTab');
 const profileForm = document.getElementById('profileForm');
@@ -15,93 +11,117 @@ const changeSec = document.getElementById('changeSection');
 const resetSec = document.getElementById('resetSection');
 const sendOtpBtn = document.getElementById('sendOtp');
 const usernameInput = document.getElementById('username');
-const usernameHelpEl = document.getElementById('usernameHelp') ||
-    (() => {
-        const p = document.createElement('p');
+const usernameHelp = (() => {
+    let p = document.getElementById('usernameHelp');
+    if (!p) {
+        p = document.createElement('p');
         p.id = 'usernameHelp';
         p.className = 'info-text';
-        usernameInput.parentNode.append(p);
-        return p;
-    })();
+        usernameInput.parentNode.appendChild(p);
+    }
+    return p;
+})();
+const SUFFIX = '@1FC';
 
-const [profileError, profileSuccess, passwordError, passwordSuccess] =
-    ['profileError', 'profileSuccess', 'passwordError', 'passwordSuccess']
-        .map(id => document.getElementById(id));
+// … after your loadProfile() call, insert this handler:
+usernameInput.addEventListener('input', () => {
+    let v = usernameInput.value;
 
-// Helper to compute whole days since a timestamp
+    // if it doesn't end with the exact suffix, strip off any bad suffix or extra chars
+    if (!v.endsWith(SUFFIX)) {
+        // take everything up to the first '@' (in case they tried to re‑insert one),
+        // or the whole string if they never removed '@1FC' entirely
+        const idx = v.indexOf(SUFFIX);
+        if (idx >= 0) {
+            v = v.slice(0, idx);
+        } else if (v.includes('@')) {
+            v = v.split('@')[0];
+        }
+        // finally re‑append the frozen suffix
+        usernameInput.value = v + SUFFIX;
+    }
+});
+
+const [profileError, profileSuccess, passwordError, passwordSuccess] = ['profileError', 'profileSuccess', 'passwordError', 'passwordSuccess']
+.map(id => document.getElementById(id));
+
 function daysSince(dateStr) {
-    return Math.floor((Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24));
+    const ms = Date.now() - new Date(dateStr).getTime();
+    return Math.floor(ms / (1000 * 60 * 60 * 24));
 }
 
-// Tab‐switching
 function switchTab(tab) {
     profileForm.classList.toggle('active', tab === 'profile');
     passwordForm.classList.toggle('active', tab === 'password');
     profileTab.classList.toggle('active', tab === 'profile');
     passwordTab.classList.toggle('active', tab === 'password');
     [profileError, profileSuccess, passwordError, passwordSuccess]
-        .forEach(el => { if (el) el.textContent = ''; });
+    .forEach(el => el.textContent = '');
 }
 
 profileTab.onclick = () => switchTab('profile');
 passwordTab.onclick = () => switchTab('password');
 
-// Load and render current profile
+async function safeFetch(...args) {
+    return apiFetch(...args);
+}
+
 async function loadProfile() {
     try {
-        const { user } = await apiFetch('/api/users/me');
+        const { user } = await safeFetch('/api/users/me');
 
-        // Simple fields
+        // Welcome banner
         document.getElementById('userName').textContent = user.name;
-        ['name', 'phone', 'gender', 'age', 'email', 'uid', 'categoryType']
-            .forEach(f => document.getElementById(f)?.value = user[f] ?? '');
 
-        // Role display
-        const roleMap = {
-            developer: 'Developer',
-            admin: 'Admin',
-            'category-admin': 'Head',
-            usher: 'Member'
-        };
-        document.getElementById('role').value = roleMap[user.role] || user.role;
+        // fill fields
+        ['name', 'phone', 'gender', 'age', 'email', 'uid']
+        .forEach(f => {
+            const el = document.getElementById(f);
+            if (el) el.value = user[f] || '';
+        });
 
-        // Username + cooldown logic
-        const count = user.usernameChangeCount || 0;
-        const windowStart = user.usernameChangeWindowStart;
-        const elapsed = daysSince(windowStart);
-        let allowed = true;
-        let daysLeft = 0;
-        let changesLeft = MAX_USERNAME_CHANGES - count;
+        // username
+        usernameInput.value = user.username;
+        usernameHelp.textContent = '';
+        // username
+        const raw = user.username || '';
+        // if somehow missing suffix, force it
+        usernameInput.value = raw.endsWith(SUFFIX) ?
+            raw :
+            raw.split('@')[0] + SUFFIX;
+        usernameHelp.textContent = '';
 
-        // only apply limits for non-admin, non-developers
-        if (!['developer', 'admin'].includes(user.role)) {
-            if (elapsed < USERNAME_WINDOW_DAYS) {
-                if (count >= MAX_USERNAME_CHANGES) {
-                    allowed = false;
-                    daysLeft = USERNAME_WINDOW_DAYS - elapsed;
-                }
+
+        // decide if editable
+        const role = user.role;
+        const elapsed = daysSince(user.usernameChangedAt);
+        const daysLeft = Math.max(0, 30 - elapsed);
+
+        if (role === 'category-admin' || role === 'usher') {
+            if (daysLeft > 0) {
+                usernameInput.disabled = true;
+                usernameHelp.textContent =
+                    `You can change your username in ${daysLeft} day${daysLeft>1?'s':''}.`;
             } else {
-                // window reset
-                changesLeft = MAX_USERNAME_CHANGES;
+                usernameInput.disabled = false;
             }
+        } else {
+            // developers & admins always can
+            usernameInput.disabled = false;
         }
 
-        usernameInput.value = user.username || '';
-        if (!allowed) {
-            usernameInput.disabled = true;
-            usernameHelpEl.textContent =
-                `You’ve used ${MAX_USERNAME_CHANGES} username changes in this ${USERNAME_WINDOW_DAYS}-day window; try again in ${daysLeft} day${daysLeft > 1 ? 's' : ''}.`;
-        } else if (changesLeft < MAX_USERNAME_CHANGES) {
-            usernameInput.disabled = false;
-            usernameHelpEl.textContent =
-                `You can change your username ${changesLeft} more time${changesLeft > 1 ? 's' : ''} in this ${USERNAME_WINDOW_DAYS}-day window.`;
-        } else {
-            usernameInput.disabled = false;
-            usernameHelpEl.textContent = '';
-        }
+        // category & role display
+        document.getElementById('categoryType').value = user.categoryType || '';
+        const roleMap = {
+            'developer': 'Developer',
+            'admin': 'Admin',
+            'category-admin': 'Head',
+            'usher': 'Member'
+        };
+        document.getElementById('role').value = roleMap[role] || 'Member';
 
     } catch (err) {
-        console.error('Failed to load profile:', err);
+        console.error(err);
         showToast('error', 'Failed to load profile');
     }
 }
@@ -109,10 +129,10 @@ async function loadProfile() {
 loadProfile();
 
 // ——— PROFILE SAVE —————————
+
 profileForm.addEventListener('submit', async e => {
     e.preventDefault();
     showToast('success', 'Saving profile…', true);
-
     try {
         const payload = {
             name: e.target.name.value.trim(),
@@ -122,28 +142,30 @@ profileForm.addEventListener('submit', async e => {
             email: e.target.email.value.trim(),
             username: usernameInput.value.trim()
         };
-        await apiFetch('/api/users/me', {
+        await safeFetch('/api/users/me', {
             method: 'PUT',
             body: JSON.stringify(payload)
         });
         showToast('success', 'Profile updated');
+        // reload so cooldown resets if username was changed
         await loadProfile();
-
     } catch (err) {
-        console.error('Profile save error:', err);
-        const msg = err.message || '';
-        if (msg.includes('You’ve used')) {
-            // server-side window limit message
-            showToast('error', msg);
+        console.error(err);
+        // server may return our 30‑day error
+        if (err.message.includes('30 days')) {
+            showToast('error', err.message);
+            // re‑render help text
+            const msg = err.message.match(/(\d+)/);
+            if (msg) usernameHelp.textContent =
+                `You can change your username in ${msg[1]} days.`;
         } else {
-            showToast('error', msg);
+            showToast('error', err.message);
         }
     }
 });
 
-// ——— PASSWORD & OTP RESET (unchanged) —————————
-// … your existing handlers for change-password / forgot-password / reset-password …
-
+// ——— PASSWORD & OTP (unchanged) —————————
+// ... your existing passwordForm submit, sendOtpBtn click, toggle‑password handlers ...
 
 // ——— Password & OTP Reset ————————————
 
@@ -215,7 +237,7 @@ passwordForm.addEventListener('submit', async e => {
 
 // ——— Send OTP ————————————————
 
-sendOtpBtn.onclick = async () => {
+sendOtpBtn.onclick = async() => {
     const email = document.getElementById('resetIdentifier').value.trim();
     if (!email) {
         showToast('error', 'Enter your email or phone to receive OTP');
