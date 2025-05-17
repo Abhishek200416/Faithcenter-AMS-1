@@ -18,6 +18,8 @@ module.exports = sequelize => {
             unique: true,
             allowNull: false
         },
+
+        // ——— Username change-limits ———
         usernameChangeCount: {
             type: DataTypes.INTEGER,
             allowNull: false,
@@ -28,12 +30,12 @@ module.exports = sequelize => {
             allowNull: false,
             defaultValue: DataTypes.NOW
         },
-
         usernameChangedAt: {
             type: DataTypes.DATE,
             allowNull: false,
             defaultValue: DataTypes.NOW
         },
+
         name: {
             type: DataTypes.STRING,
             allowNull: false
