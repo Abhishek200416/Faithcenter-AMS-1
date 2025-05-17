@@ -11,12 +11,10 @@ const { Sequelize, Op } = require('sequelize');
 const ALLOWED_CATEGORIES = ['admin', 'protocol', 'media', 'worship', 'ushering'];
 const MAX_CHANGES = 3;
 const WINDOW_DAYS = 30;
-
-// valid username characters
-const USERNAME_REGEX = /^[a-z0-9]+$/;
+const USERNAME_REGEX = /^[a-z0-9]+$/; // only lowercase letters & digits
 
 /**
- * Parses a Sequelize unique‐constraint error into a friendly message
+ * Parse a Sequelize unique‐constraint error into a friendly message
  */
 function parseSequelizeError(err) {
     if (err instanceof Sequelize.UniqueConstraintError) {
@@ -25,16 +23,14 @@ function parseSequelizeError(err) {
     return null;
 }
 
-/** 2-digit year + 8-digit random */
+/** 2-digit year + 8-digit random UID */
 function genUid() {
     const yy = new Date().getFullYear().toString().slice(-2);
-    const rand = Math.floor(Math.random() * 1e8)
-        .toString()
-        .padStart(8, '0');
+    const rand = Math.floor(Math.random() * 1e8).toString().padStart(8, '0');
     return yy + rand;
 }
 
-/** Strip spaces & dots, lowercase */
+/** Lowercase, strip spaces & dots */
 function cleanUsername(raw) {
     return raw.toLowerCase().replace(/[\s\.]+/g, '');
 }
@@ -50,28 +46,26 @@ function genPassword(source) {
 }
 
 /**
- * Checks whether the user may change their username.
- * - Admins & developers always allowed
- * - Others: at most MAX_CHANGES per WINDOW_DAYS rolling window
+ * Checks if user may change username:
+ * - dev/admin always allowed
+ * - others: max MAX_CHANGES per WINDOW_DAYS rolling window
  */
 async function canChangeUsername(user) {
     const now = Date.now();
-    const windowStart = user.usernameChangeWindowStart ?
+    const ws = user.usernameChangeWindowStart ?
         new Date(user.usernameChangeWindowStart).getTime() :
         now;
-    const elapsedDays = (now - windowStart) / (1000 * 60 * 60 * 24);
-
+    const elapsedDays = (now - ws) / (1000 * 60 * 60 * 24);
     let count = user.usernameChangeCount || 0;
-    let startDate = new Date(windowStart);
+    let windowStart = new Date(ws);
 
-    // reset window if expired
     if (elapsedDays >= WINDOW_DAYS) {
         count = 0;
-        startDate = new Date();
+        windowStart = new Date();
     }
 
-    if (['developer', 'admin'].includes(user.role) || count < MAX_CHANGES) {
-        return { allowed: true, count, startDate };
+    if (user.role === 'developer' || user.role === 'admin' || count < MAX_CHANGES) {
+        return { allowed: true, count, windowStart };
     } else {
         const daysLeft = Math.ceil(WINDOW_DAYS - elapsedDays);
         return { allowed: false, daysLeft };
@@ -92,6 +86,7 @@ exports.createUser = async function createUser(req, res, next) {
         let { name, email, phone, role, categoryType, gender, age, username } = req.body;
         categoryType = categoryType.replace(/-head$/, '');
 
+        // category & role validation
         if (!ALLOWED_CATEGORIES.includes(categoryType)) {
             return res.status(400).json({ message: 'Invalid category type' });
         }
@@ -103,13 +98,11 @@ exports.createUser = async function createUser(req, res, next) {
         }
 
         // ────── USERNAME ──────
-        if (!username?.trim()) {
-            // no username supplied → derive from name
+        if (!username || !username.trim()) {
             username = genUsername(name);
         } else {
             username = cleanUsername(username);
         }
-
         if (!USERNAME_REGEX.test(username)) {
             return res.status(400).json({
                 message: 'Username must use only lowercase letters and digits (no spaces, dots or symbols).'
@@ -154,8 +147,7 @@ exports.createUser = async function createUser(req, res, next) {
             age
         }))(user);
 
-        // **use passwordPlain here**
-        res.status(201).json({ user: safe, plainPassword: passwordPlain });
+        return res.status(201).json({ user: safe, plainPassword });
     } catch (err) {
         const msg = parseSequelizeError(err);
         if (msg) return res.status(400).json({ message: msg });
@@ -167,7 +159,7 @@ exports.createUser = async function createUser(req, res, next) {
 // READ
 // ——————————————————————————————————————————————————————————————————
 
-exports.getAllUsers = async function (req, res, next) {
+exports.getAllUsers = async function getAllUsers(req, res, next) {
     try {
         const where = {};
         if (req.user.role === 'category-admin') {
@@ -187,7 +179,7 @@ exports.getAllUsers = async function (req, res, next) {
     }
 };
 
-exports.getUserById = async function (req, res, next) {
+exports.getUserById = async function getUserById(req, res, next) {
     try {
         const user = await User.findByPk(req.params.id, {
             attributes: [
@@ -206,7 +198,7 @@ exports.getUserById = async function (req, res, next) {
     }
 };
 
-exports.getMyProfile = async function (req, res, next) {
+exports.getMyProfile = async function getMyProfile(req, res, next) {
     try {
         const user = await User.findByPk(req.user.id, {
             attributes: [
@@ -225,7 +217,7 @@ exports.getMyProfile = async function (req, res, next) {
 // UPDATE
 // ——————————————————————————————————————————————————————————————————
 
-exports.updateUser = async function (req, res, next) {
+exports.updateUser = async function updateUser(req, res, next) {
     try {
         const actor = req.user.role;
         if (!['developer', 'admin', 'category-admin'].includes(actor)) {
@@ -234,7 +226,6 @@ exports.updateUser = async function (req, res, next) {
 
         const user = await User.findByPk(req.params.id);
         if (!user) return res.status(404).json({ message: 'Not found' });
-
         if (actor === 'category-admin' && (user.role !== 'usher' || user.categoryType !== req.user.categoryType)) {
             return res.status(403).json({ message: 'Forbidden' });
         }
@@ -260,7 +251,7 @@ exports.updateUser = async function (req, res, next) {
                 });
             }
 
-            const { allowed, daysLeft, count, startDate } = await canChangeUsername(user);
+            const { allowed, daysLeft, startDate } = await canChangeUsername(user);
             if (!allowed) {
                 return res.status(400).json({
                     message: `You’ve used ${MAX_CHANGES} changes this 30-day window; try again in ${daysLeft} days.`
@@ -271,7 +262,7 @@ exports.updateUser = async function (req, res, next) {
             }
 
             const now = new Date();
-            // reset or increment
+            // reset or increment count
             if ((now - startDate) / (1000 * 60 * 60 * 24) >= WINDOW_DAYS) {
                 updates.usernameChangeCount = 1;
                 updates.usernameChangeWindowStart = now;
@@ -323,7 +314,7 @@ exports.updateUser = async function (req, res, next) {
     }
 };
 
-exports.updateMyProfile = async function (req, res, next) {
+exports.updateMyProfile = async function updateMyProfile(req, res, next) {
     try {
         const user = await User.findByPk(req.user.id);
         if (!user) return res.status(404).json({ message: 'Not found' });
@@ -339,7 +330,7 @@ exports.updateMyProfile = async function (req, res, next) {
                 });
             }
 
-            const { allowed, daysLeft, count, startDate } = await canChangeUsername(user);
+            const { allowed, daysLeft, startDate } = await canChangeUsername(user);
             if (!allowed) {
                 return res.status(400).json({
                     message: `You’ve used ${MAX_CHANGES} changes this 30-day window; try again in ${daysLeft} days.`
@@ -401,11 +392,11 @@ exports.updateMyProfile = async function (req, res, next) {
     }
 };
 
-// ————————————————————
+// ——————————————————————————————————————————————————————————————————
 // DELETE & COUNT
-// ————————————————————
+// ——————————————————————————————————————————————————————————————————
 
-exports.deleteUser = async function (req, res, next) {
+exports.deleteUser = async function deleteUser(req, res, next) {
     try {
         const actor = req.user.role;
         if (!['developer', 'admin'].includes(actor)) {
@@ -420,7 +411,7 @@ exports.deleteUser = async function (req, res, next) {
     }
 };
 
-exports.countUsers = async function (req, res, next) {
+exports.countUsers = async function countUsers(req, res, next) {
     try {
         const where = {};
         if (req.query.category) {
