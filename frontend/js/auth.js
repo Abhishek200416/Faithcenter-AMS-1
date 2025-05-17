@@ -28,7 +28,7 @@ function isValidIdentifier(s) {
     return !!(
         /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) || // email
         /^\d{10,}$/.test(s) || // phone
-        /^[a-z0-9]+$/.test(s) || // username (lowercase letters/numbers)
+        /^[a-z0-9]+$/.test(s) || // username
         /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/.test(s) // UUID
     );
 }
@@ -102,7 +102,10 @@ loginForm.addEventListener('submit', async e => {
         });
         saveToken(data.token);
         window.location.href = '/dashboard.html';
+
     } catch (err) {
+        // ← ADDITIONAL DEBUGGING HERE
+        console.error('Login Error:', err);
         showToast(
             'error',
             err.message === 'Invalid credentials' ?
@@ -136,7 +139,9 @@ async function handleSendLoginOtp() {
         document.querySelector('.otp-step2').classList.remove('hidden');
         showToast('success', 'Login code sent! Check your email.');
         startResendTimer();
+
     } catch (err) {
+        console.error('OTP Send Error:', err);
         showToast('error', err.message);
     } finally {
         sendOtpBtn.disabled = false;
@@ -171,7 +176,9 @@ async function handleVerifyLoginOtp(e) {
         });
         saveToken(data.token);
         window.location.href = '/dashboard.html';
+
     } catch (err) {
+        console.error('OTP Verify Error:', err);
         showToast('error', err.message);
     } finally {
         otpBtn.disabled = false;
@@ -203,11 +210,10 @@ resendBtn.addEventListener('click', handleSendLoginOtp);
 otpForm.addEventListener('submit', handleVerifyLoginOtp);
 
 // — 5) FORGOT / RESET PASSWORD —
-// NOTE: Your HTML must have a single input with id="forgotIdentifier"
+// NOTE: your HTML must have an input id="forgotIdentifier"
 sendResetBtn.addEventListener('click', async e => {
     e.preventDefault();
     const identifier = document.getElementById('forgotIdentifier').value.trim();
-
     if (!isValidIdentifier(identifier)) {
         showToast('error', 'Enter valid Email/Phone/UID/Username');
         return;
@@ -223,6 +229,7 @@ sendResetBtn.addEventListener('click', async e => {
         resetSection.classList.remove('hidden');
         showToast('success', 'Reset code sent! Check your email.');
     } catch (err) {
+        console.error('Forgot-Password Error:', err);
         showToast('error', err.message);
     } finally {
         sendResetBtn.disabled = false;
@@ -256,6 +263,7 @@ forgotForm.addEventListener('submit', async e => {
         showToast('success', 'Password reset—please log in.');
         switchTab('login');
     } catch (err) {
+        console.error('Reset-Password Error:', err);
         showToast('error', err.message);
     } finally {
         submitBtn.disabled = false;

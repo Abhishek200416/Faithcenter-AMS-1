@@ -1,7 +1,12 @@
-// frontend/js/profile.js
+// public/js/profile.js
+
 import { apiFetch } from './utils.js';
 import { showToast } from './toast.js';
 
+const MAX_USERNAME_CHANGES = 3;
+const USERNAME_WINDOW_DAYS = 30;
+
+// — DOM refs —
 const profileTab = document.getElementById('profileTab');
 const passwordTab = document.getElementById('passwordTab');
 const profileForm = document.getElementById('profileForm');
@@ -10,51 +15,48 @@ const changeSec = document.getElementById('changeSection');
 const resetSec = document.getElementById('resetSection');
 const sendOtpBtn = document.getElementById('sendOtp');
 const usernameInput = document.getElementById('username');
-const usernameHelp = document.getElementById('usernameHelp') || (() => {
-    const p = document.createElement('p');
-    p.id = 'usernameHelp';
-    p.className = 'info-text';
-    usernameInput.parentNode.append(p);
-    return p;
-})();
+const usernameHelpEl = document.getElementById('usernameHelp') ||
+    (() => {
+        const p = document.createElement('p');
+        p.id = 'usernameHelp';
+        p.className = 'info-text';
+        usernameInput.parentNode.append(p);
+        return p;
+    })();
 
-const [profileError, profileSuccess, passwordError, passwordSuccess] = ['profileError', 'profileSuccess', 'passwordError', 'passwordSuccess']
-.map(id => document.getElementById(id));
+const [profileError, profileSuccess, passwordError, passwordSuccess] =
+    ['profileError', 'profileSuccess', 'passwordError', 'passwordSuccess']
+        .map(id => document.getElementById(id));
 
+// Helper to compute whole days since a timestamp
 function daysSince(dateStr) {
-    const ms = Date.now() - new Date(dateStr).getTime();
-    return Math.floor(ms / (1000 * 60 * 60 * 24));
+    return Math.floor((Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24));
 }
 
+// Tab‐switching
 function switchTab(tab) {
     profileForm.classList.toggle('active', tab === 'profile');
     passwordForm.classList.toggle('active', tab === 'password');
     profileTab.classList.toggle('active', tab === 'profile');
     passwordTab.classList.toggle('active', tab === 'password');
     [profileError, profileSuccess, passwordError, passwordSuccess]
-    .forEach(el => el.textContent = '');
+        .forEach(el => { if (el) el.textContent = ''; });
 }
 
 profileTab.onclick = () => switchTab('profile');
 passwordTab.onclick = () => switchTab('password');
 
+// Load and render current profile
 async function loadProfile() {
     try {
         const { user } = await apiFetch('/api/users/me');
+
+        // Simple fields
         document.getElementById('userName').textContent = user.name;
-
-        // fill simple fields
         ['name', 'phone', 'gender', 'age', 'email', 'uid', 'categoryType']
-        .forEach(f => {
-            const el = document.getElementById(f);
-            if (el) el.value = user[f] || '';
-        });
+            .forEach(f => document.getElementById(f)?.value = user[f] ?? '');
 
-        // username: just load directly
-        usernameInput.value = user.username || '';
-        usernameHelp.textContent = '';
-
-        // role display
+        // Role display
         const roleMap = {
             developer: 'Developer',
             admin: 'Admin',
@@ -63,19 +65,43 @@ async function loadProfile() {
         };
         document.getElementById('role').value = roleMap[user.role] || user.role;
 
-        // username cooldown logic only if you still want it:
-        const elapsed = daysSince(user.usernameChangedAt);
-        const daysLeft = Math.max(0, 30 - elapsed);
+        // Username + cooldown logic
+        const count = user.usernameChangeCount || 0;
+        const windowStart = user.usernameChangeWindowStart;
+        const elapsed = daysSince(windowStart);
+        let allowed = true;
+        let daysLeft = 0;
+        let changesLeft = MAX_USERNAME_CHANGES - count;
 
-        if (['category-admin', 'usher'].includes(user.role) && daysLeft > 0) {
+        // only apply limits for non-admin, non-developers
+        if (!['developer', 'admin'].includes(user.role)) {
+            if (elapsed < USERNAME_WINDOW_DAYS) {
+                if (count >= MAX_USERNAME_CHANGES) {
+                    allowed = false;
+                    daysLeft = USERNAME_WINDOW_DAYS - elapsed;
+                }
+            } else {
+                // window reset
+                changesLeft = MAX_USERNAME_CHANGES;
+            }
+        }
+
+        usernameInput.value = user.username || '';
+        if (!allowed) {
             usernameInput.disabled = true;
-            usernameHelp.textContent = `You can change your username in ${daysLeft} day${daysLeft>1?'s':''}.`;
+            usernameHelpEl.textContent =
+                `You’ve used ${MAX_USERNAME_CHANGES} username changes in this ${USERNAME_WINDOW_DAYS}-day window; try again in ${daysLeft} day${daysLeft > 1 ? 's' : ''}.`;
+        } else if (changesLeft < MAX_USERNAME_CHANGES) {
+            usernameInput.disabled = false;
+            usernameHelpEl.textContent =
+                `You can change your username ${changesLeft} more time${changesLeft > 1 ? 's' : ''} in this ${USERNAME_WINDOW_DAYS}-day window.`;
         } else {
             usernameInput.disabled = false;
+            usernameHelpEl.textContent = '';
         }
 
     } catch (err) {
-        console.error(err);
+        console.error('Failed to load profile:', err);
         showToast('error', 'Failed to load profile');
     }
 }
@@ -86,6 +112,7 @@ loadProfile();
 profileForm.addEventListener('submit', async e => {
     e.preventDefault();
     showToast('success', 'Saving profile…', true);
+
     try {
         const payload = {
             name: e.target.name.value.trim(),
@@ -101,22 +128,22 @@ profileForm.addEventListener('submit', async e => {
         });
         showToast('success', 'Profile updated');
         await loadProfile();
+
     } catch (err) {
-        console.error(err);
-        const msg = err.message;
-        if (msg.includes('Username can only be changed')) {
+        console.error('Profile save error:', err);
+        const msg = err.message || '';
+        if (msg.includes('You’ve used')) {
+            // server-side window limit message
             showToast('error', msg);
-            // re-render help text if server told you the days remaining
-            const m = msg.match(/(\d+)/);
-            if (m) usernameHelp.textContent = `You can change your username in ${m[1]} day${m[1]>1?'s':''}.`;
         } else {
             showToast('error', msg);
         }
     }
 });
 
-// ——— PASSWORD FORM HANDLERS —————————
-// ... your existing change-password and reset-OTP logic unchanged ...
+// ——— PASSWORD & OTP RESET (unchanged) —————————
+// … your existing handlers for change-password / forgot-password / reset-password …
+
 
 // ——— Password & OTP Reset ————————————
 
@@ -188,7 +215,7 @@ passwordForm.addEventListener('submit', async e => {
 
 // ——— Send OTP ————————————————
 
-sendOtpBtn.onclick = async() => {
+sendOtpBtn.onclick = async () => {
     const email = document.getElementById('resetIdentifier').value.trim();
     if (!email) {
         showToast('error', 'Enter your email or phone to receive OTP');
