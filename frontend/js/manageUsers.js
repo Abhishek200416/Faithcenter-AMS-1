@@ -219,6 +219,14 @@ function renderCards(list) {
     container.append(card);
   });
 }
+// …inside renderCards, after you `container.append(card);`:
+
+//  Add this so clicking the card (but _not_ its buttons) expands/collapses it:
+card.addEventListener('click', e => {
+  // ignore clicks on the Edit/Delete buttons
+  if (e.target.closest('.edit-btn, .delete-btn')) return;
+  card.classList.toggle('expanded');
+});
 
 // —————————————————————————————————————
 // 6) Search/Clear Listeners
