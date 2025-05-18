@@ -117,9 +117,12 @@
             <!-- OUTPUT CARD -->
             <section id="qrOutput" class="qr-output card hidden">
                 <div id="qrLoading" class="spinner hidden" aria-label="Loading…"></div>
-                <canvas s id="qrCanvas" class="hidden"></canvas>
+                <canvas id="qrCanvas" class="hidden"></canvas>
                 <div id="qrTimer" class="monospace"></div>
+                <!-- INSERT the Cancel button here: -->
+                <button id="cancelQRBtn" class="btn danger">Cancel QR</button>
             </section>
+
             <!-- SCANNER (members only) -->
             <section id="scannerSection" class="qr-output card hidden">
                 <div id="scannerLoading" class="spinner" aria-label="Loading…"></div>
@@ -155,10 +158,13 @@
                     <label for="feedbackReason">Reason for being late:</label>
                     <textarea id="feedbackReason" placeholder="Enter your reason…"></textarea>
                 </div>
-                <!-- Just add in your QR output card after Generate -->
-                <button id="cancelQRBtn" class="btn danger">Cancel QR</button>
 
+                <!-- DELETE this from feedback-content -->
+                <!-- … -->
+                <button id="cancelQRBtn" class="btn danger">Cancel QR</button>
                 <button id="feedbackOk" class="btn accent">OK</button>
+                <!-- … -->
+
             </div>
         </div>
         </div>
