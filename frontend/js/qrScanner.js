@@ -2,7 +2,6 @@
 import { apiFetch } from './utils.js';
 import { showToast } from './toast.js';
 
-
 const E = {
     // form inputs
     dateIn: document.getElementById('dateInput'),
@@ -19,6 +18,7 @@ const E = {
 
     // buttons & selects
     applyBtn: document.getElementById('applyBtn'),
+    cancelQRBtn: document.getElementById('cancelQRBtn'),
     savePreset: document.getElementById('savePresetBtn'),
     presetSel: document.getElementById('presetSelect'),
 
@@ -47,9 +47,9 @@ const E = {
 };
 
 let html5QrInstance;
-let attendanceCache = {};     // cache punches so we don’t re-punch
+let attendanceCache = {};
 let currentQR, liveTs, expiryTs, qrCategory, qrIssuerId;
-let role, userCategory, isMember;
+let userId, role, userCategory, isMember;
 const thresholds = { early: 0, late: 0, absent: 0 };
 let timerInterval;
 
@@ -59,16 +59,15 @@ const MODE = new URLSearchParams(window.location.search).get('mode');
 (async function init() {
     try {
         const me = await apiFetch('/api/users/me');
+        userId = me.id;
         role = me.role;
         userCategory = me.categoryType || null;
         isMember = (role === 'member' || role === 'usher');
 
-        // Members / ushers ALWAYS scanner only
         if (isMember || MODE === 'scan') {
             return showScannerOnly();
         }
 
-        // Everyone else MUST generator only
         showGeneratorOnly();
         await loadPresets();
 
@@ -97,11 +96,9 @@ function showScannerOnly() {
     E.formCard.classList.add('hidden');
     E.qrOutput.classList.add('hidden');
     E.scannerSection.classList.remove('hidden');
-    fetchActiveQR()
-        .then(initScanner)
-        .catch(() => {
-            showToast('error', 'No active QR available');
-        });
+    fetchActiveQR().then(initScanner).catch(() => {
+        showToast('error', 'No active QR available');
+    });
 }
 
 function showGeneratorOnly() {
@@ -110,11 +107,11 @@ function showGeneratorOnly() {
     E.scannerSection.classList.add('hidden');
 }
 
-/** 2) Auto‑fill IST date/time **/
+/** 2) Auto-fill IST date/time **/
 window.addEventListener('load', () => {
-    const now = new Date(),
-        utc = now.getTime() + now.getTimezoneOffset() * 60000,
-        ist = new Date(utc + 5.5 * 60 * 60000);
+    const now = new Date();
+    const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+    const ist = new Date(utc + 5.5 * 60 * 60000);
     E.dateIn.value = ist.toISOString().slice(0, 10);
     E.timeIn.value = ist.toTimeString().slice(0, 8);
 });
@@ -132,15 +129,30 @@ async function fetchActiveQR() {
     thresholds.absent = (data.duration || 0) * 60000;
 }
 
-/** 4) Presets **/
+/** 4) Cancel QR **/
+E.cancelQRBtn.onclick = async () => {
+    if (!currentQR) return showToast('error', 'No active QR to cancel');
+    if (!confirm('Cancel this QR? All its attendance records will be removed.')) return;
+    try {
+        await apiFetch(`/api/qr/${currentQR}`, { method: 'DELETE' });
+        showToast('success', 'QR cancelled – all attendances removed');
+        localStorage.removeItem('qrState');
+        E.qrCanvas.classList.add('hidden');
+        E.qrTimer.textContent = '';
+        E.applyBtn.disabled = false;
+    } catch (err) {
+        showToast('error', err.message || 'Cancel failed');
+    }
+};
+
+/** 5) Presets **/
 async function loadPresets() {
     E.presetSel.innerHTML = '<option value="">— Load Preset —</option>';
     try {
         const ps = await apiFetch('/api/presets');
         ps.forEach(p => {
             const o = document.createElement('option');
-            o.value = p.id;
-            o.textContent = p.name;
+            o.value = p.id; o.textContent = p.name;
             E.presetSel.append(o);
         });
     } catch {
@@ -152,61 +164,27 @@ E.presetSel.addEventListener('change', async () => {
     if (!id) return;
     try {
         const p = await apiFetch(`/api/presets/${id}`);
-        E.dateIn.value = p.date;
-        E.timeIn.value = p.time;
-        E.earlyIn.value = p.early;
-        E.lateIn.value = p.late;
-        E.absentIn.value = p.absent;
-        E.earlyMsgIn.value = p.earlyMsg;
-        E.onTimeMsgIn.value = p.onTimeMsg;
-        E.lateMsgIn.value = p.lateMsg;
+        Object.assign(E, {
+            dateIn: p.date, timeIn: p.time,
+            earlyIn: p.early, lateIn: p.late,
+            absentIn: p.absent,
+            earlyMsgIn: p.earlyMsg,
+            onTimeMsgIn: p.onTimeMsg,
+            lateMsgIn: p.lateMsg
+        });
     } catch {
         showToast('error', 'Failed to load preset');
     }
 });
 
-E.savePreset.onclick = () => {
-    E.nameInput.value = '';
-    E.modal.classList.remove('hidden');
-    E.nameInput.focus();
-};
-E.cancelBtn.onclick = () => E.modal.classList.add('hidden');
-E.confirmBtn.onclick = async () => {
-    const nm = E.nameInput.value.trim();
-    if (!nm) return showToast('error', 'Enter a name');
-    try {
-        await apiFetch('/api/presets', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                name: nm,
-                date: E.dateIn.value,
-                time: E.timeIn.value,
-                early: +E.earlyIn.value,
-                late: +E.lateIn.value,
-                absent: +E.absentIn.value,
-                earlyMsg: E.earlyMsgIn.value,
-                onTimeMsg: E.onTimeMsgIn.value,
-                lateMsg: E.lateMsgIn.value
-            })
-        });
-        showToast('success', 'Preset saved');
-        E.modal.classList.add('hidden');
-        await loadPresets();
-    } catch {
-        showToast('error', 'Failed to save preset');
-    }
-};
-
-/** 5) Generate QR **/
+/** 6) Generate QR **/
 E.applyBtn.onclick = async () => {
     E.qrLoading.classList.remove('hidden');
     E.qrCanvas.classList.add('hidden');
 
-    // build liveAt
+    // Build UTC ISO from IST input
     const [Y, M, D] = E.dateIn.value.split('-').map(Number);
     const [h, m, s] = E.timeIn.value.split(':').map(Number);
-    // convert IST→UTC by subtracting 5h30m
     const liveAtISO = new Date(Date.UTC(Y, M - 1, D, h - 5, m - 30, s)).toISOString();
 
     try {
@@ -224,7 +202,8 @@ E.applyBtn.onclick = async () => {
                 scanType: E.scanType.value
             })
         });
-        // adopt server values
+
+        // Adopt server values
         currentQR = data.token;
         liveTs = new Date(data.liveAt).getTime();
         expiryTs = new Date(data.expiresAt).getTime();
@@ -240,8 +219,7 @@ E.applyBtn.onclick = async () => {
         startTimer();
 
         localStorage.setItem('qrState', JSON.stringify({
-            token: currentQR,
-            liveTs, expiryTs,
+            token: currentQR, liveTs, expiryTs,
             category: qrCategory, issuerId: qrIssuerId,
             scanType: E.scanType.value,
             earlyMs: thresholds.early,
@@ -258,6 +236,7 @@ E.applyBtn.onclick = async () => {
     }
 };
 
+/** 7) Timer **/
 function startTimer() {
     clearInterval(timerInterval);
     function tick() {
@@ -267,13 +246,13 @@ function startTimer() {
             clearInterval(timerInterval);
             localStorage.removeItem('qrState');
             E.qrCanvas.classList.add('hidden');
-            if (window.innerWidth <= 600) E.formCard.classList.remove('hidden');
             E.applyBtn.disabled = false;
+            if (window.innerWidth <= 600) E.formCard.classList.remove('hidden');
             return;
         }
         E.applyBtn.disabled = true;
-        const mm = String(Math.floor(d / 60000)).padStart(2, '0'),
-            ss = String(Math.floor((d % 60000) / 1000)).padStart(2, '0');
+        const mm = String(Math.floor(d / 60000)).padStart(2, '0');
+        const ss = String(Math.floor((d % 60000) / 1000)).padStart(2, '0');
         E.qrTimer.textContent = `Expires in ${mm}:${ss}`;
     }
     tick();
@@ -288,26 +267,17 @@ function restoreQRCode() {
     if (window.innerWidth <= 600) E.formCard.classList.add('hidden');
 }
 
-/** 6) Scanner startup **/
+/** 8) Scanner Initialization **/
 async function initScanner() {
     E.scannerLoading.classList.remove('hidden');
     html5QrInstance = new Html5Qrcode('qr-reader');
     const cfg = { fps: 20, qrbox: 300 };
 
     try {
-        await html5QrInstance.start(
-            { facingMode: 'environment' },
-            cfg,
-            onScan
-        );
+        await html5QrInstance.start({ facingMode: 'environment' }, cfg, onScan);
     } catch {
-        // fallback to user camera
         try {
-            await html5QrInstance.start(
-                { facingMode: 'user' },
-                cfg,
-                onScan
-            );
+            await html5QrInstance.start({ facingMode: 'user' }, cfg, onScan);
         } catch (e) {
             showToast('error', 'Camera error: ' + (e.message || e));
         }
@@ -316,31 +286,26 @@ async function initScanner() {
     }
 }
 
-/** 7) onScan **/
+/** 9) onScan Logic **/
 async function onScan(token) {
     if (token !== currentQR) {
         return showToast('error', 'Invalid QR');
     }
-
-    // issuer cannot scan own
-    if (qrIssuerId === role/* or compare userId on front if you store it */) {
+    // Prevent issuer from scanning own
+    if (qrIssuerId === userId) {
         return showToast('error', 'You cannot scan your own QR');
     }
-
-    // category check
+    // Category check
     if (qrCategory && qrCategory !== userCategory) {
         return showToast('error', 'Not for your category');
     }
 
-    const now = Date.now(),
-        key = `${currentQR}::${E.scanType.value}`;
-
-    // already punched?
+    const now = Date.now();
+    const key = `${currentQR}::${E.scanType.value}`;
     if (attendanceCache[key]) {
         return popFeedback(attendanceCache[key], key);
     }
-
-    // expired → auto absent
+    // Expired → auto absent
     if (now > expiryTs) {
         try {
             await apiFetch('/api/attendance/punch', {
@@ -359,17 +324,19 @@ async function onScan(token) {
         }
     }
 
-    // compute early/on-time/late
+    // Compute Early / On Time / Late
     let title, main, custom, needReason = false;
-    const delta = now - liveTs;
-    if (delta < -thresholds.early) {
-        title = 'Early'; main = `Early by ${Math.floor(-delta / 60000)}m`; custom = E.earlyMsgIn.value || main;
-    }
-    else if (delta <= thresholds.late) {
-        title = 'On Time'; main = 'On time'; custom = E.onTimeMsgIn.value || main;
-    }
-    else {
-        title = 'Late'; main = `Late by ${Math.floor((delta - thresholds.late) / 60000)}m`;
+    if (now < liveTs - thresholds.early) {
+        title = 'Early';
+        main = `Early by ${Math.ceil((liveTs - now) / 60000)}m`;
+        custom = E.earlyMsgIn.value || main;
+    } else if (now <= liveTs + thresholds.late) {
+        title = 'On Time';
+        main = 'On time';
+        custom = E.onTimeMsgIn.value || main;
+    } else {
+        title = 'Late';
+        main = `Late by ${Math.ceil((now - (liveTs + thresholds.late)) / 60000)}m`;
         custom = E.lateMsgIn.value || main;
         needReason = true;
     }
@@ -378,7 +345,7 @@ async function onScan(token) {
     popFeedback(attendanceCache[key], key);
 }
 
-/** 8) popFeedback **/
+/** 10) Feedback & Punch **/
 function popFeedback(rec, key) {
     html5QrInstance?.stop();
     E.fbTitle.textContent = rec.title;
@@ -387,7 +354,6 @@ function popFeedback(rec, key) {
     E.fbCard.classList.remove('hidden');
 
     E.fbOk.onclick = async () => {
-        // record if not yet
         if (!rec.punched) {
             const reason = rec.needReason ? E.fbReason.value.trim() : null;
             if (rec.needReason && !reason) {
@@ -410,7 +376,6 @@ function popFeedback(rec, key) {
                 return showToast('error', e.message || 'Punch failed');
             }
         }
-        // hide modal & go home
         E.fbCard.classList.add('hidden');
         window.location.href = 'dashboard.html';
     };
