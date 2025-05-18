@@ -271,7 +271,8 @@ function restoreFromStorage() {
 // —————————————————————————————————————————
 async function startScanner() {
     show(E.scannerLoading);
-    qrScanner = new Html5Qrcode('qr-reader');
+
+
     const cfg = {
         fps: 10,
         qrbox: calculateQrBox(),
