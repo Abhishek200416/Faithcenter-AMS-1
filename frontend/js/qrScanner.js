@@ -47,6 +47,8 @@ const MODE = new URLSearchParams(window.location.search).get('mode');
 
 ; (async function init() {
     E.root.classList.remove('hidden');
+
+    // auto-fill IST now
     const now = new Date();
     const utc = now.getTime() + now.getTimezoneOffset() * 60000;
     const ist = new Date(utc + 5.5 * 60 * 60000);
@@ -69,9 +71,7 @@ function enterGeneratorMode() {
     E.generator.classList.remove('hidden');
     E.qrOutput.classList.remove('hidden');
     E.scannerSection.classList.add('hidden');
-    if (['developer', 'admin', 'category-admin'].includes(role)) {
-        E.cancelBtn.classList.remove('hidden');
-    }
+    E.cancelBtn.classList.add('hidden');
 }
 
 function enterScannerMode() {
@@ -89,7 +89,7 @@ function promptCameraPermission() {
         return;
     }
     E.cameraOverlay.classList.remove('hidden');
-    E.cameraOkBtn.onclick = async () => {
+    E.cameraOkBtn.onclick = () => {
         E.cameraOverlay.classList.add('hidden');
         fetchAndStartScanner();
     };
@@ -172,9 +172,7 @@ function bindQR(d) {
     E.qrLoading.classList.add('hidden');
     E.qrCanvas.classList.remove('hidden');
     QRCode.toCanvas(E.qrCanvas, currentQR, { width: 250 });
-    if (['developer', 'admin', 'category-admin'].includes(role)) {
-        E.cancelBtn.classList.remove('hidden');
-    }
+    E.cancelBtn.classList.remove('hidden');
     startCountdown();
     persistState();
 }
@@ -320,7 +318,9 @@ async function handlePunch() {
 function showFeedback(rec) {
     E.fbTitle.textContent = rec.title;
     E.fbMsg.textContent = rec.custom;
-    rec.needReason ? E.fbReasonContainer.classList.remove('hidden') : E.fbReasonContainer.classList.add('hidden');
+    rec.needReason
+        ? E.fbReasonContainer.classList.remove('hidden')
+        : E.fbReasonContainer.classList.add('hidden');
     E.fbCard.classList.remove('hidden');
     E.fbOk.onclick = async () => {
         if (!rec.punched) {
