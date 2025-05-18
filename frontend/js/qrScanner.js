@@ -39,7 +39,7 @@ const E = {
     fbReason: document.getElementById('feedbackReason'),
     fbOk: document.getElementById('feedbackOk'),
 
-    // Developer manual punch (must add in HTML)
+    // Dev-panel (optional)
     devPanel: document.getElementById('devPunchPanel'),
     devUserSelect: document.getElementById('devUserSelect'),
     devPunchInBtn: document.getElementById('devPunchIn'),
@@ -63,7 +63,11 @@ const MODE = new URLSearchParams(window.location.search).get('mode');
 
 /** Bootstrap **/
 (async function init() {
-    // Hide cancel & dev panel by default
+    // **Reveal the app immediately**
+    const root = document.getElementById('app-root');
+    if (root) root.classList.remove('hidden');
+
+    // Hide cancel & dev panel to start
     E.cancelQRBtn.style.display = 'none';
     if (E.devPanel) E.devPanel.style.display = 'none';
 
@@ -73,10 +77,14 @@ const MODE = new URLSearchParams(window.location.search).get('mode');
         role = me.role;
         userCategory = me.categoryType || null;
 
-        // Show dev panel if developer
+        // Show dev panel safely
         if (role === 'developer' && E.devPanel) {
             E.devPanel.style.display = 'block';
-            await loadAllUsersForDev();
+            try {
+                await loadAllUsersForDev();
+            } catch (err) {
+                console.warn('Dev user list load failed:', err);
+            }
         }
 
         const isMember = ['member', 'usher'].includes(role);
@@ -87,8 +95,9 @@ const MODE = new URLSearchParams(window.location.search).get('mode');
         showGeneratorOnly();
         await loadPresets();
         restoreFromLocal();
-    } catch {
-        showToast('error', 'Init failed');
+    } catch (err) {
+        console.error(err);
+        showToast('error', 'Initialization failed');
     }
 })();
 
@@ -98,6 +107,7 @@ function showScannerOnly() {
     E.scannerSection.classList.remove('hidden');
     fetchActiveQR().then(initScanner).catch(() => showToast('error', 'No active QR'));
 }
+
 function showGeneratorOnly() {
     E.formCard.classList.remove('hidden');
     E.qrOutput.classList.remove('hidden');
@@ -127,12 +137,12 @@ E.cancelQRBtn.onclick = async () => {
         await apiFetch(`/api/qr/${currentQR}`, { method: 'DELETE' });
         showToast('success', 'QR cancelled');
         resetUI();
-    } catch (e) {
+    } catch {
         showToast('error', 'Cancel failed');
     }
 };
 
-/** Presets **/
+/** Load Presets **/
 async function loadPresets() {
     E.presetSel.innerHTML = '<option>— Load Preset —</option>';
     try {
@@ -142,7 +152,9 @@ async function loadPresets() {
             o.value = p.id; o.textContent = p.name;
             E.presetSel.append(o);
         });
-    } catch { showToast('error', 'Load presets failed'); }
+    } catch {
+        showToast('error', 'Load presets failed');
+    }
 }
 E.presetSel.onchange = async () => {
     const id = E.presetSel.value; if (!id) return;
@@ -156,21 +168,25 @@ E.presetSel.onchange = async () => {
         E.earlyMsgIn.value = p.earlyMsg;
         E.onTimeMsgIn.value = p.onTimeMsg;
         E.lateMsgIn.value = p.lateMsg;
-    } catch { showToast('error', 'Load preset failed'); }
+    } catch {
+        showToast('error', 'Load preset failed');
+    }
 };
 
 /** Generate QR **/
 E.applyBtn.onclick = async () => {
     E.qrLoading.classList.remove('hidden');
     E.qrCanvas.classList.add('hidden');
-    // Build liveAt from inputs
+
+    // Build liveAt from user inputs
     const [Y, M, D] = E.dateIn.value.split('-').map(Number);
     const [h, m, s] = E.timeIn.value.split(':').map(Number);
     const liveAtISO = new Date(Date.UTC(Y, M - 1, D, h - 5, m - 30, s)).toISOString();
 
     try {
         const data = await apiFetch('/api/qr/generate', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 liveAt: liveAtISO,
                 durationMinutes: +E.absentIn.value,
@@ -183,12 +199,12 @@ E.applyBtn.onclick = async () => {
             })
         });
         bindQR(data);
-    } catch (e) {
+    } catch {
         showToast('error', 'Generate failed');
     }
 };
 
-/** Bind QR data **/
+/** Bind QR data & start timer **/
 function bindQR(d) {
     currentQR = d.token;
     liveTs = new Date(d.liveAt).getTime();
@@ -202,18 +218,26 @@ function bindQR(d) {
     E.qrLoading.classList.add('hidden');
     E.qrCanvas.classList.remove('hidden');
     window.QRCode.toCanvas(E.qrCanvas, currentQR, { width: 250 });
-    E.cancelQRBtn.style.display = (['developer', 'admin', 'category-admin'].includes(role) ? 'block' : 'none');
+
+    // Show cancel only for privileged roles
+    E.cancelQRBtn.style.display =
+        ['developer', 'admin', 'category-admin'].includes(role)
+            ? 'block' : 'none';
+
     startTimer();
     if (window.innerWidth <= 600) E.formCard.classList.add('hidden');
+
     localStorage.setItem('qrState', JSON.stringify({
         token: currentQR, liveTs, expiryTs,
         category: qrCategory, issuerId: qrIssuerId,
         scanType: E.scanType.value,
-        earlyMs: thresholds.early, lateMs: thresholds.late, absentMs: thresholds.absent
+        earlyMs: thresholds.early,
+        lateMs: thresholds.late,
+        absentMs: thresholds.absent
     }));
 }
 
-/** Timer **/
+/** Countdown Timer **/
 function startTimer() {
     clearInterval(timerInterval);
     timerInterval = setInterval(() => {
@@ -230,15 +254,20 @@ function startTimer() {
 function restoreFromLocal() {
     const s = JSON.parse(localStorage.getItem('qrState') || '{}');
     if (s.token && Date.now() < s.expiryTs) {
-        Object.assign(thresholds, { early: s.earlyMs, late: s.lateMs, absent: s.absentMs });
-        qrCategory = s.category; qrIssuerId = s.issuerId;
-        currentQR = s.token; liveTs = s.liveTs; expiryTs = s.expiryTs;
+        Object.assign(thresholds, {
+            early: s.earlyMs, late: s.lateMs, absent: s.absentMs
+        });
+        qrCategory = s.category;
+        qrIssuerId = s.issuerId;
+        currentQR = s.token;
+        liveTs = s.liveTs;
+        expiryTs = s.expiryTs;
         E.scanType.value = s.scanType;
         bindQR(s);
     }
 }
 
-/** Reset UI **/
+/** Reset UI once expired or cancelled **/
 function resetUI() {
     clearInterval(timerInterval);
     localStorage.removeItem('qrState');
@@ -249,11 +278,12 @@ function resetUI() {
     if (window.innerWidth <= 600) E.formCard.classList.remove('hidden');
 }
 
-/** Scanner **/
+/** Scanner Startup **/
 async function initScanner() {
     E.scannerLoading.classList.remove('hidden');
     html5QrInstance = new Html5Qrcode('qr-reader');
     const cfg = { fps: 20, qrbox: 300 };
+
     try {
         await html5QrInstance.start({ facingMode: 'environment' }, cfg, onScan);
     } catch {
@@ -267,27 +297,36 @@ async function initScanner() {
     }
 }
 
+/** Handle each scan **/
 async function onScan(token) {
     if (token !== currentQR) return showToast('error', 'Invalid QR');
-    if (qrIssuerId === userId) return showToast('error', 'Cannot scan own QR');
+    if (qrIssuerId === userId) return showToast('error', 'Cannot scan your own QR');
     if (qrCategory && qrCategory !== userCategory) return showToast('error', 'Wrong category');
 
-    const now = Date.now(), key = `${currentQR}::${E.scanType.value}`;
+    const now = Date.now();
+    const key = `${currentQR}::${E.scanType.value}`;
     if (attendanceCache[key]) return popFeedback(attendanceCache[key], key);
 
+    // Auto-absent if expired
     if (now > expiryTs) {
         try {
             await apiFetch('/api/attendance/punch', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ qrToken: currentQR, type: E.scanType.value, status: 'absent', reason: null })
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    qrToken: currentQR,
+                    type: E.scanType.value,
+                    status: 'absent',
+                    reason: null
+                })
             });
             return showToast('success', 'Marked absent');
-        } catch (e) {
+        } catch {
             return showToast('error', 'Punch failed');
         }
     }
 
-    // Early / On-time / Late
+    // Determine Early / On-time / Late
     let title, custom, needReason = false;
     if (now < liveTs - thresholds.early) {
         title = 'Early';
@@ -305,6 +344,7 @@ async function onScan(token) {
     popFeedback(attendanceCache[key], key);
 }
 
+/** Show feedback & punch **/
 function popFeedback(rec, key) {
     html5QrInstance?.stop();
     E.fbTitle.textContent = rec.title;
@@ -315,10 +355,13 @@ function popFeedback(rec, key) {
     E.fbOk.onclick = async () => {
         if (!rec.punched) {
             const reason = rec.needReason ? E.fbReason.value.trim() : null;
-            if (rec.needReason && !reason) return showToast('error', 'Please supply reason');
+            if (rec.needReason && !reason) {
+                return showToast('error', 'Please supply a reason');
+            }
             try {
                 await apiFetch('/api/attendance/punch', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         qrToken: currentQR,
                         type: E.scanType.value,
@@ -328,17 +371,16 @@ function popFeedback(rec, key) {
                 });
                 showToast('success', `You are ${rec.title}`);
                 rec.punched = true;
-            } catch (e) {
+            } catch {
                 return showToast('error', 'Punch failed');
             }
         }
         E.fbCard.classList.add('hidden');
-        // restart scanning for next user
-        initScanner();
+        initScanner();  // restart for next scan
     };
 }
 
-/** Developer Manual Punch Helpers **/
+/** Dev manual‐punch loader **/
 async function loadAllUsersForDev() {
     try {
         const users = await apiFetch('/api/users/list'); // implement this endpoint
@@ -349,16 +391,27 @@ async function loadAllUsersForDev() {
         });
         E.devPunchInBtn.onclick = () => devPunch('punch-in');
         E.devPunchOutBtn.onclick = () => devPunch('punch-out');
-    } catch { }
+    } catch {
+        console.warn('Dev load users failed');
+    }
 }
 async function devPunch(type) {
     const uid = E.devUserSelect.value;
     if (!uid) return showToast('error', 'Select user');
     try {
         await apiFetch('/api/attendance/punch', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: uid, qrToken: null, type, status: type, reason: null })
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                userId: uid,
+                qrToken: null,
+                type,
+                status: type,
+                reason: null
+            })
         });
-        showToast('success', `${type} for user done`);
-    } catch { showToast('error', 'Manual punch failed'); }
+        showToast('success', `${type} done`);
+    } catch {
+        showToast('error', 'Manual punch failed');
+    }
 }
