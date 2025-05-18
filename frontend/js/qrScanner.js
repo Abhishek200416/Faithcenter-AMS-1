@@ -1,7 +1,7 @@
 // public/js/qrScanner.js
 import { apiFetch } from './utils.js';
 import { showToast } from './toast.js';
-import { Html5Qrcode } from 'html5-qrcode';
+
 
 const E = {
     // CONFIG
@@ -271,7 +271,7 @@ function restoreFromStorage() {
 // —————————————————————————————————————————
 async function startScanner() {
     show(E.scannerLoading);
-
+    qrScanner = new Html5Qrcode('qr-reader');
 
     const cfg = {
         fps: 10,
