@@ -403,3 +403,63 @@
     /* danger red */
     color: #fff;
 }
+
+
+/* ───────────────────────────────────────────────────────────────────── */
+
+
+/* 10.  “Live” banner (scanner mode) */
+
+
+/* ───────────────────────────────────────────────────────────────────── */
+
+#qrLiveBanner {
+    grid-column: 1 / -1;
+    background: #2ecc71;
+    /* a pleasant green */
+    color: white;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius);
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: var(--spacing);
+}
+
+
+/* ───────────────────────────────────────────────────────────────────── */
+
+
+/* 11.  Camera‐permission overlay tweaks */
+
+
+/* ───────────────────────────────────────────────────────────────────── */
+
+#cameraOverlay {
+    /* inherits feedback-card backdrop styles */
+}
+
+.camera-instructions button {
+    margin-top: 1rem;
+    background: var(--accent);
+    color: #fff;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius);
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+
+/* ───────────────────────────────────────────────────────────────────── */
+
+
+/* 12.  Presets row spacing */
+
+
+/* ───────────────────────────────────────────────────────────────────── */
+
+.presets-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-left: auto;
+}

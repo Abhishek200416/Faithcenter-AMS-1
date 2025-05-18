@@ -8,7 +8,8 @@
 
     <link rel="stylesheet" href="css/base.css" />
     <link rel="stylesheet" href="../css/qr.css" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://unpkg.com https://cdn.jsdelivr.net;">
+
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://unpkg.com https://cdn.jsdelivr.net;" />
 
     <!-- Scanner & QR libs -->
     <script src="https://unpkg.com/html5-qrcode"></script>
@@ -21,24 +22,23 @@
 </head>
 
 <body class="dashboard-page">
+    <!-- ROOT -->
     <div id="app-root" class="hidden">
-        <!-- … header/nav … -->
+        <!-- HEADER / NAV -->
         <header class="header">
             <div class="container header-inner">
                 <button id="menuToggle" class="hamburger" aria-label="Open menu">
-    <span></span><span></span><span></span>
-  </button>
+          <span></span><span></span><span></span>
+        </button>
                 <a href="dashboard.html" class="brand">Faith Centre AMS</a>
-                <a href="dashboard.html"><img id="mobileHome" class="home-icon" src="../assets/images/home.png" alt="Home"></a>
                 <nav class="nav-links" aria-label="Main navigation">
                     <a href="dashboard.html">Home</a>
                     <a href="attendance.html" class="active">Attendance</a>
                     <a href="manageUsers.html">Users</a>
                     <a href="leaves.html">Leaves</a>
                     <a href="profile.html">Profile</a>
-
                 </nav>
-                <img id="logout" class="logout-icon" src="../assets/images/exit.png" alt="Logout">
+                <img id="logout" class="logout-icon" src="../assets/images/exit.png" alt="Logout" />
             </div>
             <nav id="mobileMenu" class="mobile-menu" aria-label="Mobile navigation">
                 <a href="dashboard.html">Home</a>
@@ -46,14 +46,13 @@
                 <a href="manageUsers.html">Users</a>
                 <a href="leaves.html">Leaves</a>
                 <a href="profile.html">Profile</a>
-
-
-                <a href="#" id="mobileLogout">Logout</a>
             </nav>
         </header>
 
+        <!-- MAIN -->
         <main class="container qr-container">
-            <!-- QR Configuration (Admins / Devs) -->
+
+            <!-- 1) GENERATOR (Admins/Devs) -->
             <section class="qr-form card">
                 <h2>QR Configuration</h2>
 
@@ -115,7 +114,7 @@
                 </div>
             </section>
 
-            <!-- QR Output + Cancel -->
+            <!-- 2) QR OUTPUT (Generator & Dev) -->
             <section id="qrOutput" class="qr-output card hidden">
                 <div id="qrLoading" class="spinner hidden" aria-label="Loading…"></div>
                 <canvas id="qrCanvas" class="hidden"></canvas>
@@ -123,7 +122,12 @@
                 <button id="cancelQRBtn" class="btn danger">Cancel QR</button>
             </section>
 
-            <!-- Scanner (Members / Ushers) -->
+            <!-- 3) LIVE BANNER (Scanner Mode Only) -->
+            <div id="qrLiveBanner" class="card monospace hidden">
+                ✅ A live QR code is available — please scan!
+            </div>
+
+            <!-- 4) SCANNER (Members/Ushers) -->
             <section id="scannerSection" class="qr-output card hidden">
                 <div id="scannerLoading" class="spinner" aria-label="Loading…"></div>
                 <h2>Scan QR</h2>
@@ -131,7 +135,7 @@
                 <div id="qr-reader" class="scanner"></div>
             </section>
 
-            <!-- Developer Manual Punch Panel -->
+            <!-- 5) DEVELOPER PANEL -->
             <section id="devPunchPanel" class="qr-form card hidden">
                 <h2>Manual Punch (Dev Only)</h2>
                 <div class="form-row">
@@ -146,7 +150,7 @@
             </section>
         </main>
 
-        <!-- Preset Modal -->
+        <!-- PRESSET MODAL -->
         <div id="presetModal" class="preset-modal hidden">
             <div class="preset-content">
                 <h3>Save Preset</h3>
@@ -159,7 +163,7 @@
             </div>
         </div>
 
-        <!-- Feedback Popup -->
+        <!-- FEEDBACK POPUP -->
         <div id="feedbackCard" class="feedback-card hidden">
             <div class="feedback-content">
                 <h3 id="feedbackTitle"></h3>
@@ -170,6 +174,15 @@
                 </div>
                 <button id="feedbackOk" class="btn accent">OK</button>
             </div>
+        </div>
+    </div>
+
+    <!-- CAMERA PERMISSION OVERLAY -->
+    <div id="cameraOverlay" class="feedback-card hidden">
+        <div class="feedback-content">
+            <h3>📷 Camera Access Required</h3>
+            <p>Faith Centre AMS needs camera permission to scan</p>
+            <button id="cameraOkBtn" class="btn accent">Enable Camera</button>
         </div>
     </div>
 </body>
