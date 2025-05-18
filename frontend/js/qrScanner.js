@@ -1,12 +1,7 @@
-// public/js/qrScanner.js
 import { apiFetch } from './utils.js';
 import { showToast } from './toast.js';
 
-// ——————————————————————————————————————————————————
-// ELEMENT REFS
-// ——————————————————————————————————————————————————
 const E = {
-    // CONFIG
     dateIn: document.getElementById('dateInput'),
     timeIn: document.getElementById('timeInput'),
     earlyIn: document.getElementById('earlyThresh'),
@@ -16,26 +11,18 @@ const E = {
     onTimeMsgIn: document.getElementById('onTimeMsg'),
     lateMsgIn: document.getElementById('lateMsg'),
     scanType: document.getElementById('scanType'),
-
-    // CONTROLS
     applyBtn: document.getElementById('applyBtn'),
     cancelBtn: document.getElementById('cancelQRBtn'),
     presetSel: document.getElementById('presetSelect'),
     savePresetBtn: document.getElementById('savePresetBtn'),
-
-    // PANELS
     generator: document.querySelector('.qr-form'),
     qrOutput: document.getElementById('qrOutput'),
     scannerSection: document.getElementById('scannerSection'),
     liveBanner: document.getElementById('qrLiveBanner'),
     root: document.getElementById('app-root'),
-
-    // QR DISPLAY
     qrLoading: document.getElementById('qrLoading'),
     qrCanvas: document.getElementById('qrCanvas'),
     qrTimer: document.getElementById('qrTimer'),
-
-    // SCANNER FEEDBACK
     scannerLoading: document.getElementById('scannerLoading'),
     fbCard: document.getElementById('feedbackCard'),
     fbTitle: document.getElementById('feedbackTitle'),
@@ -43,8 +30,6 @@ const E = {
     fbReasonContainer: document.getElementById('feedbackReasonContainer'),
     fbReason: document.getElementById('feedbackReason'),
     fbOk: document.getElementById('feedbackOk'),
-
-    // CAMERA PERMISSION OVERLAY
     cameraOverlay: document.getElementById('cameraOverlay'),
     cameraOkBtn: document.getElementById('cameraOkBtn'),
 };
@@ -60,157 +45,119 @@ let qrScanner,
 
 const MODE = new URLSearchParams(window.location.search).get('mode');
 
-// ——————————————————————————————————————————————————
-// BOOTSTRAP
-// ——————————————————————————————————————————————————
 ; (async function init() {
     E.root.classList.remove('hidden');
-    hide(E.cancelBtn);
-
-    // auto–fill IST now
     const now = new Date();
     const utc = now.getTime() + now.getTimezoneOffset() * 60000;
     const ist = new Date(utc + 5.5 * 60 * 60000);
     E.dateIn.value = ist.toISOString().slice(0, 10);
     E.timeIn.value = ist.toTimeString().slice(0, 8);
 
-    try {
-        const me = await apiFetch('/api/users/me');
-        userId = me.id; role = me.role; userCategory = me.categoryType;
+    const me = await apiFetch('/api/users/me');
+    userId = me.id; role = me.role; userCategory = me.categoryType;
 
-        if (['member', 'usher'].includes(role) || MODE === 'scan') {
-            return enterScannerMode();
-        }
-
+    if (['member', 'usher'].includes(role) || MODE === 'scan') {
+        enterScannerMode();
+    } else {
         enterGeneratorMode();
-        await loadPresets();
+        loadPresets();
         restoreFromStorage();
-    } catch (err) {
-        console.error(err);
-        showToast('error', 'Initialization failed');
     }
 })();
 
-// ——————————————————————————————————————————————————
-// MODE SWITCHING
-// ——————————————————————————————————————————————————
 function enterGeneratorMode() {
-    show(E.generator);
-    show(E.qrOutput);
-    hide(E.scannerSection);
+    E.generator.classList.remove('hidden');
+    E.qrOutput.classList.remove('hidden');
+    E.scannerSection.classList.add('hidden');
+    if (['developer', 'admin', 'category-admin'].includes(role)) {
+        E.cancelBtn.classList.remove('hidden');
+    }
 }
+
 function enterScannerMode() {
-    hide(E.generator);
-    hide(E.qrOutput);
-    show(E.scannerSection);
+    E.generator.classList.add('hidden');
+    E.qrOutput.classList.add('hidden');
+    E.scannerSection.classList.remove('hidden');
+    E.cancelBtn.classList.add('hidden');
     E.liveBanner?.classList.add('hidden');
     promptCameraPermission();
 }
 
-// ——————————————————————————————————————————————————
-// CAMERA PERMISSION + PWA PROMPT
-// ——————————————————————————————————————————————————
 function promptCameraPermission() {
     if (!E.cameraOverlay) {
         fetchAndStartScanner();
         return;
     }
-    show(E.cameraOverlay);
+    E.cameraOverlay.classList.remove('hidden');
     E.cameraOkBtn.onclick = async () => {
-        hide(E.cameraOverlay);
+        E.cameraOverlay.classList.add('hidden');
         fetchAndStartScanner();
-        await promptInstall();
     };
 }
-async function promptInstall() {
-    let deferred;
-    window.addEventListener('beforeinstallprompt', e => {
-        e.preventDefault();
-        deferred = e;
-    });
-    if (!deferred) return;
-    if (confirm('📥 Add scanner to home screen?')) {
-        deferred.prompt();
-        await deferred.userChoice;
-    }
-}
 
-// ——————————————————————————————————————————————————
-// PRESSETS
-// ——————————————————————————————————————————————————
 async function loadPresets() {
     E.presetSel.innerHTML = '<option value="">— Load Preset —</option>';
-    try {
-        const ps = await apiFetch('/api/presets');
-        ps.forEach(p => {
-            const o = document.createElement('option');
-            o.value = p.id; o.textContent = p.name;
-            E.presetSel.append(o);
-        });
-        E.presetSel.onchange = async () => {
-            if (!E.presetSel.value) return;
-            const p = await apiFetch(`/api/presets/${E.presetSel.value}`);
-            E.dateIn.value = p.date;
-            E.timeIn.value = p.time;
-            E.earlyIn.value = p.early;
-            E.lateIn.value = p.late;
-            E.absentIn.value = p.absent;
-            E.earlyMsgIn.value = p.earlyMsg;
-            E.onTimeMsgIn.value = p.onTimeMsg;
-            E.lateMsgIn.value = p.lateMsg;
-        };
-        E.savePresetBtn.onclick = async () => {
-            const name = prompt('Preset name?');
-            if (!name) return;
-            await apiFetch('/api/presets', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name,
-                    date: E.dateIn.value,
-                    time: E.timeIn.value,
-                    early: E.earlyIn.value,
-                    late: E.lateIn.value,
-                    absent: E.absentIn.value,
-                    earlyMsg: E.earlyMsgIn.value,
-                    onTimeMsg: E.onTimeMsgIn.value,
-                    lateMsg: E.lateMsgIn.value
-                })
-            });
-            showToast('success', 'Preset saved');
-            await loadPresets();
-        };
-    } catch {
-        showToast('error', 'Could not load presets');
-    }
-}
-
-// ——————————————————————————————————————————————————
-// GENERATE & CANCEL QR
-// ——————————————————————————————————————————————————
-E.applyBtn.onclick = generateQR;
-async function generateQR() {
-    show(E.qrLoading);
-    hide(E.qrCanvas);
-
-    const liveAt = buildISO(E.dateIn.value, E.timeIn.value);
-    try {
-        const data = await apiFetch('/api/qr/generate', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
+    const ps = await apiFetch('/api/presets');
+    ps.forEach(p => {
+        const o = document.createElement('option');
+        o.value = p.id; o.textContent = p.name;
+        E.presetSel.append(o);
+    });
+    E.presetSel.onchange = async () => {
+        if (!E.presetSel.value) return;
+        const p = await apiFetch(`/api/presets/${E.presetSel.value}`);
+        E.dateIn.value = p.date;
+        E.timeIn.value = p.time;
+        E.earlyIn.value = p.early;
+        E.lateIn.value = p.late;
+        E.absentIn.value = p.absent;
+        E.earlyMsgIn.value = p.earlyMsg;
+        E.onTimeMsgIn.value = p.onTimeMsg;
+        E.lateMsgIn.value = p.lateMsg;
+    };
+    E.savePresetBtn.onclick = async () => {
+        const name = prompt('Preset name?');
+        if (!name) return;
+        await apiFetch('/api/presets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                liveAt,
-                durationMinutes: +E.absentIn.value,
-                earlyWindow: +E.earlyIn.value,
-                lateWindow: +E.lateIn.value,
+                name,
+                date: E.dateIn.value,
+                time: E.timeIn.value,
+                early: E.earlyIn.value,
+                late: E.lateIn.value,
+                absent: E.absentIn.value,
                 earlyMsg: E.earlyMsgIn.value,
                 onTimeMsg: E.onTimeMsgIn.value,
-                lateMsg: E.lateMsgIn.value,
-                scanType: E.scanType.value
+                lateMsg: E.lateMsgIn.value
             })
         });
-        bindQR(data);
-    } catch {
-        showToast('error', 'QR generation failed');
-    }
+        showToast('success', 'Preset saved');
+        loadPresets();
+    };
+}
+
+E.applyBtn.onclick = generateQR;
+async function generateQR() {
+    E.qrLoading.classList.remove('hidden');
+    E.qrCanvas.classList.add('hidden');
+    const liveAt = buildISO(E.dateIn.value, E.timeIn.value);
+    const d = await apiFetch('/api/qr/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            liveAt,
+            durationMinutes: +E.absentIn.value,
+            earlyWindow: +E.earlyIn.value,
+            lateWindow: +E.lateIn.value,
+            earlyMsg: E.earlyMsgIn.value,
+            onTimeMsg: E.onTimeMsgIn.value,
+            lateMsg: E.lateMsgIn.value,
+            scanType: E.scanType.value
+        })
+    });
+    bindQR(d);
 }
 
 function bindQR(d) {
@@ -222,13 +169,11 @@ function bindQR(d) {
         late: d.lateWindow * 60000,
         absent: d.duration * 60000
     };
-
-    hide(E.qrLoading);
-    show(E.qrCanvas);
+    E.qrLoading.classList.add('hidden');
+    E.qrCanvas.classList.remove('hidden');
     QRCode.toCanvas(E.qrCanvas, currentQR, { width: 250 });
-
     if (['developer', 'admin', 'category-admin'].includes(role)) {
-        show(E.cancelBtn);
+        E.cancelBtn.classList.remove('hidden');
     }
     startCountdown();
     persistState();
@@ -236,18 +181,11 @@ function bindQR(d) {
 
 E.cancelBtn.onclick = async () => {
     if (!currentQR || !confirm('Cancel this QR?')) return;
-    try {
-        await apiFetch(`/api/qr/${currentQR}`, { method: 'DELETE' });
-        showToast('success', 'QR cancelled');
-        resetGeneratorUI();
-    } catch {
-        showToast('error', 'Cancel failed');
-    }
+    await apiFetch(`/api/qr/${currentQR}`, { method: 'DELETE' });
+    showToast('success', 'QR cancelled');
+    resetGeneratorUI();
 };
 
-// ——————————————————————————————————————————————————
-// COUNTDOWN
-// ——————————————————————————————————————————————————
 function startCountdown() {
     clearInterval(timerInterval);
     E.applyBtn.disabled = true;
@@ -259,50 +197,43 @@ function startCountdown() {
         E.qrTimer.textContent = `Expires in ${mm}:${ss}`;
     }, 1000);
 }
+
 function resetGeneratorUI() {
     clearInterval(timerInterval);
     localStorage.removeItem('qrState');
-    hide(E.qrCanvas);
+    E.qrCanvas.classList.add('hidden');
     E.qrTimer.textContent = '';
-    hide(E.cancelBtn);
+    E.cancelBtn.classList.add('hidden');
     E.applyBtn.disabled = false;
-    show(E.generator);
+    E.generator.classList.remove('hidden');
 }
 
-// ——————————————————————————————————————————————————
-// PERSIST STATE
-// ——————————————————————————————————————————————————
 function persistState() {
     localStorage.setItem('qrState', JSON.stringify({
-        token: currentQR,
-        liveTs, expiryTs,
+        token: currentQR, liveTs, expiryTs,
         earlyMs: thresholds.early,
         lateMs: thresholds.late,
         absentMs: thresholds.absent,
         scanType: E.scanType.value
     }));
 }
+
 function restoreFromStorage() {
     const s = JSON.parse(localStorage.getItem('qrState') || '{}');
     if (s.token && Date.now() < s.expiryTs) {
-        currentQR = s.token;
-        liveTs = s.liveTs;
-        expiryTs = s.expiryTs;
+        currentQR = s.token; liveTs = s.liveTs; expiryTs = s.expiryTs;
         thresholds = { early: s.earlyMs, late: s.lateMs, absent: s.absentMs };
         E.scanType.value = s.scanType;
         bindQR(s);
     }
 }
 
-// ——————————————————————————————————————————————————
-// SCANNER + AUTO-ZOOM
-// ——————————————————————————————————————————————————
 async function fetchAndStartScanner() {
     try {
-        const data = await apiFetch('/api/qr/active');
-        show(E.liveBanner);
-        E.liveBanner.textContent = '✅ Live QR available—please scan!';
-        bindQR(data);
+        const d = await apiFetch('/api/qr/active');
+        E.liveBanner.classList.remove('hidden');
+        E.liveBanner.textContent = '✅ Live QR available — please scan!';
+        bindQR(d);
         startScanner();
     } catch {
         showToast('error', 'No active QR');
@@ -310,21 +241,15 @@ async function fetchAndStartScanner() {
 }
 
 async function startScanner() {
-    show(E.scannerLoading);
+    E.scannerLoading.classList.remove('hidden');
     qrScanner = new Html5Qrcode('qr-reader');
-
-    const cfg = {
-        fps: 10,
-        qrbox: calculateQrBox(),
-        experimentalFeatures: { useBarCodeDetectorIfSupported: true }
-    };
-
+    const cfg = { fps: 10, qrbox: calculateQrBox(), experimentalFeatures: { useBarCodeDetectorIfSupported: true } };
     try {
         await qrScanner.start({ facingMode: 'environment' }, cfg, onScanSuccess, onScanError);
     } catch {
         await qrScanner.start({ facingMode: 'user' }, cfg, onScanSuccess, onScanError);
     } finally {
-        hide(E.scannerLoading);
+        E.scannerLoading.classList.add('hidden');
     }
 }
 
@@ -333,10 +258,9 @@ function calculateQrBox() {
     return Math.floor(Math.min(w, h));
 }
 
-function onScanError(err) {
-    // gradually zoom if supported
+function onScanError() {
     const track = qrScanner.getState().stream?.getVideoTracks()[0];
-    if (track && track.getCapabilities().zoom) {
+    if (track?.getCapabilities().zoom) {
         const cap = track.getCapabilities().zoom;
         const cur = track.getSettings().zoom || 1;
         const next = Math.min(cap.max, cur + 0.1);
@@ -350,37 +274,33 @@ async function onScanSuccess(token) {
         return;
     }
     await qrScanner.stop();
-
-    if (userId === role) { } // no self-scan
-    if (userId === currentQR) { showToast('error', 'Cannot scan own QR'); return startScanner(); }
-    if (userCategory && currentQR.category !== userCategory) {
-        showToast('error', 'Wrong category'); return startScanner();
-    }
     handlePunch();
 }
 
-// ——————————————————————————————————————————————————
-// PUNCH LOGIC
-// ——————————————————————————————————————————————————
 async function handlePunch() {
     const now = Date.now();
     const key = `${currentQR}::${E.scanType.value}`;
-
     if (attendanceCache[key]) {
-        return showFeedback(attendanceCache[key], key);
+        return showFeedback(attendanceCache[key]);
     }
-
-    // auto-absent
+    if (E.scanType.value === 'punch-out') {
+        await apiFetch('/api/attendance/punch', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ qrToken: currentQR, type: 'punch-out', status: 'punch-out', reason: null })
+        });
+        showToast('success', 'Punched out');
+        return startScanner();
+    }
     if (now > expiryTs) {
         await apiFetch('/api/attendance/punch', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ qrToken: currentQR, type: E.scanType.value, status: 'absent', reason: null })
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ qrToken: currentQR, type: 'punch-in', status: 'absent', reason: null })
         });
         showToast('success', 'Marked absent');
         return startScanner();
     }
-
-    // classify
     let title, custom, needReason = false;
     if (now < liveTs - thresholds.early) {
         title = 'Early';
@@ -393,27 +313,26 @@ async function handlePunch() {
         custom = E.lateMsgIn.value || `Late by ${Math.ceil((now - (liveTs + thresholds.late)) / 60000)}m`;
         needReason = true;
     }
-
     attendanceCache[key] = { title, custom, needReason, punched: false };
-    showFeedback(attendanceCache[key], key);
+    showFeedback(attendanceCache[key]);
 }
 
-function showFeedback(rec, key) {
+function showFeedback(rec) {
     E.fbTitle.textContent = rec.title;
     E.fbMsg.textContent = rec.custom;
-    rec.needReason ? show(E.fbReasonContainer) : hide(E.fbReasonContainer);
-    show(E.fbCard);
-
+    rec.needReason ? E.fbReasonContainer.classList.remove('hidden') : E.fbReasonContainer.classList.add('hidden');
+    E.fbCard.classList.remove('hidden');
     E.fbOk.onclick = async () => {
         if (!rec.punched) {
             if (rec.needReason && !E.fbReason.value.trim()) {
                 return showToast('error', 'Please supply a reason');
             }
             await apiFetch('/api/attendance/punch', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     qrToken: currentQR,
-                    type: E.scanType.value,
+                    type: 'punch-in',
                     status: rec.title.toLowerCase().replace(' ', '-'),
                     reason: rec.needReason ? E.fbReason.value.trim() : null
                 })
@@ -421,18 +340,16 @@ function showFeedback(rec, key) {
             rec.punched = true;
             showToast('success', `You are ${rec.title}`);
         }
-        hide(E.fbCard);
+        E.fbCard.classList.add('hidden');
         startScanner();
     };
 }
 
-// ——————————————————————————————————————————————————
-// HELPERS
-// ——————————————————————————————————————————————————
 function buildISO(date, time) {
     const [Y, M, D] = date.split('-').map(Number);
     const [h, m, s] = time.split(':').map(Number);
     return new Date(Date.UTC(Y, M - 1, D, h - 5, m - 30, s)).toISOString();
 }
+
 function show(el) { el && el.classList.remove('hidden'); }
 function hide(el) { el && el.classList.add('hidden'); }
