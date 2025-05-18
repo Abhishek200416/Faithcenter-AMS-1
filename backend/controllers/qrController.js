@@ -12,19 +12,18 @@ async function createQR(req, res) {
     }
 
     const {
+        liveAt: clientLiveAt, // optional if you later send a custom liveAt
         durationMinutes = 10,
-            earlyWindow = 0,
-            lateWindow = 0,
-            earlyMsg = '',
-            onTimeMsg = '',
-            lateMsg = ''
+        earlyWindow = 0,
+        lateWindow = 0,
+        earlyMsg = '',
+        onTimeMsg = '',
+        lateMsg = ''
     } = req.body;
 
-    // Use the client-sent liveAt if you ever want to schedule future QRs;
-    // here we keep your original “now = liveAt” behavior for backward compat.
-    const now = new Date();
-    const liveAt = now;
-    const expiresAt = new Date(now.getTime() + durationMinutes * 60000);
+    // Use clientLiveAt if provided, otherwise “now”
+    const liveAt = clientLiveAt ? new Date(clientLiveAt) : new Date();
+    const expiresAt = new Date(liveAt.getTime() + durationMinutes * 60000);
     const token = generateToken();
 
     // Persist the QR
@@ -42,10 +41,10 @@ async function createQR(req, res) {
         category: role === 'category-admin' ? req.user.categoryType : null
     });
 
-    // Schedule “absent” marking (duration + buffer)
+    // Schedule “absent” marking after duration + 45m buffer
     const absentTime = new Date(liveAt.getTime() + (durationMinutes + 45) * 60000);
     schedule.scheduleJob(absentTime, async() => {
-        const filter = (role === 'category-admin') ?
+        const filter = role === 'category-admin' ?
             { categoryType: req.user.categoryType } :
             {};
 
@@ -79,9 +78,9 @@ async function createQR(req, res) {
         ));
     });
 
-    // Return all the bits the front end needs
+    // Return payload for front-end
     res.json({
-        token,
+        token: qr.token,
         issuedBy: qr.issuedBy,
         liveAt: qr.liveAt,
         expiresAt: qr.expiresAt,
@@ -150,7 +149,7 @@ async function cancelQR(req, res) {
         return res.status(403).json({ message: 'Forbidden' });
     }
 
-    // Wipe out all attendances tied to this QR, then delete the QR
+    // Delete all attendances tied to this QR, then delete the QR itself
     await Attendance.destroy({ where: { qrToken: token } });
     await QRCode.destroy({ where: { token } });
 

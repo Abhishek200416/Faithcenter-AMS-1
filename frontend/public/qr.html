@@ -2,17 +2,11 @@
 <html lang="en">
 
 <head>
-    <style>
-        #app-root.hidden {
-            display: none !important;
-        }
-    </style>
-    <link rel="stylesheet" href="css/base.css">
-    <script type="module" src="js/base.js"></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>QR Attendance — Faith Centre AMS</title>
 
+    <link rel="stylesheet" href="css/base.css" />
     <link rel="stylesheet" href="../css/qr.css" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://unpkg.com https://cdn.jsdelivr.net;">
 
@@ -22,7 +16,6 @@
 
     <!-- Your modules -->
     <script type="module" src="../js/utils.js"></script>
-
     <script type="module" src="../js/toast.js"></script>
     <script type="module" src="../js/qrScanner.js"></script>
 </head>
@@ -60,9 +53,10 @@
         </header>
 
         <main class="container qr-container">
-            <!-- CONFIG FORM (admins/devs) -->
+            <!-- QR Configuration (Admins / Devs) -->
             <section class="qr-form card">
                 <h2>QR Configuration</h2>
+
                 <div class="form-row">
                     <div class="form-group">
                         <label for="dateInput">Date</label>
@@ -73,6 +67,7 @@
                         <input id="timeInput" type="time" step="1" />
                     </div>
                 </div>
+
                 <div class="form-row vertical-paired">
                     <div class="form-group">
                         <label for="earlyThresh">Early Window (mins)</label>
@@ -87,43 +82,48 @@
                         <input id="lateMsg" type="text" placeholder="Please add reason" />
                     </div>
                 </div>
+
                 <div class="form-row">
                     <div class="form-group">
                         <label for="absentCutoff">Absent Cutoff (mins)</label>
                         <input id="absentCutoff" type="number" min="1" value="45" />
                     </div>
                 </div>
+
                 <div class="form-row">
                     <div class="form-group full-width">
-                        <label for="onTimeMsg">On‑Time Msg</label>
+                        <label for="onTimeMsg">On-Time Msg</label>
                         <input id="onTimeMsg" type="text" placeholder="Well done!" />
                     </div>
                 </div>
-                <!-- new dropdown to choose punch type -->
+
                 <div class="form-row scan-action-row">
                     <label for="scanType">Action:</label>
                     <select id="scanType" class="scan-select">
-                <option value="punch-in">Punch In</option>
-                <option value="punch-out">Punch Out</option>
-            </select>
-                    <div class="form-row presets-row">
+            <option value="punch-in">Punch In</option>
+            <option value="punch-out">Punch Out</option>
+          </select>
+
+                    <div class="presets-row">
                         <select id="presetSelect"></select>
                         <button id="savePresetBtn" class="btn">Save Preset</button>
                     </div>
+                </div>
 
-                    <p id="qrStatus" class="monospace"></p>
+                <div class="form-row">
                     <button id="applyBtn" class="btn accent">Apply &amp; Generate</button>
+                </div>
             </section>
-            <!-- OUTPUT CARD -->
+
+            <!-- QR Output + Cancel -->
             <section id="qrOutput" class="qr-output card hidden">
                 <div id="qrLoading" class="spinner hidden" aria-label="Loading…"></div>
                 <canvas id="qrCanvas" class="hidden"></canvas>
                 <div id="qrTimer" class="monospace"></div>
-                <!-- INSERT the Cancel button here: -->
                 <button id="cancelQRBtn" class="btn danger">Cancel QR</button>
             </section>
 
-            <!-- SCANNER (members only) -->
+            <!-- Scanner (Members / Ushers) -->
             <section id="scannerSection" class="qr-output card hidden">
                 <div id="scannerLoading" class="spinner" aria-label="Loading…"></div>
                 <h2>Scan QR</h2>
@@ -131,7 +131,19 @@
                 <div id="qr-reader" class="scanner"></div>
             </section>
 
-
+            <!-- Developer Manual Punch Panel -->
+            <section id="devPunchPanel" class="qr-form card hidden">
+                <h2>Manual Punch (Dev Only)</h2>
+                <div class="form-row">
+                    <select id="devUserSelect" class="scan-select">
+            <option value="">— Select User —</option>
+          </select>
+                </div>
+                <div class="form-row">
+                    <button id="devPunchIn" class="btn accent">Manual Punch In</button>
+                    <button id="devPunchOut" class="btn accent">Manual Punch Out</button>
+                </div>
+            </section>
         </main>
 
         <!-- Preset Modal -->
@@ -146,29 +158,20 @@
                 </div>
             </div>
         </div>
-        <!-- ───────────── Updated HTML for Feedback Popup ───────────── -->
-        <!-- replace your current feedback-card section with this -->
+
+        <!-- Feedback Popup -->
         <div id="feedbackCard" class="feedback-card hidden">
             <div class="feedback-content">
                 <h3 id="feedbackTitle"></h3>
                 <p id="feedbackMsg"></p>
-
-                <!-- only show when late -->
                 <div id="feedbackReasonContainer" class="feedback-reason-container hidden">
                     <label for="feedbackReason">Reason for being late:</label>
                     <textarea id="feedbackReason" placeholder="Enter your reason…"></textarea>
                 </div>
-
-                <!-- DELETE this from feedback-content -->
-                <!-- … -->
-                <button id="cancelQRBtn" class="btn danger">Cancel QR</button>
                 <button id="feedbackOk" class="btn accent">OK</button>
-                <!-- … -->
-
             </div>
         </div>
-        </div>
-
+    </div>
 </body>
 
 </html>
