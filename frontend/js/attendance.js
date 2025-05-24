@@ -637,6 +637,18 @@ async function init() {
     } else {
         manage.openBtn.style.display = 'inline-block'
     }
+    // ─── NEW: hide category/role filters & total-users for non-admins ───
+    if (!['developer', 'admin'].includes(userRole)) {
+        // hide the “Category” filter
+        FC.category.closest('.filter-item').style.display = 'none';
+        // hide the “Role” filter
+        FC.role.closest('.filter-item').style.display = 'none';
+        // hide the Total Users metric card
+        document
+            .getElementById('cardTotalUsers')
+            .closest('.metric-card')
+            .style.display = 'none';
+    }
 
     // show attendance-type filter
     if (attendanceTypeCol) {

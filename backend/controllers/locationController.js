@@ -318,12 +318,19 @@ const updateLocation = async (req, res) => {
         if (!req.body.specificDate || !req.body.startTime || isNaN(Number(req.body.durationMinutes))) {
             return res.status(400).json({ message: 'Invalid date/time/duration for location check.' });
         }
-        // If fields valid, continue:
-        startAt = new Date(`${req.body.specificDate}T${req.body.startTime}:00`);
-        if (isNaN(startAt.getTime())) {
-            return res.status(400).json({ message: 'Invalid startAt date/time.' });
-        }
-        expiresAt = new Date(startAt.getTime() + Number(req.body.durationMinutes) * 60000);
+        // controllers/locationController.js
+
+        // replace this:
+        startAt = new Date(`${specificDate}T${startTime}:00`);
+
+        // with something like this:
+        const [Y, M, D] = specificDate.split('-').map(Number);
+        const [h, m] = startTime.split(':').map(Number);
+        // This constructor uses server’s local TZ when you call new Date(Y, M-1, D, h, m)
+        startAt = new Date(Y, M - 1, D, h, m, 0);
+
+        expiresAt = new Date(startAt.getTime() + durationMinutes * 60000);
+
     }
 
 
