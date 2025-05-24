@@ -230,16 +230,15 @@ const createLocation = async (req, res) => {
         }
         const [Y, M, D] = req.body.specificDate.split('-').map(Number);
         const [h, m] = req.body.startTime.split(':').map(Number);
+        const moment = require('moment-timezone');
+        const startAt = moment.tz({
+            year: Y,
+            month: M - 1,
+            day: D,
+            hour: h,
+            minute: m
+        }, 'Asia/Kolkata').toDate();
 
-        // Create a Date as if it’s IST
-        // Assume user inputs in IST
-        const localDate = new Date(Y, M - 1, D, h, m); // JS Date, but in local timezone (usually server timezone, but on most hosts, that's UTC anyway!)
-        // Now shift by IST offset
-        const istOffset = 5.5 * 60 * 60 * 1000;
-        const startAt = new Date(localDate.getTime() - istOffset);
-
-
-        // Now, for display, just use .toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
 
 
 
