@@ -228,15 +228,11 @@ const createLocation = async (req, res) => {
         if (!specificDate || !startTime || isNaN(Number(durationMinutes))) {
             return res.status(400).json({ message: 'Invalid date/time/duration for location check.' });
         }
-        const moment = require('moment-timezone');
-
-        function istToUTC(dateStr, timeStr) {
-            // e.g. "2025-05-25", "04:20"
-            const [Y, M, D] = dateStr.split('-').map(Number);
-            const [h, m] = timeStr.split(':').map(Number);
-            // This gives you a Date object in UTC that matches the IST local time
-            return moment.tz({ year: Y, month: M - 1, day: D, hour: h, minute: m }, 'Asia/Kolkata').toDate();
+        if (!req.body.specificDate || !req.body.startTime || isNaN(Number(req.body.durationMinutes))) {
+            return res.status(400).json({ message: 'Invalid date/time/duration for location check.' });
         }
+        startAt = istToUTC(req.body.specificDate, req.body.startTime);
+        expiresAt = new Date(startAt.getTime() + Number(req.body.durationMinutes) * 60000);
 
         // In your handler:
         if (!specificDate || !startTime || isNaN(Number(durationMinutes))) {
