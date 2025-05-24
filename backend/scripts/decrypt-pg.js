@@ -6,7 +6,8 @@ const crypto = require('crypto');
 
 const KEY = Buffer.from(process.env.BACKUP_ENCRYPTION_KEY, 'hex');
 const IV_LENGTH = 16;
-const ENC_FILE = path.resolve(__dirname, '../postgres.dump.enc');
+const ENC_FILE = path.resolve(__dirname, './postgres.dump.enc');
+
 const OUT_DUMP = path.resolve(__dirname, '../postgres.dump');
 
 if (!fs.existsSync(ENC_FILE)) {
