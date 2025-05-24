@@ -212,6 +212,14 @@ async function getHistory(req, res, next) {
                 { email: { [Op.like]: `%${search}%` } }
             ];
         }
+        // Only apply date filter if not an "all" query
+        if (!all) {
+            // Use IST day boundaries
+            const moment = require('moment-timezone');
+            const istDayStart = moment.tz(date, 'Asia/Kolkata').startOf('day').utc().toDate();
+            const istDayEnd = moment.tz(date, 'Asia/Kolkata').endOf('day').utc().toDate();
+            where.timestamp = { [Op.between]: [istDayStart, istDayEnd] };
+        }
         // enforce “who sees whom”
         if (req.user.role === 'developer') {
             // developers see everyone except themselves
