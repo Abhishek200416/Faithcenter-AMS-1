@@ -200,8 +200,17 @@ async function punch(req, res, next) {
 async function getHistory(req, res, next) {
     try {
         const { category, role, date, search, type, all } = req.query;
-
         const where = {}, userFilter = {};
+        const moment = require('moment-timezone');
+
+        // Always define dayStart
+        let dayStart;
+        if (!all && date) {
+            dayStart = moment.tz(date, 'Asia/Kolkata').startOf('day').utc().toDate();
+        } else {
+            dayStart = new Date();
+            dayStart.setHours(0, 0, 0, 0);
+        }
 
         if (type && type !== 'all') where.type = type;
         if (category && category !== 'all') userFilter.categoryType = category;
@@ -215,7 +224,6 @@ async function getHistory(req, res, next) {
         }
         // Only apply date filter if not an "all" query
         if (!all) {
-            const moment = require('moment-timezone');
             if (!date) return res.status(400).json({ message: "Missing date" });
             const istDayStart = moment.tz(date, 'Asia/Kolkata').startOf('day').utc().toDate();
             const istDayEnd = moment.tz(date, 'Asia/Kolkata').endOf('day').utc().toDate();
