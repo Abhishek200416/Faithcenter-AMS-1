@@ -199,7 +199,8 @@ async function punch(req, res, next) {
 
 async function getHistory(req, res, next) {
     try {
-        const { category, role, date, search, type } = req.query;
+        const { category, role, date, search, type, all } = req.query;
+
         const where = {}, userFilter = {};
 
         if (type && type !== 'all') where.type = type;
@@ -220,6 +221,7 @@ async function getHistory(req, res, next) {
             const istDayEnd = moment.tz(date, 'Asia/Kolkata').endOf('day').utc().toDate();
             where.timestamp = { [Op.between]: [istDayStart, istDayEnd] };
         }
+
         // enforce “who sees whom”
         if (req.user.role === 'developer') {
             // developers see everyone except themselves
