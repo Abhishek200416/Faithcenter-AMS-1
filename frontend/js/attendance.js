@@ -453,8 +453,17 @@ async function handleSave() {
         let [h, m] = time.split(':').map(Number);
         if (mer === 'PM' && h < 12) h += 12;
         if (mer === 'AM' && h === 12) h = 0;
-        return `${date}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`;
+
+        // Compose a timestamp with your local timezone offset
+        // Eg: "2025-05-18T07:30:00+05:30" (for IST)
+        const tzOffset = -new Date().getTimezoneOffset();
+        const sign = tzOffset >= 0 ? '+' : '-';
+        const absOffset = Math.abs(tzOffset);
+        const hours = String(Math.floor(absOffset / 60)).padStart(2, '0');
+        const mins = String(absOffset % 60).padStart(2, '0');
+        return `${date}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00${sign}${hours}:${mins}`;
     }
+
 
     // punch-in
     if (inTime) {
