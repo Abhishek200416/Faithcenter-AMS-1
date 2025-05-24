@@ -206,15 +206,17 @@ const createLocation = async (req, res) => {
         lateMsg = null
     }
 
+    // Example fixed code snippet for your createLocation method
     const allowed = (
         await User.findAll({
             where:
                 role === 'category-admin'
-                    ? { role: 'member', categoryType }
-                    : { role: { [Op.in]: ['member', 'category-admin'] } },
+                    ? { role: 'usher', categoryType }
+                    : { role: { [Op.in]: ['usher', 'category-admin'] } },
             attributes: ['id'],
         })
-    ).map(u => u.id)
+    ).map(u => u.id);
+
     const userIds = rawUserIds.filter(id => allowed.includes(id))
 
     let startAt, expiresAt
