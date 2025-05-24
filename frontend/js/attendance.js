@@ -172,15 +172,17 @@ async function loadHistory() {
     })
 
     // group by user+date
-    const map = {}
+    // group by user+date (in UTC/ISO)
     rows.forEach(r => {
-        const key = `${r.user.uid}_${toISO(r.timestamp)}`
+        const dateKey = r.timestamp.slice(0, 10); // "YYYY-MM-DD"
+        const key = `${r.user.id}_${dateKey}`;
         if (!map[key]) {
-            map[key] = { user: r.user, date: new Date(r.timestamp).toLocaleDateString(), in: null, out: null }
+            map[key] = { user: r.user, date: dateKey, in: null, out: null };
         }
-        if (r.type === 'punch-in') map[key].in = r
-        if (r.type === 'punch-out') map[key].out = r
-    })
+        if (r.type === 'punch-in') map[key].in = r;
+        if (r.type === 'punch-out') map[key].out = r;
+    });
+
 
     // flatten
     const list = Object.values(map).map(e => {
@@ -209,14 +211,12 @@ async function loadHistory() {
 
     list.forEach(e => {
         const tr = document.createElement('tr')
+        // Fix:
         const inT = e.in ? new Date(e.in.timestamp)
-            .toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
-            .slice(0, 5)
-            : '—'
+            .toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : '—';
         const outT = e.out ? new Date(e.out.timestamp)
-            .toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
-            .slice(0, 5)
-            : '—'
+            .toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : '—';
+
         const cells = [
             e.user.uid,
             e.user.name,
