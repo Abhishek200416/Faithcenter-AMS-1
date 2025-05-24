@@ -219,21 +219,25 @@ const createLocation = async (req, res) => {
 
     const userIds = rawUserIds.filter(id => allowed.includes(id))
 
-    let startAt, expiresAt
+    let startAt, expiresAt;
     if (attendanceType === 'full') {
-        startAt = new Date()
-        expiresAt = null
+        startAt = new Date();
+        expiresAt = null;
+        startTime = null;
     } else {
-        const [H, M] = (startTime || '00:00').split(':').map(Number)
-        startAt = specificDate
-            ? new Date(`${specificDate}T${startTime}:00`)
-            : (() => {
-                const d = new Date()
-                d.setHours(H, M, 0, 0)
-                return d
-            })()
-        expiresAt = new Date(startAt.getTime() + durationMinutes * 60000)
+        if (!specificDate || !startTime || isNaN(Number(durationMinutes))) {
+            return res.status(400).json({ message: 'Invalid date/time/duration for location check.' });
+        }
+        // Parse date & time components
+        const [Y, M, D] = specificDate.split('-').map(Number);
+        const [h, m] = startTime.split(':').map(Number);
+        startAt = new Date(Y, M - 1, D, h, m, 0); // Server local time!
+        if (isNaN(startAt.getTime())) {
+            return res.status(400).json({ message: 'Invalid startAt date/time.' });
+        }
+        expiresAt = new Date(startAt.getTime() + Number(durationMinutes) * 60000);
     }
+
 
     const loc = await LocationCheck.create({
         latitude,
@@ -318,19 +322,12 @@ const updateLocation = async (req, res) => {
         if (!req.body.specificDate || !req.body.startTime || isNaN(Number(req.body.durationMinutes))) {
             return res.status(400).json({ message: 'Invalid date/time/duration for location check.' });
         }
-        // controllers/locationController.js
-
-        // replace this:
-        startAt = new Date(`${specificDate}T${startTime}:00`);
-
-        // with something like this:
-        const [Y, M, D] = specificDate.split('-').map(Number);
-        const [h, m] = startTime.split(':').map(Number);
-        // This constructor uses server’s local TZ when you call new Date(Y, M-1, D, h, m)
-        startAt = new Date(Y, M - 1, D, h, m, 0);
-
-        expiresAt = new Date(startAt.getTime() + durationMinutes * 60000);
-
+        // If fields valid, continue:
+        startAt = new Date(`${req.body.specificDate}T${req.body.startTime}:00`);
+        if (isNaN(startAt.getTime())) {
+            return res.status(400).json({ message: 'Invalid startAt date/time.' });
+        }
+        expiresAt = new Date(startAt.getTime() + Number(req.body.durationMinutes) * 60000);
     }
 
 
