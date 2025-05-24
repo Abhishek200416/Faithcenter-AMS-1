@@ -154,7 +154,7 @@ async function punch(req, res, next) {
         }
 
         if (punchedIn && !punchedOut) {
-            if (withinCircle(loc, latitude, longitude)) {
+            if (withinCircle(foundLoc, latitude, longitude)) {
                 punchOutState.delete(req.user.id);
                 return res.status(400).json({
                     message: 'To punch out, please move outside the radius'
@@ -164,11 +164,11 @@ async function punch(req, res, next) {
             const punchKey = `${req.user.id}:${foundLoc.id}`;
             let exitInfo = punchOutState.get(punchKey);
             if (!exitInfo) {
-                exitInfo = { locId: loc.id, exitTime: now };
+                exitInfo = { locId: foundLoc.id, exitTime: now };
                 punchOutState.set(punchKey, exitInfo);
             }
 
-            const graceMins = loc.outGrace ?? 5;
+            const graceMins = foundLoc.outGrace ?? 5;
             const graceUntil = new Date(exitInfo.exitTime.getTime() + graceMins * 60000);
 
             if (now >= graceUntil) {
@@ -189,6 +189,7 @@ async function punch(req, res, next) {
                 });
             }
         }
+
 
         return res.status(400).json({ message: 'Unable to record punch' });
     } catch (err) {

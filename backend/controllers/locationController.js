@@ -230,9 +230,8 @@ const createLocation = async (req, res) => {
         }
         const [Y, M, D] = req.body.specificDate.split('-').map(Number);
         const [h, m] = req.body.startTime.split(':').map(Number);
-        // This creates a date in server local time (not user's local time!)
-        // To adjust for IST (if user is in IST):
-        const startAt = new Date(Date.UTC(Y, M - 1, D, h, m)); // This is now in UTC
+        const startAt = new Date(Date.UTC(Y, M - 1, D, h, m));
+
 
         if (isNaN(startAt.getTime())) {
             return res.status(400).json({ message: 'Invalid startAt date/time.' });
