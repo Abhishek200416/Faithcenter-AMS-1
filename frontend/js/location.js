@@ -148,9 +148,21 @@ async function init() {
     ensureGeoPermission();
     ({ user: currentUser } = await apiFetch('/api/users/me'));
     const { users } = await apiFetch('/api/users');
-    allUsers = ['developer', 'admin'].includes(currentUser.role)
-        ? users.filter(u => ['member', 'category-admin'].includes(u.role))
-        : users.filter(u => u.role === 'member' && u.categoryType === currentUser.categoryType);
+    // show absolutely everyone (except yourself) to developers
+    if (currentUser.role === 'developer') {
+        allUsers = users.filter(u => u.id !== currentUser.id);
+    }
+    // or everyone including yourself:
+    // allUsers = users.slice();
+    else if (currentUser.role === 'admin') {
+        // maybe admins should see everyone except developers?
+        allUsers = users.filter(u => u.role !== 'developer');
+    } else {
+        allUsers = users.filter(u =>
+            u.role === 'member' && u.categoryType === currentUser.categoryType
+        );
+    }
+
     renderUserList();
     await loadChecks();
 
