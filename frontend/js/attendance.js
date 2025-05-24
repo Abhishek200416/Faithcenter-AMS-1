@@ -133,23 +133,22 @@ function renderCalendar() {
 
 // ─── LOAD + FILTER + METRICS + RENDER ───────────────────────
 async function loadHistory() {
-    // spinner
-    historyTable.body.innerHTML = ''
-    historyTable.spinner.innerHTML = '<td colspan="10" class="loading">Loading…</td>'
-    historyTable.body.append(historyTable.spinner)
+    historyTable.body.innerHTML = '';
+    historyTable.spinner.innerHTML = '<td colspan="10" class="loading">Loading…</td>';
+    historyTable.body.append(historyTable.spinner);
 
-    // build query
     const qs = new URLSearchParams({
         month: currentMonth + 1,
         year: currentYear,
         date: selectedDate
-    })
-    if (FC.search.value.trim()) qs.set('search', FC.search.value.trim())
-    if (FC.log.value !== 'all') qs.set('type', FC.log.value)
-    if (userRole === 'category-admin') qs.set('category', userCategory)
+    });
 
-    // fetch
-    const res = await apiFetch(`/api/attendance/history?${qs}`)
+    if (FC.search.value.trim()) qs.set('search', FC.search.value.trim());
+    if (FC.log.value !== 'all') qs.set('type', FC.log.value);
+    if (FC.category.value !== 'all') qs.set('category', FC.category.value); // ← ADD THIS
+    if (FC.role.value !== 'all') qs.set('role', FC.role.value); // ← ADD THIS
+
+    const res = await apiFetch(`/api/attendance/history?${qs}`);
     let rows = res.records || []
     rows.forEach(r => allAttendanceDates.add(toISO(r.timestamp)))
     renderCalendar()
@@ -434,20 +433,19 @@ manage.cancelBtn.onclick = () => manage.modal.classList.add('hidden')
 // ─── SAVE NEW RECORDS ───────────────────────────────────────
 async function handleSave() {
     if (!selectedSet.size) {
-        return showToast('error', 'No users selected')
+        return showToast('error', 'No users selected');
     }
 
-    const date = manage.dateInput.value
-    const inTime = manage.timeIn.value
-    const outTime = manage.timeOut.value
-    const inMer = manage.merIn.value
-    const outMer = manage.merOut.value
-    const inReason = manage.reasonIn.value
-    const outReason = manage.reasonOut.value
-    const status = manage.status.value
+    const date = manage.dateInput.value;
+    const inTime = manage.timeIn.value;
+    const outTime = manage.timeOut.value;
+    const inMer = manage.merIn.value;
+    const outMer = manage.merOut.value;
+    const inReason = manage.reasonIn.value;
+    const outReason = manage.reasonOut.value;
+    const status = manage.status.value;
 
-    const base = { userIds: [], date, locationCheckId: activeCheck.id };
-
+    const base = { userIds: Array.from(selectedSet), date };
 
     if (inTime) {
         await apiFetch('/api/attendance/manage/add', {
@@ -460,7 +458,7 @@ async function handleSave() {
                 status,
                 reason: inReason || null
             })
-        })
+        });
     }
 
     if (outTime) {
@@ -474,11 +472,12 @@ async function handleSave() {
                 status: null,
                 reason: outReason || null
             })
-        })
+        });
     }
 
-    if (inTime || outTime) allAttendanceDates.add(date)
+    if (inTime || outTime) allAttendanceDates.add(date);
 }
+
 
 // ─── UPDATE EXISTING RECORDS ───────────────────────────────
 async function handleUpdate() {
