@@ -3,6 +3,7 @@
 const { User } = require('../models');
 const bcrypt = require('bcrypt');
 const { Sequelize } = require('sequelize');
+const { Op } = require('sequelize');
 
 // ——————————————————————————————————————————————————————————————————
 // CONFIG & HELPERS
@@ -237,6 +238,7 @@ exports.getUserById = async function getUserById(req, res, next) {
     }
 };
 
+
 exports.getMyProfile = async function getMyProfile(req, res, next) {
     try {
         const user = await User.findByPk(req.user.id, {
@@ -438,13 +440,41 @@ exports.deleteUser = async function deleteUser(req, res, next) {
         next(err);
     }
 };
-
 exports.countUsers = async function countUsers(req, res, next) {
     try {
         const where = {};
-        if (req.query.category) {
-            where.categoryType = req.query.category;
+
+        if (req.user.role === 'developer') {
+            // Developers see all EXCEPT themselves
+            where.id = {
+                [Op.ne]: req.user.id
+            };
+        } else if (req.user.role === 'admin') {
+            // Admins see all EXCEPT themselves and developers
+            where[Op.and] = [{
+                    id: {
+                        [Op.ne]: req.user.id
+                    }
+                },
+                {
+                    role: {
+                        [Op.ne]: 'developer'
+                    }
+                }
+            ];
+        } else if (req.user.role === 'category-admin') {
+            // Category admins see ONLY their category’s members (ushers + category-admins)
+            where.categoryType = req.user.categoryType;
+            where.role = {
+                [Op.in]: ['usher', 'category-admin']
+            };
+            where.id = {
+                [Op.ne]: req.user.id
+            };
+        } else {
+            return res.status(403).json({ message: 'Forbidden' });
         }
+
         const count = await User.count({ where });
         res.json({ count });
     } catch (err) {

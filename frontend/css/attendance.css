@@ -1,340 +1,549 @@
-:root {
-    --spacing: 1rem;
-    --accent: #b71c1c;
-    --text: #ececec;
-    --bg: #121217;
-    --panel-bg: #1e1e27;
-    --header-bg: rgba(20, 20, 30, 0.9);
-    --radius: 8px;
-    --shadow-dark: rgba(0, 0, 0, 0.5);
-    --shadow-light: rgba(0, 0, 0, 0.2);
-    --transition: 0.2s ease-in-out;
-    --arrow-left: 16px;
-    /* fallback */
-}
-
-
-/* ─── LAYOUT ─────────────────────────────────────────────────── */
-
-.attendance-page {
-    display: flex;
-    flex-direction: column;
-    gap: calc(var(--spacing) * 2);
-    padding: calc(var(--spacing) * 2) 0;
-    background: var(--bg);
-    color: var(--text);
-}
-
-.filters {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: var(--spacing);
-    align-items: start;
-    margin-bottom: var(--spacing);
-    position: relative;
-    overflow: visible;
-    /* ensure overlay isn't clipped */
-}
-
-.filter-item {
-    position: relative;
-    /* anchor for calendar overlay */
-    display: flex;
-    flex-direction: column;
-}
-
-.filter-item label {
-    font-size: 0.85rem;
-    margin-bottom: 0.25rem;
-    color: var(--text);
-}
-
-.filter-item input,
-.filter-item select,
-.btn.accent {
-    padding: 0.5rem 0.75rem;
-    border-radius: var(--radius);
-    background: var(--panel-bg);
-    color: var(--text);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    font-size: 0.9rem;
-    transition: border-color var(--transition), box-shadow var(--transition);
-}
-
-.filter-item input:focus,
-.filter-item select:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 2px rgba(183, 28, 28, 0.3);
-    outline: none;
-}
-
-.filter-item select {
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23ECECEC'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 0.75rem center;
-    background-size: 10px 6px;
-    padding-right: 2.5rem;
-}
-
-
-/* ─── CALENDAR BUTTON ───────────────────────────────────────── */
-
-.btn.accent {
-    margin-top: 0.5rem;
-    background: var(--panel-bg);
-    cursor: pointer;
-    text-align: center;
-}
-
-.btn.accent:hover {
-    background: var(--accent);
-    color: #fff;
-}
-
-
-/* ─── CALENDAR OVERLAY ─────────────────────────────────────── */
-
-.calendar-overlay {
-    position: absolute;
-    top: calc(100% + var(--spacing));
-    left: 0;
-    /* initial default, overridden by JS */
-    width: 360px;
-    background: var(--panel-bg);
-    border-radius: var(--radius);
-    box-shadow: 0 4px 12px var(--shadow-dark), 0 1px 3px var(--shadow-light);
-    padding: var(--spacing);
-    opacity: 0;
-    transform: translateY(-8px);
-    pointer-events: none;
-    transition: opacity var(--transition), transform var(--transition);
-    z-index: 9999;
-    /* above everything */
-}
-
-.calendar-overlay:not(.hidden) {
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: auto;
-}
-
-
-/* arrow – its horizontal position comes from the JS‑set CSS variable */
-
-.calendar-overlay::before {
-    content: "";
-    position: absolute;
-    top: -8px;
-    /* arrow sits above the panel */
-    left: var(--arrow-left, 50%);
-    /* JS injects a px value here */
-    border: 0 8px 8px solid transparent;
-    border-bottom-color: var(--panel-bg);
-}
-
-
-/* ─── CALENDAR GRID ──────────────────────────────────────── */
-
-.overlay-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: var(--spacing);
-}
-
-.close-btn,
-.cal-nav {
-    background: none;
-    border: none;
-    color: var(--text);
-    font-size: 1.2rem;
-    cursor: pointer;
-    transition: color var(--transition);
-}
-
-.cal-nav:hover {
-    color: var(--accent);
-}
-
-.cal-month-year {
-    flex: 1;
-    text-align: center;
-    font-weight: 600;
-    color: var(--text);
-}
-
-.calendar-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 0.4rem;
-}
-
-.calendar-day {
-    width: 2.6rem;
-    height: 2.6rem;
-    line-height: 2.6rem;
-    text-align: center;
-    border-radius: var(--radius);
-    background: var(--panel-bg);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: var(--text);
-    cursor: pointer;
-    transition: background var(--transition), transform var(--transition), border-color var(--transition);
-}
-
-.calendar-day.header {
-    background: transparent;
-    border: none;
-    color: #aaa;
-    font-weight: 600;
-    cursor: default;
-}
-
-.calendar-day:hover {
-    background: var(--header-bg);
-    transform: translateY(-2px);
-}
-
-.calendar-day.present {
-    background: #4caf50;
-    border-color: #4caf50;
-    color: #fff;
-}
-
-.calendar-day.absent {
-    opacity: 0.5;
-}
-
-.calendar-day.selected-date-cell {
-    box-shadow: 0 0 0 2px var(--accent);
-}
-
-
-/* ─── TABLE ───────────────────────────────────────────────────── */
-
-.table-wrapper {
-    overflow-x: auto;
-}
-
-#history {
-    width: 100%;
-    border-collapse: collapse;
-    background: var(--panel-bg);
-    box-shadow: 0 4px 16px var(--shadow-dark);
-    /* add extra breathing room */
-}
-
-#history th,
-#history td {
-    padding: 0.75rem 1.25rem;
-    color: var(--text);
-    font-size: 0.9rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    text-align: left;
-}
-
-#history th {
-    background: var(--header-bg);
-    position: sticky;
-    top: 0;
-    z-index: 2;
-}
-
-.striped tbody tr:nth-child(odd) {
-    background: var(--bg);
-}
-
-#history tbody tr:hover {
-    background: rgba(183, 28, 28, 0.1);
-}
-
-.calendar-day.present-admin {
-    background: #e53935;
-    border-color: #e53935;
-    color: #fff;
-}
-
-.calendar-day.present-dev {
-    background: #2196f3;
-    /* developer = blue */
-    border-color: #2196f3;
-    color: #fff;
-}
-
-
-/* =======================================================================
-   Updated Metrics Cards for Responsive Layout
-   ======================================================================= */
-
-.metrics {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: var(--spacing);
-    margin-bottom: var(--spacing);
-}
-
-.metric-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: 1rem;
-    font-weight: 500;
-    color: var(--text-light);
-    background: var(--pill-bg);
-    padding: var(--spacing);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: var(--radius);
-    box-shadow: 0 2px 6px var(--shadow);
-    white-space: normal;
-    text-align: center;
-}
-
-
-/* Smaller screens */
-
-@media (max-width: 600px) {
-    .metrics {
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-        gap: calc(var(--spacing) / 2);
-    }
-    .metric-card {
-        font-size: 0.875rem;
-        padding: calc(var(--spacing) / 2);
-    }
-}
-
-
-/* Larger screens */
-
-@media (min-width: 1200px) {
-    .metrics {
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    }
-}
-
-
-/* ─── MOBILE RESPONSIVE ───────────────────────────────────────── */
-
-@media (max-width: 600px) {
-    .calendar-overlay {
-        width: 90vw;
-        max-width: 360px;
-        top: 10vh;
-        left: 50%;
-        transform: translateX(-50%);
-    }
-    .calendar-overlay::before {
-        left: 50% !important;
-        transform: translateX(-50%);
-    }
-    #history th,
-    #history td {
-        padding: 0.5rem 1rem;
-        white-space: nowrap;
-    }
-    .table-wrapper {
-        overflow-x: auto;
-    }
-}
+                 :root {
+                    --spacing: 1rem;
+                    --accent: #b71c1c;
+                    --text: #ececec;
+                    --bg: #121217;
+                    --panel-bg: #1e1e27;
+                    --header-bg: rgba(20, 20, 30, 0.9);
+                    --radius: 8px;
+                    --shadow-dark: rgba(0, 0, 0, 0.5);
+                    --shadow-light: rgba(0, 0, 0, 0.2);
+                    --transition: 0.2s ease-in-out;
+                    --arrow-left: 16px;
+                    /* fallback */
+                }
+                /* ─── LAYOUT ─────────────────────────────────────────────────── */
+                
+                .attendance-page {
+                    display: flex;
+                    flex-direction: column;
+                    gap: calc(var(--spacing) * 2);
+                    padding: calc(var(--spacing) * 2) 0;
+                    background: var(--bg);
+                    color: var(--text);
+                }
+                
+                .filters {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+                    gap: var(--spacing);
+                    align-items: start;
+                    margin-bottom: var(--spacing);
+                    position: relative;
+                    overflow: visible;
+                    /* ensure overlay isn't clipped */
+                }
+                
+                .filter-item {
+                    position: relative;
+                    /* anchor for calendar overlay */
+                    display: flex;
+                    flex-direction: column;
+                }
+                
+                .filter-item label {
+                    font-size: 0.85rem;
+                    margin-bottom: 0.25rem;
+                    color: var(--text);
+                }
+                
+                .filter-item input,
+                .filter-item select,
+                .btn.accent {
+                    padding: 0.5rem 0.75rem;
+                    border-radius: var(--radius);
+                    background: var(--panel-bg);
+                    color: var(--text);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    font-size: 0.9rem;
+                    transition: border-color var(--transition), box-shadow var(--transition);
+                }
+                
+                .filter-item input:focus,
+                .filter-item select:focus {
+                    border-color: var(--accent);
+                    box-shadow: 0 0 0 2px rgba(183, 28, 28, 0.3);
+                    outline: none;
+                }
+                
+                .filter-item select {
+                    appearance: none;
+                    background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23ECECEC'/%3E%3C/svg%3E");
+                    background-repeat: no-repeat;
+                    background-position: right 0.75rem center;
+                    background-size: 10px 6px;
+                    padding-right: 2.5rem;
+                }
+                /* ─── CALENDAR BUTTON ───────────────────────────────────────── */
+                
+                .btn.accent {
+                    margin-top: 0.5rem;
+                    background: var(--panel-bg);
+                    cursor: pointer;
+                    text-align: center;
+                }
+                
+                .btn.accent:hover {
+                    background: var(--accent);
+                    color: #fff;
+                }
+                /* ─── CALENDAR OVERLAY ─────────────────────────────────────── */
+                
+                .calendar-overlay {
+                    position: absolute;
+                    top: calc(100% + var(--spacing));
+                    left: 0;
+                    /* initial default, overridden by JS */
+                    width: 360px;
+                    background: var(--panel-bg);
+                    border-radius: var(--radius);
+                    box-shadow: 0 4px 12px var(--shadow-dark), 0 1px 3px var(--shadow-light);
+                    padding: var(--spacing);
+                    opacity: 0;
+                    transform: translateY(-8px);
+                    pointer-events: none;
+                    transition: opacity var(--transition), transform var(--transition);
+                    z-index: 9999;
+                    /* above everything */
+                }
+                
+                .calendar-overlay:not(.hidden) {
+                    opacity: 1;
+                    transform: translateY(0);
+                    pointer-events: auto;
+                }
+                /* arrow – its horizontal position comes from the JS‑set CSS variable */
+                
+                .calendar-overlay::before {
+                    content: "";
+                    position: absolute;
+                    top: -8px;
+                    /* arrow sits above the panel */
+                    left: var(--arrow-left, 50%);
+                    /* JS injects a px value here */
+                    border: 0 8px 8px solid transparent;
+                    border-bottom-color: var(--panel-bg);
+                }
+                /* ─── CALENDAR GRID ──────────────────────────────────────── */
+                
+                .overlay-header {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    margin-bottom: var(--spacing);
+                    margin-top: 40px;
+                }
+                
+                .close-btn,
+                .cal-nav {
+                    background: none;
+                    border: none;
+                    color: var(--text);
+                    font-size: 1.2rem;
+                    cursor: pointer;
+                    transition: color var(--transition);
+                }
+                
+                .cal-nav:hover {
+                    color: var(--accent);
+                }
+                
+                .cal-month-year {
+                    flex: 1;
+                    text-align: center;
+                    font-weight: 600;
+                    color: var(--text);
+                }
+                
+                .calendar-grid {
+                    display: grid;
+                    grid-template-columns: repeat(7, 1fr);
+                    gap: 0.4rem;
+                }
+                
+                .calendar-day {
+                    width: 2.1rem;
+                    height: 2.1rem;
+                    line-height: 2.1rem;
+                    text-align: center;
+                    border-radius: var(--radius);
+                    background: var(--panel-bg);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    color: var(--text);
+                    cursor: pointer;
+                    transition: background var(--transition), transform var(--transition), border-color var(--transition);
+                }
+                
+                .calendar-day.header {
+                    background: transparent;
+                    border: none;
+                    color: #aaa;
+                    font-weight: 600;
+                    cursor: default;
+                }
+                
+                .calendar-day:hover {
+                    background: var(--header-bg);
+                    transform: translateY(-2px);
+                }
+                
+                .calendar-day.present {
+                    background: #4caf50;
+                    border-color: #4caf50;
+                    color: #fff;
+                }
+                
+                .calendar-day.absent {
+                    opacity: 0.5;
+                }
+                
+                .calendar-day.selected-date-cell {
+                    box-shadow: 0 0 0 2px var(--accent);
+                }
+                /* ─── TABLE ───────────────────────────────────────────────────── */
+                
+                .table-wrapper {
+                    overflow-x: auto;
+                }
+                
+                #history {
+                    width: 100%;
+                    border-collapse: collapse;
+                    background: var(--panel-bg);
+                    box-shadow: 0 4px 16px var(--shadow-dark);
+                    /* add extra breathing room */
+                }
+                
+                #history th,
+                #history td {
+                    padding: 0.75rem 1.25rem;
+                    color: var(--text);
+                    font-size: 0.9rem;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                    text-align: left;
+                }
+                
+                #history th {
+                    background: var(--header-bg);
+                    position: sticky;
+                    top: 0;
+                    z-index: 2;
+                }
+                
+                .striped tbody tr:nth-child(odd) {
+                    background: var(--bg);
+                }
+                
+                #history tbody tr:hover {
+                    background: rgba(183, 28, 28, 0.1);
+                }
+                /* ─── MARK *ANY* DATE WITH ATTENDANCE IN RED ───────────────────── */
+                
+                .calendar-day.present-admin {
+                    background: #e53935;
+                    border-color: #e53935;
+                    color: #fff;
+                }
+                
+                .calendar-day.present-dev {
+                    background: #2196f3;
+                    /* developer = blue */
+                    border-color: #2196f3;
+                    color: #fff;
+                }
+                /* =======================================================================
+    Updated Metrics Cards for Responsive Layout
+    ======================================================================= */
+                
+                .metrics {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+                    gap: var(--spacing);
+                    margin-bottom: var(--spacing);
+                }
+                
+                .metric-card {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 1rem;
+                    font-weight: 500;
+                    color: var(--text-light);
+                    background: var(--pill-bg);
+                    padding: var(--spacing);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    border-radius: var(--radius);
+                    box-shadow: 0 2px 6px var(--shadow);
+                    white-space: normal;
+                    text-align: center;
+                }
+                /* Smaller screens */
+                
+                @media (max-width: 600px) {
+                    .metrics {
+                        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+                        gap: calc(var(--spacing) / 2);
+                    }
+                    .metric-card {
+                        font-size: 0.875rem;
+                        padding: calc(var(--spacing) / 2);
+                    }
+                }
+                /* Larger screens */
+                
+                @media (min-width: 1200px) {
+                    .metrics {
+                        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                    }
+                }
+                /* ─── MOBILE RESPONSIVE ───────────────────────────────────────── */
+                
+                @media (max-width: 600px) {
+                    .calendar-overlay {
+                        width: 90vw;
+                        max-width: 360px;
+                        top: 10vh;
+                        left: 50%;
+                        transform: translateX(-50%);
+                    }
+                    .calendar-overlay::before {
+                        left: 50% !important;
+                        transform: translateX(-50%);
+                    }
+                    #history th,
+                    #history td {
+                        padding: 0.5rem 1rem;
+                        white-space: nowrap;
+                    }
+                    .table-wrapper {
+                        overflow-x: auto;
+                    }
+                }
+                
+                #manageUserSelect {
+                    max-height: 200px;
+                    overflow-y: auto;
+                }
+                
+                #manageUserSelect option:checked {
+                    background: #4caf50;
+                    color: #fff;
+                }
+                
+                #selectedCount {
+                    font-size: 0.9rem;
+                    margin-bottom: var(--spacing);
+                    color: var(--text);
+                    text-align: right;
+                }
+                
+                #manageCategoryFilter,
+                #manageSearch {
+                    width: 100%;
+                    padding: .5rem;
+                    border-radius: var(--radius);
+                    background: var(--panel-bg);
+                    color: var(--text);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    margin-bottom: var(--spacing);
+                }
+                
+                #manageUserList {
+                    max-height: 200px;
+                    overflow-y: auto;
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    border-radius: var(--radius);
+                    padding: .5rem;
+                    margin-bottom: var(--spacing);
+                }
+                
+                .user-item {
+                    padding: .25rem;
+                    cursor: pointer;
+                    border-radius: var(--radius);
+                    margin-bottom: .25rem;
+                }
+                
+                .user-item.selected {
+                    background: #4caf50;
+                    color: #fff;
+                }
+                
+                .time-group {
+                    display: flex;
+                    align-items: center;
+                    gap: .5rem;
+                    margin-bottom: var(--spacing);
+                }
+                
+                .time-group label {
+                    white-space: nowrap;
+                }
+                /* Modal close “×” */
+                
+                .modal .close-x {
+                    position: absolute;
+                    top: 0.5rem;
+                    right: 0.5rem;
+                    background: none;
+                    border: none;
+                    font-size: 1.5rem;
+                    color: var(--text);
+                    cursor: pointer;
+                }
+                
+                .modal {
+                    max-height: 90vh;
+                    overflow-y: auto;
+                }
+                /* Two time-pickers side by side */
+                /* Manage modal controls (Select/Clear) */
+                
+                .modal-controls {
+                    display: flex;
+                    gap: 0.5rem;
+                    margin-bottom: var(--spacing);
+                }
+                /* Actions row in modal */
+                
+                .modal-actions {
+                    display: flex;
+                    justify-content: flex-end;
+                    gap: 0.5rem;
+                    margin-top: var(--spacing);
+                }
+                
+                .modal-actions .btn,
+                .modal-controls .btn {
+                    font-size: 0.85rem;
+                    padding: 0.35rem 0.75rem;
+                }
+                
+                .modal .btn {
+                    min-width: auto;
+                    margin-top: 10px;
+                    height: 38px;
+                    width: 70px;
+                }
+                /* Custom confirm modal styling */
+                
+                #confirmModal .modal-content {
+                    text-align: center;
+                }
+                /* ─── REMOVE THE EXTRA “×” AT THE BOTTOM OF THE CALENDAR ─────────── */
+                
+                .overlay-close-x {
+                    display: none;
+                }
+                /* ─── STYLE THE ONE “×” IN THE HEADER ───────────────────────────── */
+                
+                .overlay-header .close-btn {
+                    position: absolute;
+                    top: 18px;
+                    right: 0.5rem;
+                    background: none;
+                    border: none;
+                    font-size: 1.2rem;
+                    color: var(--text);
+                    cursor: pointer;
+                    z-index: 1;
+                }
+                /* ─── UNIFY TIME PICKERS ───────────────────────────────────────── */
+                /* remove native clock icon */
+                
+                .time-group input[type="time"]::-webkit-calendar-picker-indicator {
+                    display: none;
+                }
+                /* style the input and the select so they match */
+                
+                .time-group input[type="time"],
+                .time-group select {
+                    background: var(--panel-bg);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    border-radius: var(--radius);
+                    padding: 0.5rem;
+                    font-size: 0.9rem;
+                    color: var(--text);
+                    width: auto;
+                    min-width: 4.5rem;
+                }
+                /* ─── BUTTONS IN THE TABLE ──────────────────────────────────────── */
+                
+                #history button {
+                    padding: 0.25rem 0.5rem;
+                    font-size: 0.875rem;
+                    border-radius: var(--radius);
+                    margin-left: 0.25rem;
+                }
+                /* ─── ENSURE THE MODALS SCROLL ON SMALL SCREENS ─────────────────── */
+                /* if we tag the <body> with `.hide-actions-col`, hide that column */
+                
+                .hide-actions-col .actions-col {
+                    display: none;
+                }
+                /* also hide EVERY table cell in that column */
+                
+                .hide-actions-col td.actions-col {
+                    display: none;
+                }
+                /* prevent the whole page from ever overflowing horizontally */
+                
+                .time-group input[type="text"] {
+                    flex: 1 1 100px;
+                    min-width: 120px;
+                    margin-left: .5rem;
+                    padding: 0.5rem;
+                    border-radius: var(--radius);
+                    background: var(--panel-bg);
+                    color: var(--text);
+                    border: 1px solid rgba(255, 255, 255, 0.15);
+                    font-size: 0.9rem;
+                    transition: border-color var(--transition), box-shadow var(--transition);
+                }
+                
+                .time-group input[type="text"]:focus {
+                    border-color: var(--accent);
+                    box-shadow: 0 0 0 2px rgba(183, 28, 28, 0.15);
+                    outline: none;
+                }
+                
+                @media (max-width: 600px) {
+                    .time-group {
+                        flex-direction: column;
+                        align-items: flex-start;
+                        gap: .25rem;
+                    }
+                    .time-group input,
+                    .time-group select,
+                    .time-group input[type="text"] {
+                        width: 100%;
+                        min-width: 0;
+                        margin-left: 0;
+                    }
+                }
+                
+                html,
+                body {
+                    max-width: 100vw !important;
+                    overflow-x: hidden !important;
+                }
+                
+                .btn.small {
+                    font-size: 0.80rem;
+                    padding: 0.2rem 0.7rem;
+                    line-height: 1;
+                    border-radius: var(--radius);
+                    margin-left: 0.15rem;
+                }
+                
+                .inline-reason-input {
+                    width: 120px;
+                    padding: 0.3rem 0.6rem;
+                    border-radius: 6px;
+                    border: 1px solid #bbb;
+                    margin-right: 0.4rem;
+                    font-size: 0.85rem;
+                    background: var(--panel-bg);
+                    color: var(--text);
+                }

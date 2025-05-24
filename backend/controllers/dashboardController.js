@@ -32,12 +32,14 @@ async function getStats(req, res, next) {
             case 'developer':
                 // all except self
                 userWhere.id = {
-                    [Op.ne]: userId };
+                    [Op.ne]: userId
+                };
                 break;
             case 'admin':
                 // only category‑admins + ushers
                 userWhere.role = {
-                    [Op.in]: ['category-admin', 'usher'] };
+                    [Op.in]: ['category-admin', 'usher']
+                };
                 break;
             case 'category-admin':
                 if (view === 'myself') {
@@ -64,7 +66,8 @@ async function getStats(req, res, next) {
             }).then(rows => rows.map(r => r.id));
             // ensure non‑empty array
             attendWhere.userId = leaveWhere.userId = {
-                [Op.in]: ids.length ? ids : [null] };
+                [Op.in]: ids.length ? ids : [null]
+            };
         }
 
         // ---------------------------- parallel data fetch
@@ -82,14 +85,18 @@ async function getStats(req, res, next) {
                 where: {
                     ...attendWhere,
                     timestamp: {
-                        [Op.between]: [dayStart, dayEnd] }
+                        [Op.between]: [dayStart, dayEnd]
+                    }
                 }
             }),
 
             // entire month's attendance (unscoped), with user.role
             Attendance.findAll({
-                where: { timestamp: {
-                        [Op.between]: [monthStart, monthEnd] } },
+                where: {
+                    timestamp: {
+                        [Op.between]: [monthStart, monthEnd]
+                    }
+                },
                 include: [{
                     model: User,
                     as: 'user',

@@ -1,0 +1,317 @@
+/* =======================================================================
+   location.css — styles for location.html only
+   ======================================================================= */
+
+
+/* 1. Page container spacing */
+
+.location-container {
+    margin-top: var(--spacing);
+    padding-bottom: var(--spacing);
+}
+
+
+/* 2. “+ Add Check” button */
+
+#addCheckBtn {
+    margin-bottom: var(--spacing);
+}
+
+
+/* 3. Saved-checks list */
+
+.check-list {
+    list-style: none;
+    padding: 0;
+    margin: var(--spacing) 0;
+}
+
+.check-list li {
+    padding: 0.75rem 1rem;
+    background: var(--panel-bg);
+    border-radius: var(--radius);
+    margin-bottom: 0.5rem;
+    color: var(--text);
+}
+
+.check-list li.no-data {
+    text-align: center;
+    font-style: italic;
+    color: var(--text-muted);
+}
+
+
+/* 4. Modal backdrop */
+
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 99;
+}
+
+.modal-backdrop.hidden {
+    display: none!important;
+}
+
+
+/* 5. Modal dialog */
+
+.modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 90%;
+    max-width: 500px;
+    background: var(--panel-bg);
+    padding: var(--spacing);
+    border-radius: var(--radius);
+    box-shadow: 0 4px 16px var(--shadow-dark);
+    transform: translate(-50%, -50%);
+    z-index: 100;
+    color: var(--text);
+    overflow: auto;
+    max-height: 80vh;
+}
+
+.modal.hidden {
+    display: none!important;
+}
+
+
+/* 6. Modal heading */
+
+.modal h2 {
+    margin: 0 0 var(--spacing);
+    font-size: 1.4rem;
+}
+
+
+/* 7. Form layout */
+
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.form-group {
+    flex: 1 1 120px;
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    margin-bottom: .25rem;
+    font-size: .9rem;
+}
+
+.form-group input,
+.form-group select {
+    padding: .5rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius);
+    background: var(--bg);
+    color: var(--text);
+    font-size: .9rem;
+}
+
+
+/* 8. Select / Clear buttons row */
+
+#selectAllUsers,
+#clearAllUsers {
+    margin-right: .5rem;
+}
+
+
+/* 9. Scrollable user list */
+
+.user-list {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-bottom: var(--spacing);
+}
+
+.user-item {
+    padding: .5rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius);
+    margin-bottom: .25rem;
+    cursor: pointer;
+    transition: background .2s, color .2s;
+    background: var(--bg);
+    color: var(--text);
+}
+
+.user-item.selected {
+    background: var(--accent);
+    color: #fff;
+}
+
+
+/* 10. Modal action buttons */
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: .5rem;
+}
+
+
+/* 11. Responsive tweaks */
+
+@media (max-width: 600px) {
+    .form-row {
+        flex-direction: column;
+    }
+    .modal {
+        width: 95%;
+        max-width: none;
+    }
+}
+
+
+/* container for stacked notification tiles */
+
+#custom-notification-container {
+    position: fixed;
+    bottom: 1rem;
+    right: 1rem;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: .5rem;
+    z-index: 2000;
+}
+
+
+/* base tile */
+
+.cn-tile {
+    padding: .75rem 1rem;
+    border-radius: var(--radius);
+    color: #fff;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .3);
+    cursor: pointer;
+    opacity: .95;
+    transition: opacity .2s, transform .2s;
+}
+
+.cn-tile:hover {
+    opacity: 1;
+    transform: translateY(-2px);
+}
+
+
+/* variants */
+
+.cn-info {
+    background: #2196f3;
+}
+
+.cn-early {
+    background: #4caf50;
+}
+
+
+/* early */
+
+.cn-onTime {
+    background: #009688;
+}
+
+
+/* on time */
+
+.cn-late {
+    background: #f44336;
+}
+
+
+/* late */
+
+.cn-success {
+    background: var(--accent);
+}
+
+.cn-error {
+    background: #e53935;
+}
+
+
+/* make each check row flex with buttons at the end */
+
+.check-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: .75rem 1rem;
+    background: var(--panel-bg);
+    border-radius: var(--radius);
+    margin-bottom: .5rem;
+    color: var(--text);
+}
+
+
+/* button base */
+
+.check-item button {
+    margin-left: .5rem;
+    padding: .25rem .5rem;
+    font-size: .8rem;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: background .2s;
+}
+
+
+/* edit vs delete variants */
+
+.edit-btn {
+    background: #2196f3;
+    color: #fff;
+}
+
+.edit-btn:hover {
+    background: #1976d2;
+}
+
+.delete-btn {
+    background: #e53935;
+    color: #fff;
+}
+
+.delete-btn:hover {
+    background: #c62828;
+}
+
+
+/* override the old .check-list li styles */
+
+
+/* === custom days-of-week picker === */
+
+.days-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.day-item {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius);
+    cursor: pointer;
+    background: var(--bg);
+    color: var(--text);
+    transition: background .2s, color .2s;
+}
+
+.day-item.selected {
+    background: var(--accent);
+    color: #fff;
+}

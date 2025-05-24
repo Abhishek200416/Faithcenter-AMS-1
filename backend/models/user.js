@@ -94,7 +94,12 @@ module.exports = sequelize => {
     User.associate = models => {
         User.hasMany(models.Attendance, { foreignKey: 'userId' });
         User.hasMany(models.LeaveRequest, { foreignKey: 'userId' });
-        User.hasMany(models.QRCode, { foreignKey: 'issuedBy', as: 'issuedQRs' });
+        // location-based checks instead of QR codes
+        User.hasMany(models.LocationCheck, {
+            foreignKey: 'issuedBy',
+            as: 'issuedLocationChecks'
+        });
+
         User.hasMany(models.OTP, { foreignKey: 'userId' });
     };
 

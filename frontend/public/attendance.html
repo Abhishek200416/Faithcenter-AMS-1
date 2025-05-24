@@ -2,31 +2,69 @@
 <html lang="en">
 
 <head>
-    <style>
-        #app-root.hidden {
-            display: none !important;
-        }
-    </style>
-    <link rel="stylesheet" href="css/base.css">
-    <script type="module" src="js/base.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Attendance — Faith Centre AMS</title>
-
+    <link rel="stylesheet" href="../css/base.css">
     <link rel="stylesheet" href="../css/attendance.css">
 
+    <script type="module" src="js/base.js"></script>
+    <style>
+        .modal {
+            position: fixed;
+            bottom: 0%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--panel-bg);
+            padding: var(--spacing);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 12px var(--shadow-dark);
+            z-index: 10000;
+            width: 90%;
+            max-width: 500px;
+        }
+        
+        .modal.hidden {
+            display: none;
+        }
+        
+        .modal .close-x {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text);
+            cursor: pointer;
+        }
+        
+        .modal-controls {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: var(--spacing);
+        }
+        
+        .modal-actions {
+            display: flex;
+            justify-content: center;
+            gap: 2.5rem;
+            margin-top: var(--spacing);
+            flex-direction: row;
+            align-items: flex-start;
+            flex-wrap: nowrap;
+        }
+    </style>
+    <script type="module" src="js/base.js"></script>
 </head>
 
 <body class="dashboard-page">
-    <div id="app-root" class="hidden"></div>
     <header class="header">
         <div class="container header-inner">
-            <button id="menuToggle" class="hamburger" aria-label="Open menu">
-            <span></span><span></span><span></span>
-        </button>
+            <button id="menuToggle" class="hamburger" aria-label="Open menu"><span></span><span></span><span></span></button>
             <a href="dashboard.html" class="brand">Faith Centre AMS</a>
-            <a href="dashboard.html"><img id="mobileHome" class="home-icon" src="../assets/images/home.png" alt="Home"></a>
-            <nav class="nav-links" aria-label="Main navigation">
+            <img id="mobileHome" class="home-icon" src="../assets/images/home.png" alt="Home">
+            <nav class="nav-links">
                 <a href="dashboard.html">Home</a>
                 <a href="attendance.html" class="active">Attendance</a>
                 <a href="manageUsers.html">Users</a>
@@ -35,7 +73,7 @@
             </nav>
             <img id="logout" class="logout-icon" src="../assets/images/exit.png" alt="Logout">
         </div>
-        <nav id="mobileMenu" class="mobile-menu" aria-label="Mobile navigation">
+        <nav id="mobileMenu" class="mobile-menu">
             <a href="dashboard.html">Home</a>
             <a href="attendance.html">Attendance</a>
             <a href="manageUsers.html">Users</a>
@@ -44,69 +82,70 @@
             <a href="#" id="mobileLogout">Logout</a>
         </nav>
     </header>
-
     <main class="container attendance-page" role="main">
         <h1>Attendance Logs</h1>
-
-        <section class="filters" aria-labelledby="filter-heading">
-
-            <div class="filter-item" id="searchFilter">
+        <section class="filters">
+            <div class="filter-item">
                 <label for="filterSearch">Search</label>
-                <input type="search" id="filterSearch" placeholder="UID, name, email…">
+                <input id="filterSearch" type="search" placeholder="UID, name, email…">
             </div>
-
-            <div class="filter-item" id="categoryFilter">
+            <div class="filter-item">
                 <label for="filterCategory">Category</label>
                 <select id="filterCategory">
-            <option value="all">All</option>
-            <option value="head-of-ushers">Ushering</option>
-            <option value="media-head">Media</option>
-            <option value="worship-head">Worship</option>
-            </select>
+          <option value="all">All</option>
+          <option value="Protocol-head">Protocol</option>
+          <option value="head-of-ushers">Ushering</option>
+          <option value="media-head">Media</option>
+          <option value="worship-head">Worship</option>
+        </select>
             </div>
-
-            <div class="filter-item" id="roleFilter">
+            <div class="filter-item">
                 <label for="filterRole">Role</label>
                 <select id="filterRole">
-            <option value="all">All</option>
-            <option value="head">Head</option>
-            <option value="member">Member</option>
-            </select>
+          <option value="all">All</option>
+          <option value="head">Head</option>
+          <option value="member">Member</option>
+        </select>
             </div>
-
-            <div class="filter-item" id="statusFilter">
+            <div class="filter-item">
                 <label for="filterStatus">Status</label>
                 <select id="filterStatus">
-            <option value="all">All</option>
-            <option value="present">Present</option>
-            <option value="absent">Absent</option>
-            <option value="unreasoned-absent">Unreasoned Absent</option>
-            </select>
-            </div>
-
-            <div class="filter-item" id="logFilter">
-                <label for="filterLog">Log Type</label>
-                <select id="filterLog">
-            <option value="all">All</option>
-            <option value="punch-in">Punch In</option>
-            <option value="punch-out">Punch Out</option>
-            </select>
-            </div>
-
-            <div class="filter-item" id="timeFilter">
-                <label for="filterTime">Time Status</label>
-                <select id="filterTime">
-            <option value="all">All</option>
-            <option value="on-time">On Time</option>
-            <option value="early">Early</option>
-            <option value="late">Late</option>
-            <option value="unreasoned-late">Unreasoned Late</option>
-            </select>
+          <option value="all">All</option>
+          <option value="present">Present</option>
+          <option value="absent">Absent</option>
+          <option value="unreasoned-absent">Unreasoned Absent</option>
+        </select>
             </div>
 
             <div class="filter-item">
+                <label for="filterLog">Log Type</label>
+                <select id="filterLog">
+          <option value="all">All</option>
+          <option value="punch-in">Punch In</option>
+          <option value="punch-out">Punch Out</option>
+        </select>
+            </div>
+            <div class="filter-item">
+                <label for="filterTime">Time Status</label>
+                <select id="filterTime">
+          <option value="all">All</option>
+          <option value="on-time">On Time</option>
+          <option value="early">Early</option>
+          <option value="late">Late</option>
+          <option value="unreasoned-late">Unreasoned Late</option>
+        </select>
+            </div>
+            <div class="filter-item" id="attendanceTypeFilterWrapper" style="display:none">
+                <label for="filterAttendanceType">Attendance Type</label>
+                <select id="filterAttendanceType">
+        <option value="all">All</option>
+        <option value="normal">Normal-Time</option>
+        <option value="full">Full-Time</option>
+    </select>
+            </div>
+            <div class="filter-item">
                 <label>Calendar</label>
-                <button id="openCalendarBtn" class="btn accent">Calendar</button>
+                <button id="openCalendarBtn" class="btn accent" type="button">Calendar</button>
                 <div id="calendarOverlay" class="calendar-overlay hidden" role="dialog" aria-modal="true">
                     <div class="overlay-header">
                         <button id="closeCalendarBtn" class="close-btn" aria-label="Close">×</button>
@@ -117,7 +156,72 @@
                     <div id="calendar" class="calendar-grid" role="grid"></div>
                 </div>
             </div>
+            <button id="manageBtn" class="btn accent" type="button" style="display:none">Manage Attendance</button>
         </section>
+        <div id="manageModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="manualAttendanceHeading">
+            <div class="modal-content">
+                <button class="close-x" id="closeManage" aria-label="Close">&times;</button>
+                <h2 id="manualAttendanceHeading">Manual Attendance</h2>
+                <div class="modal-controls">
+                    <button id="selectAllUsers" class="btn accent" type="button">Select All</button>
+                    <button id="clearAllUsers" class="btn" type="button">Clear All</button>
+                </div>
+                <label for="manageCategoryFilter">Category</label>
+                <select id="manageCategoryFilter" name="manageCategoryFilter" aria-label="Category">
+            <option value="all">All categories</option>
+            <option value="Protocol-head">Protocol</option>
+            <option value="head-of-ushers">Ushering</option>
+            <option value="media-head">Media</option>
+            <option value="worship-head">Worship</option>
+        </select>
+                <input id="manageSearch" type="search" placeholder="Search users" aria-label="Search users">
+                <div id="manageUserList" aria-label="User list"></div>
+                <div id="selectedCount">Selected: 0</div>
+                <label for="manageDate">Date</label>
+                <input id="manageDate" type="date" name="manageDate" required>
+
+                <div class="time-group">
+                    <label for="manageTimeIn">Punch In</label>
+                    <input id="manageTimeIn" type="time" name="manageTimeIn" autocomplete="off" aria-label="Punch In Time">
+                    <select id="manageMeridiemIn" name="manageMeridiemIn" aria-label="Punch In AM/PM">
+                <option>AM</option>
+                <option>PM</option>
+            </select>
+                    <input id="manageReasonIn" type="text" name="manageReasonIn" placeholder="Reason for punch-in (optional)" aria-label="Punch In Reason">
+                </div>
+                <div class="time-group">
+                    <label for="manageTimeOut">Punch Out</label>
+                    <input id="manageTimeOut" type="time" name="manageTimeOut" autocomplete="off" aria-label="Punch Out Time">
+                    <select id="manageMeridiemOut" name="manageMeridiemOut" aria-label="Punch Out AM/PM">
+                <option>AM</option>
+                <option>PM</option>
+            </select>
+                    <input id="manageReasonOut" type="text" name="manageReasonOut" placeholder="Reason for punch-out (optional)" aria-label="Punch Out Reason">
+                </div>
+
+                <label for="manageStatus">Status (for punch-in only)</label>
+                <select id="manageStatus" name="manageStatus" aria-label="Status">
+            <option value="early">Early</option>
+            <option value="on-time">On Time</option>
+            <option value="late">Late</option>
+            <option value="absent">Absent</option>
+        </select>
+                <div class="modal-actions">
+                    <button id="saveManage" class="btn accent" type="button">Save</button>
+                    <button id="cancelManage" class="btn" type="button">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="confirmModal" class="modal hidden" role="dialog" aria-modal="true">
+            <div class="modal-content">
+                <p id="confirmText">Are you sure?</p>
+                <div class="modal-actions">
+                    <button id="confirmYes" class="btn accent">Yes</button>
+                    <button id="confirmNo" class="btn">No</button>
+                </div>
+            </div>
+        </div>
         <section class="metrics">
             <div class="metric-card">
                 <h3>Total Users</h3>
@@ -128,7 +232,7 @@
                 <p id="cardPunchIn">0</p>
             </div>
             <div class="metric-card">
-                <h3>Punch out</h3>
+                <h3>Punch Out</h3>
                 <p id="cardPunchOut">0</p>
             </div>
             <div class="metric-card">
@@ -156,36 +260,32 @@
                 <p id="cardRecentUnreasonedLate">0</p>
             </div>
         </section>
-
         <section class="table-wrapper">
             <table id="history" class="striped" aria-label="Attendance History">
                 <thead>
                     <tr>
-                        <th class="col-uid" scope="col">UID</th>
-                        <th class="col-name" scope="col">Name</th>
-                        <th class="col-cat" scope="col">Category</th>
-                        <th class="col-role" scope="col">Role</th>
-                        <th class="col-log" scope="col">
-                            Log <sup>In | Out</sup>
+                        <th>UID</th>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Role</th>
+                        <th>Date</th>
+                        <th>In Time</th>
+                        <th>Out Time</th>
+                        <th>Status</th>
+                        <th>
+                            <button class="btn small">Add Reason</button>
                         </th>
+                        <th class="actions-col">Actions</th>
 
-                        <th class="col-date" scope="col">Date</th>
-                        <th class="col-time" scope="col">Time</th>
-                        <th class="col-status" scope="col">Status</th>
-                        <th class="col-reason" scope="col">Reason (late/absent)</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
             </table>
         </section>
-
     </main>
-
-    <div id="toast-container" class="toast-container"></div>
-
+    <div id="toast-container"></div>
     <script type="module" src="../js/toast.js"></script>
-    <script type="module" src="js/attendance.js"></script>
-
+    <script type="module" src="../js/attendance.js"></script>
 </body>
 
 </html>

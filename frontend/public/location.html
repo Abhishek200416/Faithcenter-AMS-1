@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Location Attendance — Faith Centre AMS</title>
+    <link rel="stylesheet" href="../css/base.css" />
+    <link rel="stylesheet" href="../css/location.css" />
+    <script src="/socket.io/socket.io.js"></script>
+    <script type="module" src="../js/utils.js" defer></script>
+    <script type="module" src="../js/toast.js" defer></script>
+    <script type="module" src="../js/location.js" defer></script>
+
+    <script type="module" src="js/base.js"></script>
+</head>
+
+<body class="dashboard-page">
+    <div id="app-root" class="hidden">
+
+        <!-- HEADER / NAV -->
+        <header class="header" role="banner">
+            <div class="container header-inner">
+                <button id="menuToggle" class="hamburger" aria-label="Open menu">
+          <span></span><span></span><span></span>
+        </button>
+                <a href="dashboard.html" class="brand">Faith Centre AMS</a>
+                <nav class="nav-links" aria-label="Main navigation">
+                    <a href="dashboard.html">Home</a>
+                    <a href="attendance.html" class="active">Attendance</a>
+                    <a href="manageUsers.html">Users</a>
+                    <a href="leaves.html">Leaves</a>
+                    <a href="profile.html">Profile</a>
+                </nav>
+                <img id="logout" class="logout-icon" src="../assets/images/exit.png" alt="Logout" />
+            </div>
+            <nav id="mobileMenu" class="mobile-menu" aria-label="Mobile navigation">
+                <a href="dashboard.html">Home</a>
+                <a href="attendance.html">Attendance</a>
+                <a href="manageUsers.html">Users</a>
+                <a href="leaves.html">Leaves</a>
+                <a href="profile.html">Profile</a>
+            </nav>
+        </header>
+        <!-- somewhere in location.html -->
+        <div id="geo-banner" style="display:none;position:fixed;bottom:0;width:100%;background:#ffcc00;padding:1em;text-align:center;z-index:1000;">
+            📍 This app needs your location—<button id="geo-allow">Allow Location</button>
+        </div>
+
+
+        <!-- PAGE CONTENT -->
+        <main class="container location-container" role="main">
+            <button id="addCheckBtn" class="btn accent">+ Add Check</button>
+            <ul id="checkList" class="check-list" aria-live="polite"></ul>
+        </main>
+
+        <!-- MODAL BACKDROP -->
+        <div id="modalBackdrop" class="modal-backdrop hidden" aria-hidden="true"></div>
+
+        <!-- NEW CHECK MODAL -->
+        <section id="checkModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+            <h2 id="modalTitle">New Location Check</h2>
+
+            <!-- Coordinates & Radius -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="locLatitude">Latitude</label>
+                    <input id="locLatitude" name="latitude" type="number" step="0.000001" required aria-required="true" />
+                </div>
+                <div class="form-group">
+                    <label for="locLongitude">Longitude</label>
+                    <input id="locLongitude" name="longitude" type="number" step="0.000001" required aria-required="true" />
+                </div>
+                <div class="form-group">
+                    <label for="locRadius">Radius (m)</label>
+                    <input id="locRadius" name="radius" type="number" min="10" value="100" required aria-required="true" />
+                </div>
+            </div>
+            <div class="form-group full-width">
+                <label for="attendanceType">Attendance Type</label>
+                <select id="attendanceType" name="attendanceType" required>
+    <option value="normal">Normal-Time</option>
+    <option value="full">Full-Time</option>
+  </select>
+            </div>
+            <!-- Schedule Configuration -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="scheduleType">Schedule</label>
+                    <select id="scheduleType" name="scheduleType" required>
+      <option value="once">One-off</option>
+      <option value="weekly">Weekly</option>
+    </select>
+                </div>
+                <div class="form-group" data-dependent="weekly">
+                    <label>Days of Week</label>
+                    <div id="daysOfWeekList" class="days-list" aria-label="Select days of week"></div>
+                </div>
+
+
+                <div class="form-group" data-dependent="once">
+                    <label for="specificDate">Date (optional)</label>
+                    <input id="specificDate" name="specificDate" type="date" />
+                </div>
+            </div>
+
+            <!-- Times & Reminder (all of these get hidden for full-time) -->
+            <div class="form-row time-fields">
+                <div class="form-group">
+                    <label for="startTime">Start Time</label>
+                    <input id="startTime" name="startTime" type="time" value="09:00" required/>
+                </div>
+                <div class="form-group">
+                    <label for="durationMinutes">Duration (mins)</label>
+                    <input id="durationMinutes" name="durationMinutes" type="number" min="1" value="10" required/>
+                </div>
+                <div class="form-group">
+                    <label for="remindBefore">Remind Before (mins)</label>
+                    <input id="remindBefore" name="remindBefore" type="number" min="0" value="60" required/>
+                </div>
+            </div>
+
+            <!-- Early/Late Windows (also hidden for full) -->
+            <div class="form-row window-fields">
+                <div class="form-group">
+                    <label for="earlyWindow">Early Window (mins)</label>
+                    <input id="earlyWindow" name="earlyWindow" type="number" min="0" value="5" required/>
+                </div>
+                <div class="form-group">
+                    <label for="lateWindow">Late Window (mins)</label>
+                    <input id="lateWindow" name="lateWindow" type="number" min="0" value="15" required/>
+                </div>
+            </div>
+
+            <!-- Out-of-Radius Grace (still shown for full) -->
+            <div class="form-group">
+                <label for="outGrace">Out-of-Radius Grace <b>(seconds)</b></label>
+                <input id="outGrace" name="outGrace" type="number" min="1" value="2" required/>
+
+            </div>
+
+            <!-- Custom messages (also hidden for full) -->
+            <div class="message-fields">
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label for="earlyMsg">“Early” Message</label>
+                        <input id="earlyMsg" name="earlyMsg" type="text" />
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="onTimeMsg">“On-Time” Message</label>
+                        <input id="onTimeMsg" name="onTimeMsg" type="text" />
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="lateMsg">“Late” Message</label>
+                        <input id="lateMsg" name="lateMsg" type="text" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Select Users -->
+            <div class="form-row">
+                <button id="selectAllUsers" class="btn">Select All</button>
+                <button id="clearAllUsers" class="btn">Clear All</button>
+            </div>
+            <div id="userList" class="user-list" tabindex="0" aria-label="Selectable users list"></div>
+
+            <!-- Modal Actions -->
+            <div class="modal-actions">
+                <button id="saveCheckBtn" class="btn accent">Save</button>
+                <button id="cancelCheckBtn" class="btn">Cancel</button>
+            </div>
+        </section>
+
+    </div>
+</body>
+
+</html>

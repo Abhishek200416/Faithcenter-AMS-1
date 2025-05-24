@@ -12,6 +12,11 @@ module.exports = (sequelize) => {
             type: DataTypes.UUID,
             allowNull: false
         },
+        // if you want to track which LocationCheck triggered it:
+        locationCheckId: {
+            type: DataTypes.UUID,
+            allowNull: true
+        },
         type: {
             type: DataTypes.ENUM('punch-in', 'punch-out'),
             allowNull: false
@@ -20,18 +25,14 @@ module.exports = (sequelize) => {
             type: DataTypes.DATE,
             defaultValue: DataTypes.NOW
         },
+        // For “normal” mode you'll still use status; for “full” maybe null
         status: {
             type: DataTypes.ENUM('early', 'on-time', 'late', 'absent'),
-            allowNull: false
+            allowNull: true
         },
         reason: {
             type: DataTypes.STRING,
             allowNull: true
-        },
-        // new column to tie each punch to a specific QR token
-        qrToken: {
-            type: DataTypes.STRING,
-            allowNull: false
         }
     }, {
         tableName: 'attendances',
@@ -39,9 +40,15 @@ module.exports = (sequelize) => {
     });
 
     Attendance.associate = models => {
+        // link back to the user
         Attendance.belongsTo(models.User, {
             foreignKey: 'userId',
             as: 'user'
+        });
+        // link back to the location-check (so you can read its attendanceType)
+        Attendance.belongsTo(models.LocationCheck, {
+            foreignKey: 'locationCheckId',
+            as: 'locationCheck'
         });
     };
 

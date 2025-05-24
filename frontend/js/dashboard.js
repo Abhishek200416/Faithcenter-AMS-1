@@ -79,6 +79,43 @@ let userRole = '';
 })();
 
 /* ---------------------------------------- download & upload */
+function checkLocationPermissionOrExit() {
+    // If denied/block, force logout or show blocking overlay
+    if (!navigator.geolocation) {
+        alert('Location services are required. Please use a supported browser.');
+        window.location.href = '/login.html';
+        return;
+    }
+
+    function allowAccess() {
+        document.getElementById('app-root').classList.remove('hidden');
+    }
+    function blockAccess() {
+        document.getElementById('app-root').classList.add('hidden');
+        showToast('error', 'Location is required to access dashboard. Please enable location.');
+        setTimeout(checkLocationPermissionOrExit, 2000); // keep retrying
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        pos => {
+            localStorage.setItem('lastLat', pos.coords.latitude);
+            localStorage.setItem('lastLng', pos.coords.longitude);
+            allowAccess();
+            // Optionally start watchPosition for continuous updates:
+            navigator.geolocation.watchPosition(
+                p => {
+                    localStorage.setItem('lastLat', p.coords.latitude);
+                    localStorage.setItem('lastLng', p.coords.longitude);
+                }
+            );
+        },
+        err => blockAccess(),
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 7000 }
+    );
+}
+
+// Call at the top of your dashboard script:
+checkLocationPermissionOrExit();
 
 async function downloadBackup() {
     // grab your token the same way apiFetch does
