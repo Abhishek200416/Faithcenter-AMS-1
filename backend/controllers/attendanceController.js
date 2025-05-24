@@ -272,26 +272,23 @@ async function getHistory(req, res, next) {
 
 async function addRecord(req, res, next) {
     try {
-        const { userIds, date, time12, meridiem, type, status, reason, locationCheckId } = req.body;
-        const [hh, mm] = time12.split(':').map(Number);
-        const hour24 = meridiem === 'PM' && hh < 12
-            ? hh + 12
-            : meridiem === 'AM' && hh === 12
-                ? 0
-                : hh;
-        const timestamp = new Date(`${date}T${String(hour24).padStart(2, '0')}:${String(mm).padStart(2, '0')}:00`);
+        const { userIds, timestamp, type, status, reason, locationCheckId } = req.body;
+        // Validate timestamp
+        if (!timestamp) return res.status(400).json({ message: "timestamp is required (ISO string)" });
+        const dateObj = new Date(timestamp);
+        if (isNaN(dateObj.getTime())) return res.status(400).json({ message: "Invalid timestamp format" });
 
+        // Bulk create for all selected users
         const created = await Promise.all(userIds.map(uid =>
             Attendance.create({
                 userId: uid,
                 locationCheckId,
                 type,
-                timestamp,
+                timestamp: dateObj,
                 status: type === 'punch-out' ? null : status,
                 reason: reason || null
             })
         ));
-
         res.status(201).json({ created: created.length });
     } catch (err) {
         next(err);
@@ -300,13 +297,14 @@ async function addRecord(req, res, next) {
 
 async function updateRecord(req, res, next) {
     try {
-        const { date, time12, meridiem, status, reason } = req.body;
+        const { timestamp, status, reason } = req.body;
         const rec = await Attendance.findByPk(req.params.id);
         if (!rec) return res.status(404).json({ message: 'Not found' });
 
         const userRole = req.user.role;
         const isOwn = rec.userId === req.user.id;
 
+        // Only admin/developer can update timestamp/status, otherwise only reason
         if (userRole !== 'developer' && userRole !== 'admin') {
             if (!isOwn || !['absent', 'late'].includes(rec.status)) {
                 return res.status(403).json({
@@ -324,14 +322,13 @@ async function updateRecord(req, res, next) {
             return res.json({ updated: true });
         }
 
-        const [hh, mm] = time12.split(':').map(Number);
-        const hour24 = meridiem === 'PM' && hh < 12
-            ? hh + 12
-            : meridiem === 'AM' && hh === 12
-                ? 0
-                : hh;
-        rec.timestamp = new Date(`${date}T${String(hour24).padStart(2, '0')}:${String(mm).padStart(2, '0')}:00`);
-        rec.status = rec.type === 'punch-out' ? null : status;
+        // For admins/devs, update everything
+        if (timestamp) {
+            const dateObj = new Date(timestamp);
+            if (isNaN(dateObj.getTime())) return res.status(400).json({ message: "Invalid timestamp format" });
+            rec.timestamp = dateObj;
+        }
+        if (rec.type !== 'punch-out') rec.status = status;
         rec.reason = reason || null;
         await rec.save();
 
@@ -340,7 +337,6 @@ async function updateRecord(req, res, next) {
         next(err);
     }
 }
-
 async function deleteRecord(req, res, next) {
     try {
         const rec = await Attendance.findByPk(req.params.id);
