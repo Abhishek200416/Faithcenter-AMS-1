@@ -230,11 +230,13 @@ async function getHistory(req, res, next) {
             // ushers see only their own punches
             userFilter.id = req.user.id;
         }
-        let dayStart = date ? new Date(date) : new Date();
-        let dayEnd = new Date(dayStart);
-        dayStart.setHours(0, 0, 0, 0);
-        dayEnd.setHours(23, 59, 59, 999);
-        where.timestamp = { [Op.between]: [dayStart, dayEnd] };
+        const moment = require('moment-timezone');
+        const istDayStart = moment.tz(date, 'Asia/Kolkata').startOf('day').utc().toDate();
+        const istDayEnd = moment.tz(date, 'Asia/Kolkata').endOf('day').utc().toDate();
+
+        // Now query:
+        where.timestamp = { [Op.between]: [istDayStart, istDayEnd] };
+
 
         const records = await Attendance.findAll({
             where,
