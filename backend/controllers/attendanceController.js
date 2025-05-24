@@ -1,5 +1,7 @@
 const { Attendance, User, LocationCheck } = require('../models');
 const { Op } = require('sequelize');
+const moment = require('moment-timezone');
+
 
 function withinCircle(loc, latitude, longitude) {
     function toRad(x) { return x * Math.PI / 180; }
@@ -201,7 +203,7 @@ async function getHistory(req, res, next) {
     try {
         const { category, role, date, search, type, all } = req.query;
         const where = {}, userFilter = {};
-        const moment = require('moment-timezone');
+
 
         // Always define dayStart
         let dayStart;
@@ -248,7 +250,7 @@ async function getHistory(req, res, next) {
             // ushers see only their own punches
             userFilter.id = req.user.id;
         }
-        const moment = require('moment-timezone');
+
         const istDayStart = moment.tz(date, 'Asia/Kolkata').startOf('day').utc().toDate();
         const istDayEnd = moment.tz(date, 'Asia/Kolkata').endOf('day').utc().toDate();
 
