@@ -367,21 +367,30 @@ function openEditModal(loc) {
 }
 
 async function grabPositionAndUpdate(id) {
-    if (currentPosition) {
-        E.lat.value = currentPosition.latitude.toFixed(6);
-        E.lng.value = currentPosition.longitude.toFixed(6);
-        return updateCheck(id);
+    const latEmpty = !E.lat.value || E.lat.value.trim() === '';
+    const lngEmpty = !E.lng.value || E.lng.value.trim() === '';
+
+    if (latEmpty || lngEmpty) {
+        if (currentPosition) {
+            E.lat.value = currentPosition.latitude.toFixed(6);
+            E.lng.value = currentPosition.longitude.toFixed(6);
+            return updateCheck(id);
+        }
+        navigator.geolocation.getCurrentPosition(
+            pos => {
+                currentPosition = pos.coords;
+                E.lat.value = pos.coords.latitude.toFixed(6);
+                E.lng.value = pos.coords.longitude.toFixed(6);
+                updateCheck(id);
+            },
+            () => showTile({ message: 'Unable to get location', type: 'error' })
+        );
+    } else {
+        // Use what user typed!
+        updateCheck(id);
     }
-    navigator.geolocation.getCurrentPosition(
-        pos => {
-            currentPosition = pos.coords;
-            E.lat.value = pos.coords.latitude.toFixed(6);
-            E.lng.value = pos.coords.longitude.toFixed(6);
-            updateCheck(id);
-        },
-        () => showTile({ message: 'Unable to get location', type: 'error' })
-    );
 }
+
 
 async function updateCheck(id) {
     const payload = {
