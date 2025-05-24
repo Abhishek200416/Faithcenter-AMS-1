@@ -451,18 +451,26 @@ async function handleSave() {
     function buildTimestamp(date, time, mer) {
         if (!date || !time || !mer) return null;
         let [h, m] = time.split(':').map(Number);
-        if (mer === 'PM' && h < 12) h += 12;
-        if (mer === 'AM' && h === 12) h = 0;
 
-        // Compose a timestamp with your local timezone offset
-        // Eg: "2025-05-18T07:30:00+05:30" (for IST)
+        // Handle 12-hour to 24-hour conversion properly
+        if (mer === 'AM') {
+            if (h === 12) h = 0; // Midnight
+        } else if (mer === 'PM') {
+            if (h !== 12) h += 12; // PM but not noon
+        }
+
+        // Format with leading zeroes
+        const hour = String(h).padStart(2, '0');
+        const min = String(m).padStart(2, '0');
+        // Compose ISO 8601 with local timezone offset
         const tzOffset = -new Date().getTimezoneOffset();
         const sign = tzOffset >= 0 ? '+' : '-';
         const absOffset = Math.abs(tzOffset);
         const hours = String(Math.floor(absOffset / 60)).padStart(2, '0');
         const mins = String(absOffset % 60).padStart(2, '0');
-        return `${date}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00${sign}${hours}:${mins}`;
+        return `${date}T${hour}:${min}:00${sign}${hours}:${mins}`;
     }
+
 
 
     // punch-in
