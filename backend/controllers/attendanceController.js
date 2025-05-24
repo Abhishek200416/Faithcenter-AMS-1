@@ -105,9 +105,14 @@ async function punch(req, res, next) {
             where: {
                 userId: req.user.id,
                 type: 'punch-in',
+                locationCheckId: foundLoc.id,
                 timestamp: { [Op.between]: [dayStart, dayEnd] }
             }
         });
+        if (punchedIn) {
+            return res.status(409).json({ message: 'Already punched-in for this location today.' });
+        }
+
 
         const punchedOut = punchedIn && await Attendance.findOne({
             where: {
