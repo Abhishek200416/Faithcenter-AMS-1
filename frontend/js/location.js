@@ -236,20 +236,29 @@ function closeModal() {
 }
 
 function grabPositionAndSave() {
-    if (currentPosition) {
-        E.lat.value = currentPosition.latitude.toFixed(6);
-        E.lng.value = currentPosition.longitude.toFixed(6);
-        return saveCheck();
+    // Use currentPosition ONLY if lat/lng fields are empty
+    const latEmpty = !E.lat.value || E.lat.value.trim() === '';
+    const lngEmpty = !E.lng.value || E.lng.value.trim() === '';
+
+    if (latEmpty || lngEmpty) {
+        if (currentPosition) {
+            E.lat.value = currentPosition.latitude.toFixed(6);
+            E.lng.value = currentPosition.longitude.toFixed(6);
+            return saveCheck();
+        }
+        navigator.geolocation.getCurrentPosition(
+            pos => {
+                currentPosition = pos.coords;
+                E.lat.value = pos.coords.latitude.toFixed(6);
+                E.lng.value = pos.coords.longitude.toFixed(6);
+                saveCheck();
+            },
+            () => showTile({ message: 'Unable to get location', type: 'error' })
+        );
+    } else {
+        // Trust user input
+        saveCheck();
     }
-    navigator.geolocation.getCurrentPosition(
-        pos => {
-            currentPosition = pos.coords;
-            E.lat.value = pos.coords.latitude.toFixed(6);
-            E.lng.value = pos.coords.longitude.toFixed(6);
-            saveCheck();
-        },
-        () => showTile({ message: 'Unable to get location', type: 'error' })
-    );
 }
 
 function renderUserList() {
