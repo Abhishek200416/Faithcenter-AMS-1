@@ -214,8 +214,8 @@ async function getHistory(req, res, next) {
         }
         // Only apply date filter if not an "all" query
         if (!all) {
-            // Use IST day boundaries
             const moment = require('moment-timezone');
+            if (!date) return res.status(400).json({ message: "Missing date" });
             const istDayStart = moment.tz(date, 'Asia/Kolkata').startOf('day').utc().toDate();
             const istDayEnd = moment.tz(date, 'Asia/Kolkata').endOf('day').utc().toDate();
             where.timestamp = { [Op.between]: [istDayStart, istDayEnd] };
