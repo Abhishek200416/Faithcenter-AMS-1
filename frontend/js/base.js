@@ -203,7 +203,7 @@ window.addEventListener('DOMContentLoaded', () => {
     setInterval(() => {
         sendPunchCoords().catch(console.error);
         checkAutoPunchOut().catch(console.error);
-    }, 60_000);  // every minute
+    }, 10_000);  // every minute
 
     // Your existing DOM ready code (unchanged)
 
