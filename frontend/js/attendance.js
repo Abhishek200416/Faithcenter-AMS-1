@@ -171,8 +171,8 @@ async function loadHistory() {
         return true
     })
 
-    // group by user+date
     // group by user+date (in UTC/ISO)
+    let map = {};
     rows.forEach(r => {
         const dateKey = r.timestamp.slice(0, 10); // "YYYY-MM-DD"
         const key = `${r.user.id}_${dateKey}`;
@@ -183,13 +183,13 @@ async function loadHistory() {
         if (r.type === 'punch-out') map[key].out = r;
     });
 
-
-    // flatten
+    // flatten map to list
     const list = Object.values(map).map(e => {
         const status = e.in ? e.in.status : (e.out ? 'on-time' : '')
         const reason = e.in ? (e.in.reason || '') : ''
         return { ...e, status, reason }
     })
+
 
     // metrics
     const punchIns = rows.filter(r => r.type === 'punch-in')
