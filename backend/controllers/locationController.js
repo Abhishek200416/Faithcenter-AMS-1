@@ -308,22 +308,24 @@ const updateLocation = async (req, res) => {
     let { attendanceType = loc.attendanceType, scheduleType = loc.scheduleType } = req.body
     if (attendanceType === 'full') scheduleType = 'weekly'
 
-    let startAt, expiresAt, startTime = req.body.startTime
+    let startAt, expiresAt, startTime = req.body.startTime;
     if (attendanceType === 'full') {
-        startAt = new Date()
-        expiresAt = null
-        startTime = null
+        startAt = new Date();
+        expiresAt = null;
+        startTime = null;
     } else {
-        const [H, M] = (req.body.startTime || '00:00').split(':').map(Number)
-        startAt = req.body.specificDate
-            ? new Date(`${req.body.specificDate}T${req.body.startTime}:00`)
-            : (() => {
-                const d = new Date()
-                d.setHours(H, M, 0, 0)
-                return d
-            })()
-        expiresAt = new Date(startAt.getTime() + req.body.durationMinutes * 60000)
+        // Validate specificDate and startTime
+        if (!req.body.specificDate || !req.body.startTime || isNaN(Number(req.body.durationMinutes))) {
+            return res.status(400).json({ message: 'Invalid date/time/duration for location check.' });
+        }
+        // If fields valid, continue:
+        startAt = new Date(`${req.body.specificDate}T${req.body.startTime}:00`);
+        if (isNaN(startAt.getTime())) {
+            return res.status(400).json({ message: 'Invalid startAt date/time.' });
+        }
+        expiresAt = new Date(startAt.getTime() + Number(req.body.durationMinutes) * 60000);
     }
+
 
     Object.assign(loc, {
         latitude: req.body.latitude,
