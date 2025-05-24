@@ -12,7 +12,5 @@ if (!DATABASE_URL) {
 }
 
 console.log('→ Creating PostgreSQL dump...');
-// now only dump the "users" table:
-execSync(`pg_dump "${DATABASE_URL}" -Fc -f "${DUMP_FILE}" -t public.users`);
-
+execSync(`pg_dump "${DATABASE_URL}" -Fc -f "${DUMP_FILE}"`);
 console.log('✔ Dump created at', DUMP_FILE);
