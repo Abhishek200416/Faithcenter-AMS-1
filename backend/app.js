@@ -85,12 +85,12 @@ app.use(helmet());
 // 5.2 Rate limiters
 const loginLimiter = rateLimit({
     windowMs: 60 * 1000,
-    max: 20,
+    max: 20000, // 20,000 per minute
     message: { message: 'Too many login attempts, please wait a minute.' }
 });
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 100,
+    max: 100000, // 100,000 per 15 minutes
     message: { message: 'Too many API requests, please try again later.' }
 });
 
