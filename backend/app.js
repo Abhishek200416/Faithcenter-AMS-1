@@ -18,6 +18,7 @@ const { init: initIo } = require('./io');
 // ─── 3. Middleware & routes imports ──────────────────────────────────────
 const anomaly          = require('./middleware/anomaly');
 const authenticate     = require('./middleware/authenticate');
+
 const authRoutes       = require('./routes/auth');
 const userRoutes       = require('./routes/users');
 const attendanceRoutes = require('./routes/attendance');
@@ -41,42 +42,43 @@ webpush.setVapidDetails(
 
 const PORT = process.env.PORT || 3000;
 
-// ─── 4. Create app & HTTP server ─────────────────────────────────────────
-const app    = express();
+// ─── 4. Create Express app & HTTP server ─────────────────────────────────
+const app = express();
 const server = http.createServer(app);
 
 // ─── 5. GLOBAL MIDDLEWARE ────────────────────────────────────────────────
-// 5.1 CORS (first!)
+// 5.1 CORS (must come first!)
 const allowedOrigins = [
   'https://faithcenter-ams-production.up.railway.app',
   'https://faithcenter-ams.up.railway.app',
-  'http://localhost:3000',   // web dev
-  'http://localhost',        // Capacitor dev
-  'https://localhost',       // Capacitor prod
-  'capacitor://localhost',   // Capacitor native
-  'ionic://localhost'        // Ionic
+  // Allow any localhost in dev, both http & https:
+  /^https?:\/\/localhost(?::\d+)?$/,
+  'capacitor://localhost',
+  'ionic://localhost'
 ];
 
-const corsOptions = {
-  origin(origin, cb) {
-    // allow no-origin (curl, native) or whitelisted
-    if (!origin || allowedOrigins.includes(origin)) {
-      return cb(null, true);
+app.use(cors({
+  origin(origin, callback) {
+    // 1) no origin (curl/native) → allow
+    // 2) exact string match for prod domains, or match regex for localhost
+    if (!origin
+      || allowedOrigins.some(o => (o instanceof RegExp ? o.test(origin) : o === origin))
+    ) {
+      return callback(null, true);
     }
-    cb(new Error(`CORS blocked for origin ${origin}`), false);
+    // block everything else in production
+    callback(new Error(`CORS not allowed for ${origin}`), false);
   },
   credentials: true,
   methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
   allowedHeaders: ['Content-Type','Authorization']
-};
-
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));  // preflight
+}));
+app.options('*', cors());  // handle preflight
 
 // 5.2 Security headers
 app.use(helmet());
 
-// 5.3 Rate limiters
+// 5.3 Rate limiting
 const loginLimiter = rateLimit({
   windowMs:  60_000,
   max:       20_000,
@@ -88,11 +90,11 @@ const apiLimiter = rateLimit({
   message:   { message: 'Too many API requests, please try again later.' }
 });
 
-// 5.4 Body parser & XSS clean
+// 5.4 Body parser & XSS
 app.use(bodyParser.json({ limit: '10kb' }));
 app.use(xss());
 
-// 5.5 Request timer & slow‐request logger
+// 5.5 Slow‐request logger
 app.use((req, res, next) => {
   const start = Date.now();
   res.on('finish', () => {
@@ -119,10 +121,10 @@ app.use(anomaly);
 const io = initIo(server);
 
 // ─── 7. API ROUTES ────────────────────────────────────────────────────────
-// auth (public)
+// Public auth
 app.use('/api/auth', loginLimiter, authRoutes);
 
-// protected
+// Protected
 app.use('/api/users',      apiLimiter, authenticate, userRoutes);
 app.use('/api/attendance', apiLimiter, authenticate, attendanceRoutes);
 app.use('/api/location',   apiLimiter, authenticate, locationRoutes);
@@ -131,7 +133,7 @@ app.use('/api/dashboard',  apiLimiter, authenticate, dashboardRoutes);
 
 app.use('/api/backup', apiLimiter, backupRouter);
 
-// tighten CSP after routes if desired
+// Tighten CSP if desired
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -145,7 +147,7 @@ app.use(helmet({
   }
 }));
 
-// ─── 8. SPA ASSETS & Fallback ────────────────────────────────────────────
+// ─── 8. SPA ASSETS & FALLBACK ────────────────────────────────────────────
 app.use('/css',    express.static(path.join(__dirname, '../frontend/css')));
 app.use('/js',     express.static(path.join(__dirname, '../frontend/js')));
 app.use('/assets', express.static(path.join(__dirname, '../frontend/assets')));
@@ -164,7 +166,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Internal server error' });
 });
 
-// ─── 10. Bootstrap & start ───────────────────────────────────────────────
+// ─── 10. Bootstrap defaults & start ──────────────────────────────────────
 async function createDefaultUsers() {
   const defaults = [
     {
@@ -215,7 +217,7 @@ async function createDefaultUsers() {
     await sequelize.sync();
     await createDefaultUsers();
 
-    // re‐install your location‐based jobs safely
+    // re‐install location jobs safely
     const allChecks = await LocationCheck.findAll();
     for (const loc of allChecks) {
       try {
