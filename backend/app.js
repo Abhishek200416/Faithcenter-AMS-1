@@ -98,11 +98,13 @@ const apiLimiter = rateLimit({
 const allowedOrigins = [
     'https://faithcenter-ams-production.up.railway.app',
     'https://faithcenter-ams.up.railway.app',
-    'http://localhost:3000', // web dev
-    'http://localhost', // Capacitor dev
-    'capacitor://localhost', // Capacitor prod
-    'ionic://localhost', // Ionic if needed
+    'http://localhost:3000',
+    'http://localhost',
+    'https://localhost', // <——— THIS FIXES IT
+    'capacitor://localhost',
+    'ionic://localhost'
 ];
+
 
 app.use(cors({
     origin: (incomingOrigin, callback) => {
