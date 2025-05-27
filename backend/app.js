@@ -95,12 +95,31 @@ const apiLimiter = rateLimit({
 });
 
 // 5.3 CORS
+const allowedOrigins = [
+    'https://faithcenter-ams-production.up.railway.app',
+    'https://faithcenter-ams.up.railway.app',
+    'http://localhost:3000', // web dev
+    'http://localhost', // Capacitor dev
+    'capacitor://localhost', // Capacitor prod
+    'ionic://localhost', // Ionic if needed
+];
+
 app.use(cors({
-    origin: [
-        'https://faithcenter-ams-production.up.railway.app',
-        'http://localhost:3000'
-    ]
+    origin: (incomingOrigin, callback) => {
+        // allow if no origin (like curl) or if it’s in our list
+        if (!incomingOrigin || allowedOrigins.includes(incomingOrigin)) {
+            return callback(null, true);
+        }
+        callback(new Error(`CORS blocked origin ${incomingOrigin}`));
+    },
+    credentials: true, // <— allow cookies & auth headers
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// respond to preflight requests
+app.options('*', cors());
+
 
 // 5.4 Body parsing & XSS
 app.use(bodyParser.json({ limit: '10kb' }));
