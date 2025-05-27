@@ -51,29 +51,22 @@ const server = http.createServer(app);
 const allowedOrigins = [
   'https://faithcenter-ams-production.up.railway.app',
   'https://faithcenter-ams.up.railway.app',
+  'https://localhost',
   // Allow any localhost in dev, both http & https:
   /^https?:\/\/localhost(?::\d+)?$/,
   'capacitor://localhost',
   'ionic://localhost'
 ];
 
+// in backend/app.js, before any routes
 app.use(cors({
-  origin(origin, callback) {
-    // 1) no origin (curl/native) → allow
-    // 2) exact string match for prod domains, or match regex for localhost
-    if (!origin
-      || allowedOrigins.some(o => (o instanceof RegExp ? o.test(origin) : o === origin))
-    ) {
-      return callback(null, true);
-    }
-    // block everything else in production
-    callback(new Error(`CORS not allowed for ${origin}`), false);
-  },
-  credentials: true,
+  origin: true,           // echo back the request Origin header
+  credentials: true,      // allow cookies/auth headers
   methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
   allowedHeaders: ['Content-Type','Authorization']
 }));
-app.options('*', cors());  // handle preflight
+app.options('*', cors());
+
 
 // 5.2 Security headers
 app.use(helmet());
