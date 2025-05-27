@@ -18,7 +18,6 @@ const { init: initIo } = require('./io');
 // ─── 3. Middleware & routes imports ──────────────────────────────────────
 const anomaly = require('./middleware/anomaly');
 const authenticate = require('./middleware/authenticate');
-
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const attendanceRoutes = require('./routes/attendance');
@@ -42,16 +41,12 @@ webpush.setVapidDetails(
 
 const PORT = process.env.PORT || 3000;
 
-// ─── 4. Create Express app & HTTP server ─────────────────────────────────
+// ─── 4. Create app & HTTP server ─────────────────────────────────────────
 const app = express();
-app.set('trust proxy', 1);
-console.log("Server Time:", new Date().toISOString());
-
 const server = http.createServer(app);
-server.setTimeout(120000);
 
 // ─── 5. GLOBAL MIDDLEWARE ────────────────────────────────────────────────
-// 5.1 — CORS (must be first! handles OPTIONS preflight too)
+// 5.1 CORS (first!)
 const allowedOrigins = [
     'https://faithcenter-ams-production.up.railway.app',
     'https://faithcenter-ams.up.railway.app',
@@ -59,58 +54,57 @@ const allowedOrigins = [
     'http://localhost', // Capacitor dev
     'https://localhost', // Capacitor prod
     'capacitor://localhost', // Capacitor native
-    'ionic://localhost', // Ionic if you ever use it
+    'ionic://localhost' // Ionic
 ];
 
 const corsOptions = {
-    origin(origin, callback) {
-        // allow if no origin (mobile/native fetch, curl, etc) OR if whitelisted
+    origin(origin, cb) {
+        // allow no-origin (curl, native) or whitelisted
         if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error(`CORS not allowed for origin ${origin}`), false);
+            return cb(null, true);
         }
+        cb(new Error(`CORS blocked for origin ${origin}`), false);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 };
 
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // preflight handler for all routes
+app.options('*', cors(corsOptions)); // preflight
 
-// 5.2 — security headers
+// 5.2 Security headers
 app.use(helmet());
 
-// 5.3 — rate limiting
+// 5.3 Rate limiters
 const loginLimiter = rateLimit({
-    windowMs: 60 * 1000,
-    max: 20000,
+    windowMs: 60 _000,
+    max: 20 _000,
     message: { message: 'Too many login attempts, please wait a minute.' }
 });
 const apiLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 100000,
+    windowMs: 15 * 60 _000,
+    max: 100 _000,
     message: { message: 'Too many API requests, please try again later.' }
 });
 
-// 5.4 — body parsing & XSS sanitization
+// 5.4 Body parser & XSS clean
 app.use(bodyParser.json({ limit: '10kb' }));
 app.use(xss());
 
-// 5.5 — slow-request logger & basic request timer
+// 5.5 Request timer & slow‐request logger
 app.use((req, res, next) => {
     const start = Date.now();
     res.on('finish', () => {
-        const dt = Date.now() - start;
-        if (dt > 5000) {
-            console.warn(`[SLOW] ${req.method} ${req.originalUrl} took ${dt}ms`);
+        const ms = Date.now() - start;
+        if (ms > 5000) {
+            console.warn(`[SLOW] ${req.method} ${req.originalUrl} took ${ms}ms`);
         }
     });
     next();
 });
 
-// 5.6 — mutating-request logger
+// 5.6 Mutating‐request logger
 app.use((req, res, next) => {
     if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
         console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`, req.body);
@@ -118,11 +112,14 @@ app.use((req, res, next) => {
     next();
 });
 
-// 5.7 — anomaly detector
+// 5.7 Anomaly detector
 app.use(anomaly);
 
-// ─── 6. API ROUTES ────────────────────────────────────────────────────────
-// public
+// ─── 6. Initialize Socket.IO ─────────────────────────────────────────────
+const io = initIo(server);
+
+// ─── 7. API ROUTES ────────────────────────────────────────────────────────
+// auth (public)
 app.use('/api/auth', loginLimiter, authRoutes);
 
 // protected
@@ -134,7 +131,7 @@ app.use('/api/dashboard', apiLimiter, authenticate, dashboardRoutes);
 
 app.use('/api/backup', apiLimiter, backupRouter);
 
-// tighten CSP again after routes if you like
+// tighten CSP after routes if desired
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
@@ -148,7 +145,7 @@ app.use(helmet({
     }
 }));
 
-// ─── 7. SPA ASSETS & FALLBACK ────────────────────────────────────────────
+// ─── 8. SPA ASSETS & Fallback ────────────────────────────────────────────
 app.use('/css', express.static(path.join(__dirname, '../frontend/css')));
 app.use('/js', express.static(path.join(__dirname, '../frontend/js')));
 app.use('/assets', express.static(path.join(__dirname, '../frontend/assets')));
@@ -161,21 +158,42 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/public/index.html'));
 });
 
-// ─── 8. Global error handler ─────────────────────────────────────────────
+// ─── 9. Global error handler ─────────────────────────────────────────────
 app.use((err, req, res, next) => {
     console.error('❌ Unhandled error:', err.stack || err);
     res.status(500).json({ message: 'Internal server error' });
 });
 
-// ─── 9. Bootstrap defaults & start server ─────────────────────────────────
+// ─── 10. Bootstrap & start ───────────────────────────────────────────────
 async function createDefaultUsers() {
-    const defaults = [
-        { name: 'Admin', email: 'admin@gmail.com', phone: '9000327849', username: 'ADMIN1@FC', uid: '2534567891', password: 'admin1', role: 'admin', categoryType: 'admin', gender: 'male', age: '21' },
-        { name: 'Developer', email: 'developer@gmail.com', phone: '9381135838', username: 'DEVELOPER1@FC', uid: '2534567892', password: 'developer1', role: 'developer', categoryType: 'developer', gender: 'male', age: '21' }
+    const defaults = [{
+            name: 'Admin',
+            email: 'admin@gmail.com',
+            phone: '9000327849',
+            username: 'ADMIN1@FC',
+            uid: '2534567891',
+            password: 'admin1',
+            role: 'admin',
+            categoryType: 'admin',
+            gender: 'male',
+            age: '21'
+        },
+        {
+            name: 'Developer',
+            email: 'developer@gmail.com',
+            phone: '9381135838',
+            username: 'DEVELOPER1@FC',
+            uid: '2534567892',
+            password: 'developer1',
+            role: 'developer',
+            categoryType: 'developer',
+            gender: 'male',
+            age: '21'
+        }
     ];
 
     for (const u of defaults) {
-        const [user, created] = await User.findOrCreate({
+        const [usr, created] = await User.findOrCreate({
             where: {
                 [Op.or]: [{ email: u.email }, { phone: u.phone }] },
             defaults: {
@@ -197,15 +215,21 @@ async function createDefaultUsers() {
         await sequelize.sync();
         await createDefaultUsers();
 
-        // restore any scheduled jobs
+        // re‐install your location‐based jobs safely
         const allChecks = await LocationCheck.findAll();
-        allChecks.forEach(loc => scheduleJobsFor(loc));
+        for (const loc of allChecks) {
+            try {
+                scheduleJobsFor(loc);
+            } catch (err) {
+                console.error('❌ scheduleJobsFor failed for', loc.id, err);
+            }
+        }
 
         server.listen(PORT, () => {
             console.log(`🚀 Server listening at http://localhost:${PORT}`);
         });
-    } catch (err) {
-        console.error('❌ Startup error:', err);
+    } catch (startupErr) {
+        console.error('❌ Startup error:', startupErr);
         process.exit(1);
     }
 })();
