@@ -47,25 +47,30 @@ const app = express();
 const server = http.createServer(app);
 
 // ─── 5. GLOBAL MIDDLEWARE ────────────────────────────────────────────────
-// 5.1 CORS (must come first!)
 const allowedOrigins = [
-  'https://faithcenter-ams-production.up.railway.app',
-  'https://faithcenter-ams.up.railway.app',
+  'https://faithcenterams.up.railway.app',
+  'http://localhost',
   'https://localhost',
-  // Allow any localhost in dev, both http & https:
-  /^https?:\/\/localhost(?::\d+)?$/,
   'capacitor://localhost',
   'ionic://localhost'
 ];
 
-// in backend/app.js, before any routes
-app.use(cors({
-  origin: true,           // echo back the request Origin header
-  credentials: true,      // allow cookies/auth headers
-  methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type','Authorization']
-}));
-app.options('*', cors());
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+
 
 
 // 5.2 Security headers
