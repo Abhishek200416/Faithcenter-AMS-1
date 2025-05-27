@@ -100,27 +100,25 @@ const allowedOrigins = [
     'https://faithcenter-ams.up.railway.app',
     'http://localhost:3000',
     'http://localhost',
-    'https://localhost', // <——— THIS FIXES IT
+    'https://localhost',
     'capacitor://localhost',
     'ionic://localhost'
 ];
 
-
-app.use(cors({
-    origin: (incomingOrigin, callback) => {
-        // allow if no origin (like curl) or if it’s in our list
-        if (!incomingOrigin || allowedOrigins.includes(incomingOrigin)) {
-            return callback(null, true);
-        }
-        callback(new Error(`CORS blocked origin ${incomingOrigin}`));
+const corsOptions = {
+    origin: function(origin, callback) {
+        // No origin = allowed (curl, mobile apps, etc)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.includes(origin)) return callback(null, true);
+        return callback(new Error('CORS not allowed for ' + origin), false);
     },
-    credentials: true, // <— allow cookies & auth headers
+    credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
-}));
+};
 
-// respond to preflight requests
-app.options('*', cors());
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Preflight for all routes
 
 
 // 5.4 Body parsing & XSS
