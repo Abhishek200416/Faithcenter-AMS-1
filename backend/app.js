@@ -93,14 +93,22 @@ app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", "https://unpkg.com", "https://cdn.jsdelivr.net"],
+            scriptSrc: ["'self'", "https://cdn.socket.io", "https://cdn.jsdelivr.net"],
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
             imgSrc: ["'self'", "data:"],
-            connectSrc: ["'self'"]
+            // ADD these two:
+            connectSrc: [
+                "'self'",
+                "https://faithcenterams.up.railway.app",
+                "wss://faithcenterams.up.railway.app"
+            ],
+            // (optionally) if you proxy socket.io at /socket.io:
+            // connectSrc: ["'self'", "wss://faithcenterams.up.railway.app", "wss://localhost"]
         }
     }
 }));
+
 
 app.use('/css', express.static(require('path').join(__dirname, '../frontend/css')));
 app.use('/js', express.static(require('path').join(__dirname, '../frontend/js')));
