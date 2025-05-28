@@ -1,14 +1,5 @@
-// backend/app.js
-
-// ─── 1. Load env & core modules ───────────────────────────────────────────
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
-// Create Express app & HTTP server
-const app = express();
-const server = http.createServer(app); // ← this must come first
-
-// Now it's safe to init Socket.IO
-const io = initIo(server);
 
 const express = require('express');
 const http = require('http');
@@ -18,11 +9,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const xss = require('xss-clean');
 
-// ─── 2. Socket.IO bootstrap (no circular require) ───────────────────────
-const { init: initIo, getIo } = require('./io');
-
-
-// ─── 3. Middleware & routes imports ──────────────────────────────────────
+const { init: initIo } = require('./io');
 const anomaly = require('./middleware/anomaly');
 const authenticate = require('./middleware/authenticate');
 
@@ -47,9 +34,10 @@ webpush.setVapidDetails(
     process.env.VAPID_PRIVATE_KEY
 );
 
-const PORT = process.env.PORT || 3000;
+const app = express();
+const server = http.createServer(app);
+const io = initIo(server);
 
-// ─── 5. GLOBAL MIDDLEWARE ────────────────────────────────────────────────
 const allowedOrigins = [
     'https://faithcenterams.up.railway.app',
     'http://localhost',
@@ -59,7 +47,7 @@ const allowedOrigins = [
 ];
 
 const corsOptions = {
-    origin: function (origin, callback) {
+    origin(origin, callback) {
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
@@ -73,68 +61,35 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
-
-
-
-// 5.2 Security headers
 app.use(helmet());
-
-// 5.3 Rate limiting
-const loginLimiter = rateLimit({
-    windowMs: 60_000,
-    max: 20_000,
-    message: { message: 'Too many login attempts, please wait a minute.' }
-});
-const apiLimiter = rateLimit({
-    windowMs: 15 * 60_000,
-    max: 100_000,
-    message: { message: 'Too many API requests, please try again later.' }
-});
-
-// 5.4 Body parser & XSS
+app.use(rateLimit({ windowMs: 60_000, max: 20_000, message: { message: 'Too many login attempts, please wait a minute.' } }), '/api/auth');
+app.use(rateLimit({ windowMs: 15 * 60_000, max: 100_000, message: { message: 'Too many API requests, please try again later.' } }), '/api');
 app.use(bodyParser.json({ limit: '10kb' }));
 app.use(xss());
-
-// 5.5 Slow‐request logger
 app.use((req, res, next) => {
     const start = Date.now();
     res.on('finish', () => {
         const ms = Date.now() - start;
-        if (ms > 5000) {
-            console.warn(`[SLOW] ${req.method} ${req.originalUrl} took ${ms}ms`);
-        }
+        if (ms > 5000) console.warn(`[SLOW] ${req.method} ${req.originalUrl} took ${ms}ms`);
     });
     next();
 });
-
-// 5.6 Mutating‐request logger
 app.use((req, res, next) => {
     if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
         console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`, req.body);
     }
     next();
 });
-
-// 5.7 Anomaly detector
 app.use(anomaly);
 
-// ─── 6. Initialize Socket.IO ─────────────────────────────────────────────
+app.use('/api/auth', authRoutes);
+app.use('/api/users', authenticate, userRoutes);
+app.use('/api/attendance', authenticate, attendanceRoutes);
+app.use('/api/location', authenticate, locationRoutes);
+app.use('/api/leaves', authenticate, leaveRoutes);
+app.use('/api/dashboard', authenticate, dashboardRoutes);
+app.use('/api/backup', authenticate, backupRouter);
 
-
-// ─── 7. API ROUTES ────────────────────────────────────────────────────────
-// Public auth
-app.use('/api/auth', loginLimiter, authRoutes);
-
-// Protected
-app.use('/api/users', apiLimiter, authenticate, userRoutes);
-app.use('/api/attendance', apiLimiter, authenticate, attendanceRoutes);
-app.use('/api/location', apiLimiter, authenticate, locationRoutes);
-app.use('/api/leaves', apiLimiter, authenticate, leaveRoutes);
-app.use('/api/dashboard', apiLimiter, authenticate, dashboardRoutes);
-
-app.use('/api/backup', apiLimiter, backupRouter);
-
-// Tighten CSP if desired
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
@@ -148,7 +103,6 @@ app.use(helmet({
     }
 }));
 
-// ─── 8. SPA ASSETS & FALLBACK ────────────────────────────────────────────
 app.use('/css', express.static(path.join(__dirname, '../frontend/css')));
 app.use('/js', express.static(path.join(__dirname, '../frontend/js')));
 app.use('/assets', express.static(path.join(__dirname, '../frontend/assets')));
@@ -161,13 +115,11 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/public/index.html'));
 });
 
-// ─── 9. Global error handler ─────────────────────────────────────────────
 app.use((err, req, res, next) => {
     console.error('❌ Unhandled error:', err.stack || err);
     res.status(500).json({ message: 'Internal server error' });
 });
 
-// ─── 10. Bootstrap defaults & start ──────────────────────────────────────
 async function createDefaultUsers() {
     const defaults = [
         {
@@ -197,7 +149,7 @@ async function createDefaultUsers() {
     ];
 
     for (const u of defaults) {
-        const [usr, created] = await User.findOrCreate({
+        const [user, created] = await User.findOrCreate({
             where: { [Op.or]: [{ email: u.email }, { phone: u.phone }] },
             defaults: {
                 ...u,
@@ -205,34 +157,24 @@ async function createDefaultUsers() {
                 usernameChangedAt: new Date()
             }
         });
-        console.log(
-            created
-                ? `✔ Default ${u.role} created: ${u.email}`
-                : `ℹ️ Default ${u.role} already exists`
-        );
+        console.log(created ? `✔ Default ${u.role} created: ${u.email}` : `ℹ️ Default ${u.role} already exists`);
     }
 }
 
 (async () => {
-    try {
-        await sequelize.sync();
-        await createDefaultUsers();
+    await sequelize.sync();
+    await createDefaultUsers();
 
-        // re‐install location jobs safely
-        const allChecks = await LocationCheck.findAll();
-        for (const loc of allChecks) {
-            try {
-                scheduleJobsFor(loc);
-            } catch (err) {
-                console.error('❌ scheduleJobsFor failed for', loc.id, err);
-            }
+    const allChecks = await LocationCheck.findAll();
+    for (const loc of allChecks) {
+        try {
+            scheduleJobsFor(loc);
+        } catch (err) {
+            console.error(`❌ scheduleJobsFor failed for ${loc.id}`, err);
         }
-
-        server.listen(PORT, () => {
-            console.log(`🚀 Server listening at http://localhost:${PORT}`);
-        });
-    } catch (startupErr) {
-        console.error('❌ Startup error:', startupErr);
-        process.exit(1);
     }
+
+    server.listen(process.env.PORT || 3000, () => {
+        console.log(`🚀 Server listening on port ${process.env.PORT || 3000}`);
+    });
 })();
