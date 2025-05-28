@@ -1,17 +1,29 @@
 // backend/io.js
 const { Server } = require('socket.io');
 
-let io = null;
-
 module.exports = {
     init: (httpServer) => {
-        io = new Server(httpServer, {
-            cors: { origin: ['http://localhost:3000'] }
+        // mirror your Express CORS origins exactly:
+        const allowedOrigins = [
+            'https://faithcenterams.up.railway.app',
+            'http://localhost',
+            'https://localhost',
+            'capacitor://localhost',
+            'ionic://localhost'
+        ];
+
+        const io = new Server(httpServer, {
+            cors: {
+                origin: allowedOrigins,
+                credentials: true,
+                methods: ['GET', 'POST', 'OPTIONS']
+            }
         });
+
+        // (optionally attach your event handlers here)
         return io;
     },
     getIo: () => {
-        if (!io) throw new Error('Socket.io not initialized');
-        return io;
+        throw new Error('Socket.io not initialized');
     }
 };
