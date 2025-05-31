@@ -434,12 +434,18 @@ exports.deleteUser = async function deleteUser(req, res, next) {
         }
         const user = await User.findByPk(req.params.id);
         if (!user) return res.status(404).json({ message: 'Not found' });
+
+        // Delete attendance records first
+        await Attendance.destroy({ where: { userId: user.id } });
+
+        // Now delete the user
         await user.destroy();
         res.status(204).end();
     } catch (err) {
         next(err);
     }
 };
+
 exports.countUsers = async function countUsers(req, res, next) {
     try {
         const where = {};
