@@ -1,6 +1,6 @@
 // backend/controllers/userController.js
 
-const { User } = require('../models');
+const { User, Attendance } = require('../models');
 const bcrypt = require('bcrypt');
 const { Sequelize } = require('sequelize');
 const { Op } = require('sequelize');
