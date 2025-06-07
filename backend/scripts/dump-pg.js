@@ -1,4 +1,4 @@
-// backend/scripts/dump-pg.js
+// backend/dump-pg.js
 require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') });
 const { execSync } = require('child_process');
 const path = require('path');
