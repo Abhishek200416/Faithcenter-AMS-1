@@ -93,7 +93,7 @@ async function requirePermissions() {
     }
 }
 
-// ─── Push Subscription ───────────────────────────────────────────────────
+// ─── Push Subscription ──────────────────────────────────────────────────
 
 async function subscribeToPush() {
     try {
